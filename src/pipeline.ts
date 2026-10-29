@@ -1,12 +1,12 @@
 import path from 'node:path';
-import {writeFile} from 'node:fs/promises';
+import {writeFile,readFile} from 'node:fs/promises';
 import {demoPlan,fixtureAlignment} from './fixtures';
 import {buildTimeline} from './timing';
 import {Budget,narrate,planVideo,ProviderError,type ProviderConfig} from './providers';
 import {makeRun,acquireLock,cleanup,saveManifest,runPath,purgeRun,RETENTION_MS,JOB_LIMIT_MS} from './storage';
 import {probe,validateMedia} from './media';
 import {render} from './render';
-import type {VideoProps} from './contracts';
+import {validatePlan,type VideoProps} from './contracts';
 import {VOICES} from './voices';
 
 export function configuration(voice?:string):ProviderConfig{
@@ -14,7 +14,7 @@ export function configuration(voice?:string):ProviderConfig{
  if(!config.geminiKey||!config.elevenKey||!config.voiceId)throw new Error('Set GEMINI_API_KEY, ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID in your local .env before live generation. Never paste keys into chat.');
  return config;
 }
-export async function generate(options:{demo:boolean;topic?:string;voice?:string;captions:boolean;onProgress?:(state:string)=>void}){
+export async function generate(options:{demo:boolean;topic?:string;voice?:string;captions:boolean;reviewedPlanFile?:string;onProgress?:(state:string)=>void}){
  const config=options.demo?undefined:configuration(options.voice);
  if(!options.demo&&(!options.topic?.trim()||options.topic.length>1000))throw new Error('Provide a topic between 1 and 1,000 characters.');
  const release=await acquireLock();
@@ -33,8 +33,8 @@ export async function generate(options:{demo:boolean;topic?:string;voice?:string
    for(let attempt=0;attempt<3&&!accepted;attempt++){
     await state('Planning scenes');
     let plan;
-    try{plan=await planVideo(options.topic!,config!,budget,feedback,signal);}
-    catch(error){if(error instanceof ProviderError||signal.aborted||attempt===2)throw error;feedback='The previous response was invalid. Carefully follow the schema and exact cue phrase requirements.';continue;}
+    try{plan=attempt===0&&options.reviewedPlanFile?validatePlan(JSON.parse(await readFile(options.reviewedPlanFile,'utf8'))):await planVideo(options.topic!,config!,budget,feedback,signal);}
+    catch(error){if(error instanceof ProviderError||signal.aborted||attempt===2)throw error;feedback=`Correct the previous plan error, retaining required topic-specific animation fields: ${error instanceof Error?error.message:'invalid plan'}`;continue;}
     await state('Generating narration');
     const narration=await narrate(plan,config!,budget,signal);
     const audioPath=path.join(dir,'narration.mp3');await writeFile(audioPath,narration.audio);

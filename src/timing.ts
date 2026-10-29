@@ -38,7 +38,9 @@ export function buildTimeline(plan:Plan,alignment:Alignment,duration:number):Tim
   let offset=0;
   const scenes=plan.scenes.map(scene=>{
     const narrationSpan=span(offset,offset+scene.narration.length);
-    const result={id:scene.id,start:narrationSpan.start,end:narrationSpan.end,cues:scene.cues.map(cue=>{
+    const motionAt=scene.motion?findOccurrence(scene.narration,scene.motion.triggerPhrase,scene.motion.occurrence):undefined;
+    const arrayEvents=scene.arrayStory?.events.map(event=>{const at=findOccurrence(scene.narration,event.phrase,event.occurrence);return {...event,at:span(offset+at,offset+at+event.phrase.length).start};});
+    const result={id:scene.id,start:narrationSpan.start,end:narrationSpan.end,...(arrayEvents?{arrayEvents}:{}),...(motionAt!==undefined?{motionStart:span(offset+motionAt,offset+motionAt+scene.motion!.triggerPhrase.length).start}:{}),cues:scene.cues.map(cue=>{
       const at=findOccurrence(scene.narration,cue.phrase,cue.occurrence);
       return {targetId:cue.targetId,at:span(offset+at,offset+at+cue.phrase.length).start};
     })};

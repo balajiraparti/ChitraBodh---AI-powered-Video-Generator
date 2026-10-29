@@ -1,5 +1,7 @@
 # ChitraBodh local prototype
 
+**Build 2: motion-first explainers.** Water-cycle topics can now use a continuous animated landscape with water ripples, sunlight, vapor movement, cloud droplets, rainfall and runoff, triggered by narrated phrases. Other topics retain animated diagram flows. See [updated core features](docs/ChitraBodh-V1-Motion-Update.md). These are procedural vector animations; the export remains a normal MP4, not a clickable lesson.
+
 Turn an educational topic into a vertical motion-graphics explainer. This is the local generation experiment described in the PRD, not the complete SaaS application.
 
 ## Try the visual demo

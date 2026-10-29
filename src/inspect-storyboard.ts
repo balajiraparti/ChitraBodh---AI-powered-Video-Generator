@@ -1,0 +1,14 @@
+import 'dotenv/config';
+import {writeFile} from 'node:fs/promises';
+import path from 'node:path';
+import {configuration} from './pipeline';
+import {makeRun,runPath,saveManifest} from './storage';
+const config=configuration();
+const response=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${config.geminiModel}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':config.geminiKey},body:JSON.stringify({contents:[{role:'user',parts:[{text:'Design a 60–90 second vertical educational video explaining binary search to a beginner. Independently choose a small sorted array and a target that requires several comparisons. Give the full narration and a storyboard describing boxes, indices, low/high/mid pointers, each comparison, excluded ranges, and the final result. Explain what is visible over time, with suggested timing and exact speech cues. You decide all example values, target and teaching sequence. Use correct binary-search arithmetic; explain sorted input and zero-based indices. Output JSON with title, values, target, narration, and scenes. Do not write rendering code.'}]}],generationConfig:{responseMimeType:'application/json'} }),signal:AbortSignal.timeout(90000)});
+if(!response.ok)throw new Error(`Gemini storyboard request failed: ${response.status}`);
+const data=await response.json() as any;
+const text=data.candidates?.[0]?.content?.parts?.filter((p:any)=>!p.thought).map((p:any)=>p.text||'').join('');
+const storyboard=JSON.parse(text);const manifest=await makeRun('live',true);
+manifest.state='storyboard_review';await saveManifest(manifest);
+const file=path.join(runPath(manifest.id),'storyboard.json');await writeFile(file,JSON.stringify(storyboard,null,2));
+console.log(JSON.stringify({file,storyboard},null,2));

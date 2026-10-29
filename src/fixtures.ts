@@ -11,6 +11,8 @@ export const demoPlan=validatePlan({
     {id:'takeaway',layout:'icon_text',heading:'The journey keeps going',narration:'The sun supplies energy, and gravity brings water back down. Evaporation, condensation, and precipitation keep water moving. There is no single starting point. The cycle continues all around us.',nodes:[{id:'cycle',iconId:'globe',label:'A continuous cycle'}],edges:[],cues:[{phrase:'cycle continues',occurrence:1,targetId:'cycle'}]}
   ]
 });
+const demoPhases=['overview','evaporation','condensation','precipitation','overview'] as const;
+demoPlan.scenes.forEach((scene,i)=>{scene.motion={kind:'water_cycle',phase:demoPhases[i],triggerPhrase:scene.cues[0].phrase,occurrence:scene.cues[0].occurrence};});
 export function fixtureAlignment(duration=75):Alignment {
   const characters=Array.from(scriptFor(demoPlan));
   return {characters,character_start_times_seconds:characters.map((_,i)=>i/characters.length*duration),character_end_times_seconds:characters.map((_,i)=>(i+1)/characters.length*duration)};

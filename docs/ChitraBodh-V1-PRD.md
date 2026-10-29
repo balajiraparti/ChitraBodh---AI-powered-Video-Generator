@@ -1,5 +1,7 @@
 # ChitraBodh — V1 Product Requirements Document
 
+**28 October visual-feature update:** [Motion-first core features](ChitraBodh-V1-Motion-Update.md) refines the visual scope below: explanatory process animation, a continuous water-cycle landscape, and speech-triggered actions take priority over dashboard expansion. The original simple creator flow and operating limits remain in place.
+
 **Product:** ChitraBodh (चित्रबोध)  
 **Tagline:** Ideas in motion. Made clear.  
 **Document version:** 1.2  

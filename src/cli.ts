@@ -15,7 +15,7 @@ try{
    console.log(`Default voice: ${process.env.ELEVENLABS_VOICE_ID||VOICES[0].id}`);
    await command(process.env.FFPROBE_PATH||'ffprobe',['-version']);await command(process.env.FFMPEG_PATH||'ffmpeg',['-version']);console.log('FFmpeg and ffprobe: available');break;
   case 'demo':await generate({demo:true,captions:!args.includes('--no-captions')});break;
-  case 'generate':await generate({demo:false,topic:option('--topic'),voice:option('--voice'),captions:!args.includes('--no-captions')});break;
+  case 'generate':await generate({demo:false,topic:option('--topic'),voice:option('--voice'),captions:!args.includes('--no-captions'),reviewedPlanFile:option('--plan')});break;
   case 'preview':await preview();break;
   case 'cleanup':console.log(`Removed ${(await cleanup()).length} expired runs.`);break;
   default:console.log('Commands: doctor | demo [--no-captions] | generate --topic "Your idea" [--voice ID] [--no-captions] | preview | cleanup');

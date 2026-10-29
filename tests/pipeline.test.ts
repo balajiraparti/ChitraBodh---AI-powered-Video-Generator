@@ -8,6 +8,7 @@ import {demoPlan,fixtureAlignment} from '../src/fixtures';
 import {validatePlan,scriptFor} from '../src/contracts';
 import {buildTimeline} from '../src/timing';
 import {Budget,planVideo,narrate,ProviderError,type ProviderConfig} from '../src/providers';
+import {motionState} from '../src/video/WaterCycle';
 const testRoot=await mkdtemp(path.join(tmpdir(),'chitrabodh-tests-'));
 process.env.CHITRABODH_RUNS_DIR=testRoot;
 const {makeRun,saveManifest,assertAvailable,purgeRun,runPath,acquireLock,cleanup}=await import('../src/storage');
@@ -16,6 +17,15 @@ after(async()=>{await rm(testRoot,{recursive:true,force:true});});
 test('plan rejects dangling edges and missing spoken cue phrases',()=>{
  const plan=structuredClone(demoPlan);plan.scenes[0].edges=[{from:'missing',to:'missing'}];assert.throws(()=>validatePlan(plan));
  const other=structuredClone(demoPlan);other.scenes[0].cues[0].phrase='not spoken';assert.throws(()=>validatePlan(other));
+});
+test('motion is anchored to actual narration and remains inactive before its cue',()=>{
+ const plan=structuredClone(demoPlan);plan.scenes[0].motion!.triggerPhrase='missing phrase';assert.throws(()=>validatePlan(plan));
+ const timeline=buildTimeline(demoPlan,fixtureAlignment(),75);assert.ok(timeline.scenes.every(s=>s.motionStart!==undefined&&s.motionStart>=s.start&&s.motionStart<s.end));
+ assert.equal(motionState(4,5,'precipitation').rain,false);
+ assert.equal(motionState(6,5,'precipitation').rain,true);
+ assert.equal(motionState(6,5,'precipitation').evaporation,false);
+ assert.equal(motionState(6,5,'collection').collection,true);
+ assert.notEqual(motionState(6,5,'evaporation').elapsed,motionState(7,5,'evaporation').elapsed);
 });
 test('timing maps every scene and caption into the narration duration',()=>{
  const timeline=buildTimeline(demoPlan,fixtureAlignment(),75);
@@ -44,6 +54,8 @@ test('actual HTTP clients send provider contracts and reject quota errors withou
   const budget=new Budget();const plan=await planVideo('water cycle',config,budget);const speech=await narrate(plan,config,budget);
   assert.equal(speech.audio.length,128);assert.equal(requests[0].headers['x-goog-api-key'],'test-gemini');assert.equal(requests[1].headers['xi-api-key'],'test-eleven');
   assert.equal(requests[1].body.text,scriptFor(demoPlan));assert.match(requests[1].url,/with-timestamps/);assert.equal(requests[0].body.generationConfig.responseMimeType,'application/json');
+  await assert.rejects(()=>planVideo('binary search',config,budget),/arrayStory/);
+  assert.ok(requests[2].body.generationConfig.responseJsonSchema.properties.scenes.items.required.includes('arrayStory'));
   fail=true;await assert.rejects(()=>planVideo('test',config,budget),(e:unknown)=>e instanceof ProviderError&&e.status===429&&!e.message.includes('private text'));
  }finally{server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));}
 });

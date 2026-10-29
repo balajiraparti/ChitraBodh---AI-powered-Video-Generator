@@ -1,5 +1,13 @@
 # Local prototype implementation status
 
+## Build 2 — explanatory motion (28 October 2026)
+
+User review changed the next-build priority from dashboard expansion to animated explanations. The water-cycle template now shows a persistent landscape, rippling lake, animated sun and heat indicators, schematic rising vapor, developing cloud droplets, rainfall, river flow and infiltration. Gemini chooses the phase and a spoken trigger phrase; the timing layer maps it to actual ElevenLabs alignment. Generic diagrams also have directed moving flow and animated semantic icons.
+
+The updated sample used three planning requests and one narration request with Adam. A visual-only revision reused that audio and timing without provider calls and preserves the original expiry. Nine tests and TypeScript checking passed, including phase activation and exact trigger validation. Rain and water crops from two times within the same scene produced different frame checksums; sample frames were also visually inspected. This is an animated educational illustration, not a physical simulation. Factual and perceived-synchronization review still require a person.
+
+See [revised core features and acceptance criteria](ChitraBodh-V1-Motion-Update.md). Dashboard and Instagram work remain deferred. The Next.js installation was cancelled when the user changed priorities; no Next.js dependency was added.
+
 ## First narrated export — Adam
 
 Adam (`pNInz6obpgDQGcFmaJgB`) is now the default male testing voice in `.env`, `.env.example` and the portal. The water-cycle example completed with one Gemini request and one ElevenLabs request. Its MP4 is 70.933 seconds, 1080 × 1920, H.264 video with AAC audio. The complete file passed FFmpeg decoding. Speech alignment produced six scenes and 38 caption segments, with all cue starts within their scene boundaries. Sample frames were inspected. TypeScript checking and all eight tests passed.
