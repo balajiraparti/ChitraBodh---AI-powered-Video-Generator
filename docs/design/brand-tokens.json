@@ -1,0 +1,69 @@
+{
+  "status": "exploration-not-approved",
+  "date": "2026-11-01",
+  "recommendedCandidate": "daylight",
+  "directions": {
+    "daylight": {
+      "canvas": "#F7F5EF",
+      "surface": "#FFFFFF",
+      "ink": "#202B27",
+      "muted": "#59665E",
+      "primary": "#126B58",
+      "onPrimary": "#FFFFFF",
+      "highlight": "#F2C14E",
+      "secondary": "#E77B5B",
+      "divider": "#D9DED6",
+      "controlEdge": "#7C887F"
+    },
+    "cobalt": {
+      "canvas": "#F3F5F9",
+      "surface": "#FFFFFF",
+      "ink": "#18243E",
+      "muted": "#55617A",
+      "primary": "#3155D9",
+      "onPrimary": "#FFFFFF",
+      "highlight": "#C5E76B",
+      "secondary": "#9DADEB",
+      "divider": "#D8DEEA",
+      "controlEdge": "#79859D"
+    },
+    "afterlight": {
+      "canvas": "#141C24",
+      "surface": "#202C37",
+      "ink": "#F0F4EE",
+      "muted": "#A9B5B7",
+      "primary": "#B9F27C",
+      "onPrimary": "#141C24",
+      "highlight": "#A6B6FF",
+      "secondary": "#70828F",
+      "divider": "#354553",
+      "controlEdge": "#70828F"
+    }
+  },
+  "typography": {
+    "daylight": {
+      "heading": "Manrope",
+      "editorialAccent": "Instrument Serif Italic",
+      "body": "Manrope"
+    },
+    "cobalt": {
+      "heading": "Space Grotesk",
+      "body": "Manrope"
+    },
+    "afterlight": {
+      "heading": "Space Grotesk",
+      "body": "Manrope"
+    }
+  },
+  "spacing": [
+    4,
+    8,
+    12,
+    16,
+    24,
+    32,
+    48,
+    64,
+    96
+  ]
+}
