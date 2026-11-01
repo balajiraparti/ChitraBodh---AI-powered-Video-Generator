@@ -10,7 +10,9 @@ try{
  switch(args[0]){
   case 'doctor':
    console.log(`Node: ${process.version}\nBrowser: ${browserPath()||'Not found: set BROWSER_EXECUTABLE'}`);
-   console.log(`GEMINI_API_KEY: ${process.env.GEMINI_API_KEY?'configured':'missing'}`);
+   console.log('Storyboard provider: '+(process.env.AI_PROVIDER||'gemini'));
+   console.log('NVIDIA_API_KEY: '+(process.env.NVIDIA_API_KEY?'configured':'missing'));
+   console.log('GEMINI_API_KEY: '+(process.env.GEMINI_API_KEY?'configured':'missing'));
    console.log(`ELEVENLABS_API_KEY: ${process.env.ELEVENLABS_API_KEY||process.env.ELEVEN_LABS_API_KEY?'configured':'missing'}`);
    console.log(`Default voice: ${process.env.ELEVENLABS_VOICE_ID||VOICES[0].id}`);
    await command(process.env.FFPROBE_PATH||'ffprobe',['-version']);await command(process.env.FFMPEG_PATH||'ffmpeg',['-version']);console.log('FFmpeg and ffprobe: available');break;

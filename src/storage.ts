@@ -5,7 +5,7 @@ import {randomUUID} from 'node:crypto';
 export const RUNS=path.resolve(process.env.CHITRABODH_RUNS_DIR||'.local-runs');
 export const RETENTION_MS=2*60*60*1000;
 export const JOB_LIMIT_MS=20*60*1000;
-export type Manifest={id:string;mode:'demo'|'live';state:string;createdAt:number;readyAt?:number;expiresAt:number;calls?:{gemini:number;elevenlabs:number};duration?:number;error?:string;captions:boolean};
+export type Manifest={id:string;mode:'demo'|'live';state:string;createdAt:number;readyAt?:number;expiresAt:number;calls?:{gemini:number;nvidia?:number;elevenlabs:number};duration?:number;error?:string;captions:boolean};
 export function runPath(id:string){if(!/^[0-9a-f-]{36}$/.test(id))throw new Error('Invalid run ID.');return path.join(RUNS,id);}
 export async function saveManifest(manifest:Manifest) {const dest=path.join(runPath(manifest.id),'manifest.json');const temp=dest+'.'+randomUUID()+'.tmp';await writeFile(temp,JSON.stringify(manifest,null,2));await rename(temp,dest);}
 export async function readManifest(id:string):Promise<Manifest>{return JSON.parse(await readFile(path.join(runPath(id),'manifest.json'),'utf8'));}

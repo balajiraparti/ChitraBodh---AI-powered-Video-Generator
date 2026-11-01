@@ -92,3 +92,17 @@ test('portal exposes both voices and requires same-origin token before generatio
   assert.equal((await (await fetch(origin+'/api/generation')).json() as any).state,'ready');
  }finally{server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));}
 });
+
+test('portal returns a safe failed stage and code instead of the generic key message',async()=>{
+ const {preview}=await import('../src/preview');const {VOICES}=await import('../src/voices');
+ const server=await preview(0,async options=>{options.onProgress?.('Planning scenes');throw new Error('Gemini returned an invalid scene plan: secret payload');});
+ if(!server.listening)await new Promise(resolve=>server.once('listening',resolve));
+ const origin=`http://127.0.0.1:${(server.address() as {port:number}).port}`;
+ try{
+  const page=await (await fetch(origin)).text();const token=page.match(/'X-ChitraBodh-Token':"([a-f0-9]+)"/)![1];
+  const response=await fetch(origin+'/api/generate',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','X-ChitraBodh-Token':token},body:JSON.stringify({topic:'test',voice:VOICES[0].id,captions:true})});
+  assert.equal(response.status,202);await new Promise(resolve=>setImmediate(resolve));
+  const job=await (await fetch(origin+'/api/generation')).json() as any;
+  assert.equal(job.state,'failed');assert.equal(job.stage,'Planning scenes');assert.equal(job.code,'STORYBOARD_INVALID');assert.doesNotMatch(job.error,/secret payload|Check the local terminal/);
+ }finally{server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));}
+});

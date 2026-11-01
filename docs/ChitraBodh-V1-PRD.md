@@ -1,5 +1,9 @@
 # ChitraBodh — V1 Product Requirements Document
 
+**API/database companions:** [API design](ChitraBodh-API-Design.md) · [OpenAPI contract](api/chitrabodh.openapi.json) · [database design](ChitraBodh-Database-Design.md). These specify the planned application contracts, not current localhost behavior.
+
+**31 October application design:** [Dashboard and application system design](ChitraBodh-Dashboard-System-Design.md) provides the detailed implementation contracts and reconciles subsequent product changes. In particular, videos still target 60–90 seconds, but complete lessons from 40 seconds are now accepted; older strict minimum-duration statements below are historical baseline requirements.
+
 **28 October visual-feature update:** [Motion-first core features](ChitraBodh-V1-Motion-Update.md) refines the visual scope below: explanatory process animation, a continuous water-cycle landscape, and speech-triggered actions take priority over dashboard expansion. The original simple creator flow and operating limits remain in place.
 
 **Product:** ChitraBodh (चित्रबोध)  

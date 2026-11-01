@@ -1,5 +1,7 @@
 # ChitraBodh — Prototype and Internal Pilot Technical Design
 
+**31 October companion:** Use [Dashboard and application system design](ChitraBodh-Dashboard-System-Design.md) for the updated application architecture, API/data contracts, recovery and publishing rules, and reconciled 40–90-second duration policy. This earlier document preserves the initial prototype design context.
+
 **Version:** 1.0  
 **Date:** 26 October 2026  
 **Status:** Proposed technical design, pending prototype evidence  

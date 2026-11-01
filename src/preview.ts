@@ -4,14 +4,15 @@ import {readdir,stat} from 'node:fs/promises';
 import path from 'node:path';
 import {randomBytes} from 'node:crypto';
 import {creatorForm} from './portal';
+import {BUILD_ID} from './build';
 import {isSupportedVoice} from './voices';
 import {generate} from './pipeline';
-import {ProviderError} from './providers';
+import {publicFailure} from './generation-errors';
 import {RUNS,assertAvailable,cleanup,runPath} from './storage';
 export async function preview(port=4173,runGeneration:typeof generate=generate){
  await cleanup();
  const token=randomBytes(32).toString('hex');
- let job:{busy:boolean;state:string;error?:string}={busy:false,state:'idle'};
+ let job:{busy:boolean;state:string;error?:string;stage?:string;code?:string}={busy:false,state:'idle'};
  const timer=setInterval(()=>{void cleanup().catch(()=>console.error('Cleanup failed; run npm run cleanup.'));},60_000);
  const server=createServer(async(req,res)=>{
   res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');
@@ -19,6 +20,7 @@ export async function preview(port=4173,runGeneration:typeof generate=generate){
   if(req.headers.host!==localHost&&req.headers.host!==localHost.replace('127.0.0.1','localhost')){res.writeHead(403).end('Invalid host');return;}
   try{
    const url=new URL(req.url||'/',`http://127.0.0.1:${port}`);
+   if(url.pathname==='/api/build'&&req.method==='GET'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify({build:BUILD_ID,legacyIconFallback:false}));return;}
    if(url.pathname==='/api/generation'&&req.method==='GET'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify(job));return;}
    if(url.pathname==='/api/generate'&&req.method==='POST'){
     res.setHeader('Content-Type','application/json');
@@ -28,7 +30,7 @@ export async function preview(port=4173,runGeneration:typeof generate=generate){
     let input;try{input=JSON.parse(body);}catch{res.writeHead(400).end(JSON.stringify({error:'Invalid JSON.'}));return;}
     if(!input||typeof input.topic!=='string'||!input.topic.trim()||input.topic.length>1000||!isSupportedVoice(input.voice)||typeof input.captions!=='boolean'){res.writeHead(400).end(JSON.stringify({error:'Enter a topic, choose one of the two voices, and set captions.'}));return;}
     job={busy:true,state:'Starting generation'};
-    void runGeneration({demo:false,topic:input.topic.trim(),voice:input.voice,captions:input.captions,onProgress:state=>{job.state=state;}}).then(()=>{job={busy:false,state:'ready'};}).catch(error=>{job={busy:false,state:'failed',error:error instanceof ProviderError?error.message:'Generation could not finish. Check the local terminal and provider configuration, then retry.'};console.error(error instanceof Error?error.message:'Generation failed');});
+    void runGeneration({demo:false,topic:input.topic.trim(),voice:input.voice,captions:input.captions,onProgress:state=>{job.state=state;}}).then(()=>{job={busy:false,state:'ready'};}).catch(error=>{job={busy:false,state:'failed',...publicFailure(error,job.state)};console.error(error instanceof Error?error.message:'Generation failed');});
     res.writeHead(202).end(JSON.stringify({accepted:true}));return;
    }
    if(req.method!=='GET'&&req.method!=='HEAD'){res.writeHead(405).end();return;}
