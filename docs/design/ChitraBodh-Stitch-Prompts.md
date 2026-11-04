@@ -1,6 +1,6 @@
 # ChitraBodh — Stitch exploration prompts
 
-1 November 2026. Prepared prompts; **not submitted to Stitch**. These contain brand/product context only, never credentials or private project data.
+Prepared 1 November 2026. A consolidated version of these prompts was submitted on 2 November 2026 and all three boards were generated in [ChitraBodh Brand Direction Studies](https://stitch.withgoogle.com/u/1/projects/16810763223132817674?pli=1). These contain brand/product context only, never credentials or private project data. No direction is selected yet.
 
 ## Shared brief — paste first
 

@@ -9,7 +9,30 @@ export type ArrayStory=z.infer<typeof ArrayStorySchema>;
 export type ArrayEvent=z.infer<typeof ArrayEventSchema>;
 export type TimedArrayEvent=ArrayEvent&{at:number};
 
-// Validate AI-authored operations. Do not choose the example or silently repair it.
+/**
+ * Recompute the derived bookkeeping (low, high, mid) of every event from the model's own choices:
+ * the array, the target, and the order of actions. The model's actions and phrases are never changed,
+ * so a wrong decision (for example discarding the wrong half) is still rejected by validation.
+ */
+export function repairArrayStories(stories:(ArrayStory|undefined)[]){
+ if(!stories.length||stories.some(s=>!s))return;
+ const first=stories[0]!;const {values,target}=first;
+ if(values.some((v,i)=>i>0&&v<=values[i-1]))return;
+ let low=0,high=values.length-1,mid=-1;
+ for(const story of stories as ArrayStory[]){
+  story.values=values;story.target=target;
+  for(const event of story.events){
+   event.low=low;event.high=high;
+   if(event.action==='show'||event.action==='not_found'){event.mid=-1;continue;}
+   if(event.action==='compare'){mid=Math.floor((low+high)/2);event.mid=mid;continue;}
+   event.mid=mid;
+   if(event.action==='discard_left')low=mid+1;
+   if(event.action==='discard_right')high=mid-1;
+  }
+ }
+}
+
+// Validate AI-authored operations. The example (array and target) and the actions stay the model's choice.
 export function validateArrayStories(stories:(ArrayStory|undefined)[]){
  if(!stories.some(Boolean))return;
  if(stories.some(s=>!s))throw new Error('Every binary-search scene must preserve the same array story.');
@@ -27,8 +50,8 @@ export function validateArrayStories(stories:(ArrayStory|undefined)[]){
    if(low>high||event.mid!==mid)throw new Error(`Wrong midpoint: expected ${mid}.`);
    if(event.action==='compare'){if(compared)throw new Error('Resolve the previous comparison first.');compared=true;continue;}
    if(!compared)throw new Error('Compare the midpoint before a decision.');
-   if(event.action==='discard_left'){if(values[mid]>=target)throw new Error('Incorrect left-half elimination.');low=mid+1;}
-   if(event.action==='discard_right'){if(values[mid]<=target)throw new Error('Incorrect right-half elimination.');high=mid-1;}
+   if(event.action==='discard_left'){if(values[mid]>=target)throw new Error(`Incorrect left-half elimination: values[${mid}]=${values[mid]} is not less than target ${target}, so discard_right (or found if equal).`);low=mid+1;}
+   if(event.action==='discard_right'){if(values[mid]<=target)throw new Error(`Incorrect right-half elimination: values[${mid}]=${values[mid]} is not greater than target ${target}, so discard_left (or found if equal).`);high=mid-1;}
    if(event.action==='found'){if(values[mid]!==target)throw new Error('The highlighted value is not the target.');terminal=true;}
    compared=false;
   }
