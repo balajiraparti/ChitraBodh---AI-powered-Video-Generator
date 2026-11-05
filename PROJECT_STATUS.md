@@ -16,7 +16,7 @@ Baseline established from repository inspection and recorded prototype results. 
 
 ## Feature queue
 
-**Active:** F02. Invite lookup, link issuance and the dependent F03 session boundary are implemented. Next, verify the MongoDB and SMTP path with a designated test inbox. Keep one implementation slice active. Each row can be reviewed against its finish condition using fixtures or a test adapter until its integration dependencies land.
+**Integration verification:** F02–F04. Invite lookup, link issuance and the dependent F03 session boundary are implemented. Next, verify the MongoDB and SMTP path with test accounts, then save, reload and check draft isolation. Keep one implementation slice active. Each row can be reviewed against its finish condition using fixtures or a test adapter until its integration dependencies land.
 
 | ID | Feature | Depends on | Status | Finish condition |
 |---|---|---|---|---|
@@ -24,7 +24,7 @@ Baseline established from repository inspection and recorded prototype results. 
 | F01 | Next.js dashboard shell | Daylight design | Done | My videos, Create and Settings routes open directly and through keyboard-accessible desktop and mobile navigation. My videos has an empty state. |
 | F02 | Invite-only email link | MongoDB user and token records | Awaiting integration verification | An invited user receives a single-use, expiring link. All addresses receive the same on-screen response. |
 | F03 | Session and private routes | F01, F02 | Awaiting integration verification | Redeeming a valid link opens the dashboard. Signed-out access redirects to sign-in and sign-out revokes access. |
-| F04 | Topic draft | F03 | Planned | A user can save and reopen their own idea of up to 2,000 characters. Another user cannot read it. |
+| F04 | Topic draft | F03 | Awaiting integration verification | A user can save and reopen their own idea of up to 2,000 characters. Another user cannot read it. |
 | F05 | Narrator and caption choices | F04, prototype voices | Planned | A draft retains the selected available voice and captions setting across reloads. |
 | F06 | Submit one generation job | F05 | Planned | Submission creates a durable job. Double-clicks and simultaneous submissions from the same user produce one outstanding job. |
 | F07 | Worker and progress | F06, local pipeline | Planned | One worker processes queued jobs in order. Users can leave and return to see the current stage, failure or cancellation. |
@@ -56,3 +56,4 @@ Apply the [screen QA findings](docs/design/Stitch-Screens-QA.md) to each affecte
 | 5 Nov 2026 | F00 added as the product entry point. Home links to sign-in and workspace preview. Workspace links to library, Create and Settings. Brand links return home. | Water-cycle and linear-search illustrations provide the demo scaffold. Reviewed public MP4 and live authentication remain pending. Next feature is F02 invite lookup. |
 | 5 Nov 2026 | Applied the [Moving Chitra identity](docs/design/Moving-Chitra-Logo.md) across the web shell and favicon. | Verified the five generated pages reference both assets and inspected the logo preview. Next feature is F02 invite lookup. |
 | 5 Nov 2026 | F02 and F03 implemented in dashboard/server, the auth API, sign-in form and workspace routes. SMTP selected as the delivery interface. | 41 tests passed including captured-mail auth lifecycle with isolated storage. Production build passed and all three private routes redirected signed-out HTTP requests. Configure dashboard/.env.local and verify MongoDB, throttling, actual inbox delivery and signed-in browser access before closing these slices. |
+| 5 Nov 2026 | F04 added the [topic editor](dashboard/pages/create.js) and [owner-scoped draft persistence](dashboard/server/drafts.mjs). Create reopens the latest draft or the draft named in its private URL. | Isolated tests passed for validation, cross-user access, retry and conflicting edits. Signed-out endpoint requests returned 401 and the editor redirected to sign-in. Live signed-in MongoDB/browser verification remains pending. Next feature is F05 voice and caption choices. |

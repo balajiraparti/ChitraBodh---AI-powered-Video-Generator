@@ -9,7 +9,7 @@
     "generate": "tsx src/cli.ts generate",
     "preview": "tsx src/cli.ts preview",
     "cleanup": "tsx src/cli.ts cleanup",
-    "test": "tsx --test tests/*.test.ts tests/auth-flow.test.mjs",
+    "test": "tsx --test tests/*.test.ts tests/*.test.mjs",
     "typecheck": "tsc --noEmit",
     "dashboard": "next dev dashboard --hostname 127.0.0.1",
     "dashboard:build": "next build dashboard --webpack"
