@@ -1,5 +1,7 @@
 # ChitraBodh local prototype
 
+For current implementation status, the next feature and its acceptance criteria, see [Project status](PROJECT_STATUS.md).
+
 **Build 7: flexible duration and stronger script instructions.** The selected AI provider chooses the script, objects, positions, labels, connections and speech-triggered actions. New live plans require illustrations or explicit binary-search array operations; they cannot silently fall back to icon slides. Supported primitives include sun, moon, hills, water, trees, animals, people, soil, factories, atoms, boxes and arrows. The export is an animated MP4, not a clickable lesson.
 
 Turn an educational topic into a vertical motion-graphics explainer. This is the local generation experiment described in the PRD, not the complete SaaS application.
@@ -105,3 +107,23 @@ Official contract: https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3_5
 Uses `input`, `response_format: {type: "text", mime_type: "application/json", schema}`, and `store: false` without background execution or provider conversation IDs. Repairs send the previous candidate explicitly. Only completed interactions with text in the final `model_output` step are parsed; thoughts and intermediate output are excluded. All local script, geometry, action and speech-cue validators still apply. This creates structured instructions for the existing vector renderer, not arbitrary generated image assets. ElevenLabs remains the narration provider. Verified on October 31 with the configured Gemini Flash-Lite model: four illustrated scenes passed validation after two script-length repairs. No narration was requested. Reference: https://ai.google.dev/gemini-api/docs/structured-output
 
 The system instruction still targets 60–90 seconds, ideally 190–210 spoken words, using explanation, an example and a recap instead of filler. Shorter complete lessons are accepted from 40 seconds. This is consistent across preflight (100–240 words), measured audio (40–89.8 seconds to leave frame-rounding headroom), export validation (40–90 seconds), and dashboard text. Invalid motion and speech cues are still repaired or rejected. Word count is an estimate, never a substitute for measuring narration.
+
+## Dashboard shell
+
+Run `npm run dashboard` and open the local URL printed by Next.js. My videos, Create and Settings share the Daylight navigation. Run `npm run dashboard:build` for the production build.
+
+## Invite-only dashboard
+
+Copy dashboard/.env.example to dashboard/.env.local. Set the canonical origin to the exact URL you use in the browser (HTTPS outside localhost). Set a randomly generated secret of at least 32 characters, a MongoDB replica-set URI with a database name, an authenticated SMTP URL and a verified sender. Protect the database and email credentials as server secrets.
+
+In that database, an operator enables an invitation with the normalized address, for example in mongosh:
+
+~~~js
+db.invites.updateOne(
+  { normalizedEmail: "creator@example.com" },
+  { $set: { enabled: true }, $setOnInsert: { createdAt: new Date() } },
+  { upsert: true }
+)
+~~~
+
+Restart the dashboard and use /sign-in. For the first integration check, use a test inbox and verify that the link opens /dashboard once, a second use returns to sign-in, and signing out from Settings protects all three workspace routes again. Set enabled to false to withdraw access. The current request endpoint is /api/auth/email-links and the verification callback is /api/auth/magic-link/verify.

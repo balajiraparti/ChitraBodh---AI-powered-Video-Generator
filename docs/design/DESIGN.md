@@ -39,3 +39,5 @@ Animate relationships: water-cycle arrows, array comparisons, scene progress and
 ## Anti-patterns and review
 
 No glowing orbs, glassmorphism, stock robots, sparkle badges, gratuitous 3D, fake metrics or testimonials. Avoid generic centered heroes and repeated equal-card feature rows. Check wording, diagram accuracy, contrast, font loading and responsive behavior before implementation. Candidate marks are provisional, not trademark-cleared logos. Do not treat a generated screenshot as evidence of working animation or video generation.
+
+For the production product mark, follow [Moving Chitra](Moving-Chitra-Logo.md). This replaces the provisional Daylight frame-and-dot mark.
