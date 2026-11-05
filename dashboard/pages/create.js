@@ -1,6 +1,7 @@
 import {useRef,useState} from 'react';
 import Link from 'next/link';
 import {currentOwner,services} from '../server/auth.mjs';
+import {narratorChoices} from '../server/narrators.mjs';
 import {readDraft} from '../server/drafts.mjs';
 
 export async function getServerSideProps({req,res,query}) {
@@ -11,30 +12,35 @@ export async function getServerSideProps({req,res,query}) {
   const {projects}=await services();
   const initial=await readDraft(projects,owner,query.draft);
   if(query.draft!==undefined && !initial)return {notFound:true};
-  return {props:{initial}};
+  return {props:{initial,voices:narratorChoices()}};
 }
-export default function Create({initial}) {
-  return <Editor key={initial?.id ?? 'new'} initial={initial}/>;
+export default function Create({initial,voices}) {
+  return <Editor key={initial?.id ?? 'new'} initial={initial} voices={voices}/>;
 }
-function Editor({initial}) {
+function Editor({initial,voices}) {
   const [draft,setDraft]=useState(initial);
   const [topic,setTopic]=useState(initial?.topic || '');
+  const [voiceCatalogId,setVoice]=useState(initial?.voiceCatalogId ?? voices[0].id);
+  const [captions,setCaptions]=useState(initial?.captions ?? true);
+  const available=voices.some(voice=>voice.id===voiceCatalogId && voice.available);
   const [message,setMessage]=useState('');
   const [busy,setBusy]=useState(false);
   const request=useRef(null);
   const length=[...topic].length;
   async function save(event) {
     event.preventDefault();
-    if(busy||!topic.trim()||length>2000)return;
+    if(busy||!available||!topic.trim()||length>2000)return;
     setBusy(true);
     setMessage('');
     try{
-      if(!request.current || request.current.topic!==topic)request.current={topic,key:crypto.randomUUID()};
+      const fingerprint=JSON.stringify([topic,voiceCatalogId,captions]);
+      if(request.current?.fingerprint!==fingerprint)request.current={fingerprint,key:crypto.randomUUID()};
       const response=await fetch('/api/projects'+(draft?'/'+draft.id:''),{
         method:draft?'PATCH':'POST',
         headers:{'Content-Type':'application/json','Idempotency-Key':request.current.key},
-        body:JSON.stringify({topic,expectedRevision:draft?.revision})
+        body:JSON.stringify({topic,voiceCatalogId,captions,expectedRevision:draft?.revision})
       });
+      if(response.status===422){setMessage('This narrator is unavailable. Reload to see current choices.');return;}
       if(response.status===409){setMessage('This draft changed. Copy your edits before reloading the saved version.');return;}
       if(response.status===401){setMessage('Your session expired. Sign in in another tab, then save again.');return;}
       if(!response.ok)throw Error();
@@ -47,7 +53,13 @@ function Editor({initial}) {
     <label htmlFor="topic">What would you like to explain?</label>
     <textarea id="topic" rows={6} value={topic} disabled={busy} onChange={e=>{setTopic(e.target.value);setMessage('')}} aria-describedby="topic-count" aria-invalid={length>2000}/>
     <small id="topic-count">{length} / 2,000 characters{length>2000?' · Shorten your idea before saving.':''}</small>
-    <button className="action" disabled={busy || !topic.trim() || length>2000}>{busy?'Saving…':'Save draft'}</button>
+    <label htmlFor="narrator">Narrator</label>
+    <select id="narrator" value={voiceCatalogId} disabled={busy} onChange={event=>{setVoice(event.target.value);setMessage("");}}>
+      {voices.map(voice=><option key={voice.id} value={voice.id} disabled={!voice.available}>{voice.name}{voice.available?"":" · Unavailable"}</option>)}
+    </select>
+    {!available && <p>Select an available narrator to save this draft.</p>}
+    <label><input type="checkbox" checked={captions} disabled={busy} onChange={event=>{setCaptions(event.target.checked);setMessage("");}}/> Include synchronized captions</label>
+    <button className="action" disabled={busy || !available || !topic.trim() || length>2000}>{busy?'Saving…':'Save draft'}</button>
     <span role="status">{message}</span>
     {draft && <Link href={'/create?draft='+draft.id}>Open saved draft</Link>}
   </form></section></>;
