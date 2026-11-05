@@ -9,12 +9,14 @@ export async function getServerSideProps({req,res,query}) {
   const owner=await currentOwner(req);
   if(!owner)return {redirect:{destination:'/sign-in',permanent:false}};
   if(query.draft!==undefined && typeof query.draft!=='string')return {notFound:true};
-  const {projects}=await services();
+  const {projects,jobs}=await services();
+  if(await jobs.findOne({ownerId:owner,active:true},{projection:{_id:1}}))return {props:{queued:true}};
   const initial=await readDraft(projects,owner,query.draft);
   if(query.draft!==undefined && !initial)return {notFound:true};
   return {props:{initial,voices:narratorChoices()}};
 }
-export default function Create({initial,voices}) {
+export default function Create({initial,voices,queued}) {
+  if(queued)return <><h1>Your video is queued</h1><p>You can leave this page. Your request has been saved.</p></>;
   return <Editor key={initial?.id ?? 'new'} initial={initial} voices={voices}/>;
 }
 function Editor({initial,voices}) {
@@ -26,6 +28,26 @@ function Editor({initial,voices}) {
   const [message,setMessage]=useState('');
   const [busy,setBusy]=useState(false);
   const request=useRef(null);
+  const generation=useRef(null);
+  const [queued,setQueued]=useState(false);
+  const dirty=draft && (topic.trim()!==draft.topic || captions!==draft.captions || voiceCatalogId!==draft.voiceCatalogId);
+  async function generate(){
+    if(busy || dirty || !available || !topic.trim() || length>2000)return;
+    setBusy(true);
+    try{
+      const body=JSON.stringify(draft?{projectId:draft.id,expectedRevision:draft.revision}:{topic,voiceCatalogId,captions});
+      if(generation.current?.body!==body)generation.current={body,key:crypto.randomUUID()};
+      const response=await fetch('/api/v1/generations',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':generation.current.key},body});
+      const result=await response.json().catch(()=>({}));
+      if(response.status===202 || result.error?.code==='ACTIVE_JOB_EXISTS'){setQueued(true);return;}
+      if(response.status===409){setMessage('The draft changed. Reopen the saved version before generating.');return;}
+      if(response.status===401){setMessage('Sign in again before creating a video.');return;}
+      if(response.status===422){setMessage('Choose an available narrator before generating.');return;}
+      throw Error();
+    }catch{setMessage('Could not confirm your request. Try again.');}
+    finally{setBusy(false);}
+  }
+  if(queued)return <><h1>Your video is queued</h1><p>You can leave this page. Your request has been saved.</p></>;
   const length=[...topic].length;
   async function save(event) {
     event.preventDefault();
@@ -60,6 +82,8 @@ function Editor({initial,voices}) {
     {!available && <p>Select an available narrator to save this draft.</p>}
     <label><input type="checkbox" checked={captions} disabled={busy} onChange={event=>{setCaptions(event.target.checked);setMessage("");}}/> Include synchronized captions</label>
     <button className="action" disabled={busy || !available || !topic.trim() || length>2000}>{busy?'Saving…':'Save draft'}</button>
+    {dirty && <small>Save your changes before creating the video.</small>}
+    <button type="button" className="action" disabled={busy || dirty || !available || !topic.trim() || length>2000} onClick={generate}>Create video</button>
     <span role="status">{message}</span>
     {draft && <Link href={'/create?draft='+draft.id}>Open saved draft</Link>}
   </form></section></>;

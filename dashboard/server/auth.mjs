@@ -15,6 +15,8 @@ async function connect() {
   const db = client.db();
   try {
     await Promise.all([
+      db.collection('jobs').createIndex({ownerId:1,key:1},{unique:true}),
+      db.collection('jobs').createIndex({ownerId:1},{unique:true,partialFilterExpression:{active:true}}),
       db.collection('projects').createIndex({ownerId:1,status:1,updatedAt:-1,_id:-1}),
       db.collection('invites').createIndex({normalizedEmail:1},{unique:true}),
       db.collection('auth_limits').createIndex({expiresAt:1},{expireAfterSeconds:0}),
@@ -25,7 +27,7 @@ async function connect() {
     const mail = nodemailer.createTransport(SMTP_URL);
     const auth = makeAuth({database:mongodbAdapter(db,{client}),baseURL:origin,secret:BETTER_AUTH_SECRET,invited,
       deliver:(to,url)=>mail.sendMail({from:AUTH_FROM,to,subject:'Sign in to Chitrabodh',text:'Your sign-in link is valid for ten minutes:\n'+url})});
-    return {auth,invited,origin,projects:db.collection('projects'),limits:db.collection('auth_limits')};
+    return {auth,invited,origin,client,jobs:db.collection('jobs'),versions:db.collection('versions'),projects:db.collection('projects'),limits:db.collection('auth_limits')};
   } catch(error) { await client.close(); throw error; }
 }
 export function services() {

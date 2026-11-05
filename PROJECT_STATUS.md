@@ -16,7 +16,7 @@ Baseline established from repository inspection and recorded prototype results. 
 
 ## Feature queue
 
-**Integration verification:** F02–F05. Invite lookup, link issuance and the dependent F03 session boundary are implemented. Next, verify the MongoDB and SMTP path with test accounts, then save, reload and check draft isolation. Keep one implementation slice active. Each row can be reviewed against its finish condition using fixtures or a test adapter until its integration dependencies land.
+**Integration verification:** F02–F06. Invite lookup, link issuance and the dependent F03 session boundary are implemented. Next, verify the MongoDB and SMTP path with test accounts, then save, reload and check draft isolation. Keep one implementation slice active. Each row can be reviewed against its finish condition using fixtures or a test adapter until its integration dependencies land.
 
 | ID | Feature | Depends on | Status | Finish condition |
 |---|---|---|---|---|
@@ -26,7 +26,7 @@ Baseline established from repository inspection and recorded prototype results. 
 | F03 | Session and private routes | F01, F02 | Awaiting integration verification | Redeeming a valid link opens the dashboard. Signed-out access redirects to sign-in and sign-out revokes access. |
 | F04 | Topic draft | F03 | Awaiting integration verification | A user can save and reopen their own idea of up to 2,000 characters. Another user cannot read it. |
 | F05 | Narrator and caption choices | F04, prototype voices | Awaiting integration verification | A draft retains the selected available voice and captions setting across reloads. |
-| F06 | Submit one generation job | F05 | Planned | Submission creates a durable job. Double-clicks and simultaneous submissions from the same user produce one outstanding job. |
+| F06 | Submit one generation job | F05 | Awaiting integration verification | Submission creates a durable job. Double-clicks and simultaneous submissions from the same user produce one outstanding job. |
 | F07 | Worker and progress | F06, local pipeline | Planned | One worker processes queued jobs in order. Users can leave and return to see the current stage, failure or cancellation. |
 | F08 | Private media and expiry | F07 | Planned | Completed media goes to R2. Access closes two hours after first ready, and cleanup removes expired objects. |
 | F09 | Ready video and download | F08 | Planned | The owner can play and download the selected 9:16 MP4 before expiry. Expired projects offer fresh creation from the saved idea. |
@@ -59,3 +59,4 @@ Apply the [screen QA findings](docs/design/Stitch-Screens-QA.md) to each affecte
 | 5 Nov 2026 | F04 added the [topic editor](dashboard/pages/create.js) and [owner-scoped draft persistence](dashboard/server/drafts.mjs). Create reopens the latest draft or the draft named in its private URL. | Isolated tests passed for validation, cross-user access, retry and conflicting edits. Signed-out endpoint requests returned 401 and the editor redirected to sign-in. Live signed-in MongoDB/browser verification remains pending. Next feature is F05 voice and caption choices. |
 | 6 Nov 2026 | Adopted per-step GitHub checkpoints in AGENTS.md. | Each completed step includes a scoped commit, push and remote verification. |
 | 6 Nov 2026 | F05 added narrator and caption controls to Create and stored both choices on private drafts. Older drafts default to Adam with captions on. | Draft tests covered reload, unavailable voices, invalid caption values, retries, legacy defaults and topic-only edits. Signed-in MongoDB/browser check pending. Next is F06 generation submission. |
+| 6 Nov 2026 | F06 added generation submission for new topics and saved drafts, an owner-only receipt endpoint, and a queued state in Create. The transaction writes the project, version snapshot and job together. | 45 tests passed, including simulated duplicate-key races, retries, private ownership and stale revisions. Live MongoDB replica-set concurrency and signed-in browser checks remain pending. F07 connects the worker to queued jobs. |
