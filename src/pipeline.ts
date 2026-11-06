@@ -23,18 +23,19 @@ export function configuration(voice?:string):ProviderConfig{
  if(!config.elevenKey||!config.voiceId)throw new Error('Set ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID in .env.');
  return config;
 }
-export async function generate(options:{demo:boolean;topic?:string;voice?:string;captions:boolean;reviewedPlanFile?:string;onProgress?:(state:string)=>void}){
+export async function generate(options:{demo:boolean;topic?:string;voice?:string;captions:boolean;reviewedPlanFile?:string;signal?:AbortSignal;onProgress?:(state:string)=>void|Promise<void>}){
+ options.signal?.throwIfAborted();
  const config=options.demo?undefined:configuration(options.voice);
- if(!options.demo&&(!options.topic?.trim()||options.topic.length>1000))throw new Error('Provide a topic between 1 and 1,000 characters.');
+ if(!options.demo&&(!options.topic?.trim()||[...options.topic].length>2000))throw new Error('Provide a topic between 1 and 2,000 characters.');
  const release=await acquireLock();
  const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),JOB_LIMIT_MS);
- const cancel=()=>controller.abort();process.once('SIGINT',cancel);process.once('SIGTERM',cancel);
+ const cancel=()=>controller.abort();options.signal?.addEventListener('abort',cancel,{once:true});if(options.signal?.aborted)cancel();process.once('SIGINT',cancel);process.once('SIGTERM',cancel);
  let lastStage='Starting generation';
  let manifest:Awaited<ReturnType<typeof makeRun>>|undefined;
  try{
   await cleanup();manifest=await makeRun(options.demo?'demo':'live',options.captions);
   const m=manifest,dir=runPath(m.id),signal=controller.signal;
-  const state=async(value:string)=>{lastStage=value;m.state=value;await saveManifest(m);console.log(value);options.onProgress?.(value);};
+  const state=async(value:string)=>{lastStage=value;m.state=value;await saveManifest(m);console.log(value);await options.onProgress?.(value);signal.throwIfAborted();};
   const budget=new Budget(async calls=>{m.calls=calls;await saveManifest(m);});
   let props:VideoProps;
   if(options.demo){props={plan:demoPlan,timeline:buildTimeline(demoPlan,fixtureAlignment(),75),captions:options.captions,demo:true};}
@@ -65,5 +66,5 @@ export async function generate(options:{demo:boolean;topic?:string;voice?:string
   console.log(`Ready: ${path.join(dir,'video.mp4')}\nExpires: ${new Date(m.expiresAt).toLocaleString()}\nRun npm run preview to view and keep automatic cleanup running.`);
   return m;
  }catch(error){if(manifest)await purgeRun(manifest.id);throw generationFailure(error,lastStage);}
- finally{clearTimeout(timeout);process.removeListener('SIGINT',cancel);process.removeListener('SIGTERM',cancel);await release();}
+ finally{options.signal?.removeEventListener('abort',cancel);clearTimeout(timeout);process.removeListener('SIGINT',cancel);process.removeListener('SIGTERM',cancel);await release();}
 }

@@ -1,4 +1,5 @@
-import {useRef,useState} from 'react';
+import {useRouter} from 'next/router';
+import React,{useRef,useState} from 'react';
 import Link from 'next/link';
 import {currentOwner,services} from '../server/auth.mjs';
 import {narratorChoices} from '../server/narrators.mjs';
@@ -10,16 +11,17 @@ export async function getServerSideProps({req,res,query}) {
   if(!owner)return {redirect:{destination:'/sign-in',permanent:false}};
   if(query.draft!==undefined && typeof query.draft!=='string')return {notFound:true};
   const {projects,jobs}=await services();
-  if(await jobs.findOne({ownerId:owner,active:true},{projection:{_id:1}}))return {props:{queued:true}};
+  const activeJob=await jobs.findOne({ownerId:owner,active:true},{projection:{_id:1}});
+  if(activeJob)return {redirect:{destination:'/jobs/'+activeJob._id,permanent:false}};
   const initial=await readDraft(projects,owner,query.draft);
   if(query.draft!==undefined && !initial)return {notFound:true};
   return {props:{initial,voices:narratorChoices()}};
 }
-export default function Create({initial,voices,queued}) {
-  if(queued)return <><h1>Your video is queued</h1><p>You can leave this page. Your request has been saved.</p></>;
+export default function Create({initial,voices}) {
   return <Editor key={initial?.id ?? 'new'} initial={initial} voices={voices}/>;
 }
 function Editor({initial,voices}) {
+  const router=useRouter();
   const [draft,setDraft]=useState(initial);
   const [topic,setTopic]=useState(initial?.topic || '');
   const [voiceCatalogId,setVoice]=useState(initial?.voiceCatalogId ?? voices[0].id);
@@ -29,7 +31,6 @@ function Editor({initial,voices}) {
   const [busy,setBusy]=useState(false);
   const request=useRef(null);
   const generation=useRef(null);
-  const [queued,setQueued]=useState(false);
   const dirty=draft && (topic.trim()!==draft.topic || captions!==draft.captions || voiceCatalogId!==draft.voiceCatalogId);
   async function generate(){
     if(busy || dirty || !available || !topic.trim() || length>2000)return;
@@ -39,7 +40,7 @@ function Editor({initial,voices}) {
       if(generation.current?.body!==body)generation.current={body,key:crypto.randomUUID()};
       const response=await fetch('/api/v1/generations',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':generation.current.key},body});
       const result=await response.json().catch(()=>({}));
-      if(response.status===202 || result.error?.code==='ACTIVE_JOB_EXISTS'){setQueued(true);return;}
+      if(response.status===202 || result.error?.code==='ACTIVE_JOB_EXISTS'){await router.push('/jobs/'+(result.jobId || result.job.jobId));return;}
       if(response.status===409){setMessage('The draft changed. Reopen the saved version before generating.');return;}
       if(response.status===401){setMessage('Sign in again before creating a video.');return;}
       if(response.status===422){setMessage('Choose an available narrator before generating.');return;}
@@ -47,7 +48,6 @@ function Editor({initial,voices}) {
     }catch{setMessage('Could not confirm your request. Try again.');}
     finally{setBusy(false);}
   }
-  if(queued)return <><h1>Your video is queued</h1><p>You can leave this page. Your request has been saved.</p></>;
   const length=[...topic].length;
   async function save(event) {
     event.preventDefault();

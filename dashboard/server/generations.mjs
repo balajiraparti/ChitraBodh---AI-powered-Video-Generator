@@ -10,7 +10,7 @@ const input=z.union([
 ]);
 
 export function receipt(job) {
-  return {projectId:job.projectId,versionId:job.versionId,jobId:job._id,state:job.state,statusUrl:'/api/v1/jobs/'+job._id};
+  return {projectId:job.projectId,versionId:job.versionId,jobId:job._id,state:job.state,stage:job.stage ?? 'queued',cancelRequested:job.cancelRequested ?? false,safeError:job.safeError ?? null,mediaUrl:job.artifactId ? "/api/v1/media/"+job.artifactId : null,statusUrl:'/api/v1/jobs/'+job._id};
 }
 
 export async function submitGeneration(store,ownerId,key,body) {

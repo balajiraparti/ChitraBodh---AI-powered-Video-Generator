@@ -9,10 +9,13 @@
     "generate": "tsx src/cli.ts generate",
     "preview": "tsx src/cli.ts preview",
     "cleanup": "tsx src/cli.ts cleanup",
-    "test": "tsx --test tests/*.test.ts tests/*.test.mjs",
+    "test": "tsx --test tests/*.test.ts tests/*.test.tsx tests/*.test.mjs",
     "typecheck": "tsc --noEmit",
     "dashboard": "next dev dashboard --hostname 127.0.0.1",
-    "dashboard:build": "next build dashboard --webpack"
+    "dashboard:build": "next build dashboard --webpack",
+    "worker": "tsx scripts/generation-worker.mjs",
+    "media:cleanup": "tsx scripts/media-cleanup.mjs",
+    "worker:recover": "tsx scripts/worker-recover.mjs"
   },
   "engines": {
     "node": ">=22"
@@ -21,6 +24,7 @@
     "zod": "$zod"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1163.0",
     "@remotion/bundler": "4.0.539",
     "@remotion/renderer": "4.0.539",
     "better-auth": "1.7.18",

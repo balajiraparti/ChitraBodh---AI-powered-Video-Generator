@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb';
+import {database} from './database.mjs';
 import { mongodbAdapter } from 'better-auth/adapters/mongodb';
 import nodemailer from 'nodemailer';
 import { createHash } from 'node:crypto';
@@ -11,24 +11,13 @@ async function connect() {
   if (!MONGODB_URI || !BETTER_AUTH_URL || !SMTP_URL || !AUTH_FROM || BETTER_AUTH_SECRET?.length < 32 || !BETTER_AUTH_SECRET) throw Error('Auth configuration required');
   const origin = new URL(BETTER_AUTH_URL).origin;
   if (!origin.startsWith('https://') && !['localhost','127.0.0.1'].includes(new URL(origin).hostname)) throw Error('HTTPS required');
-  const client = new MongoClient(MONGODB_URI,{serverSelectionTimeoutMS:5000});
-  const db = client.db();
-  try {
-    await Promise.all([
-      db.collection('jobs').createIndex({ownerId:1,key:1},{unique:true}),
-      db.collection('jobs').createIndex({ownerId:1},{unique:true,partialFilterExpression:{active:true}}),
-      db.collection('projects').createIndex({ownerId:1,status:1,updatedAt:-1,_id:-1}),
-      db.collection('invites').createIndex({normalizedEmail:1},{unique:true}),
-      db.collection('auth_limits').createIndex({expiresAt:1},{expireAfterSeconds:0}),
-      ...[['user','email'],['verification','identifier'],['session','token']].map(([name,key]) =>
-        db.collection(name).createIndex({[key]:1},{unique:true}))
-    ]);
+  const store=await database();
+  const {client,db}=store;
     const invited = async email => Boolean(await db.collection('invites').findOne({normalizedEmail:email.trim().toLowerCase(),enabled:true},{projection:{_id:1}}));
     const mail = nodemailer.createTransport(SMTP_URL);
     const auth = makeAuth({database:mongodbAdapter(db,{client}),baseURL:origin,secret:BETTER_AUTH_SECRET,invited,
       deliver:(to,url)=>mail.sendMail({from:AUTH_FROM,to,subject:'Sign in to Chitrabodh',text:'Your sign-in link is valid for ten minutes:\n'+url})});
-    return {auth,invited,origin,client,jobs:db.collection('jobs'),versions:db.collection('versions'),projects:db.collection('projects'),limits:db.collection('auth_limits')};
-  } catch(error) { await client.close(); throw error; }
+    return {...store,auth,invited,origin,limits:db.collection('auth_limits')};
 }
 export function services() {
   return connection ??= connect().catch(error=>{connection=undefined;throw error});

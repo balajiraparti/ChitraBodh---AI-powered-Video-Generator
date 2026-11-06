@@ -127,3 +127,22 @@ db.invites.updateOne(
 ~~~
 
 Restart the dashboard and use /sign-in. For the first integration check, use a test inbox and verify that the link opens /dashboard once, a second use returns to sign-in, and signing out from Settings protects all three workspace routes again. Set enabled to false to withdraw access. The current request endpoint is /api/auth/email-links and the verification callback is /api/auth/magic-link/verify.
+
+## Generation worker and private media
+
+The pilot runs one generation supervisor on one host. Run these services from the repository root after configuring MongoDB and a private R2 bucket in dashboard/.env.local:
+
+~~~sh
+npm run worker
+npm run media:cleanup
+~~~
+
+The worker loads generation keys from the root .env and dashboard infrastructure settings from dashboard/.env.local. It claims the database-wide generation slot, processes queued jobs in order, runs the existing pipeline in a child process, and reports actual stages. Cancellation aborts the child, with a ten-second grace period before terminating its process tree. Job execution is bounded to twenty minutes. The worker's database slot is retained until the child exits. It refuses to start while another slot exists.
+
+After a supervisor crash, stop and verify the entire old worker/render process tree on its original host. Only then run npm run worker:recover -- --confirm-process-tree-stopped. This deliberately requires an operator to confirm that orphaned browser processes have ended. Recovery refuses a live recorded PID or another host. Interrupted jobs become failed drafts instead of being automatically rerun with more provider calls.
+
+Keep the R2 bucket private, including disabling r2.dev and public custom domains. The server uses @aws-sdk/client-s3 against R2's S3 endpoint. Video files are uploaded under random object keys. Authenticated media reads check ownership and expiry on every request, support a single byte range and stop ongoing streams at expiry. No object URL or storage credential is returned to the browser.
+
+The first successful ready commit starts a two-hour availability window. Future outputs retain that original deadline. Run the independent cleanup process continuously, even when rendering stops. It polls every fifteen seconds and retries failed deletions. Metadata survives deletion, and the API rejects expired media regardless of cleanup availability. Failed uploads are registered before transfer and become eligible for cleanup after twenty minutes once their job stops. Scratch runs are removed after upload and periodically purged by the worker. Use npm run media:cleanup -- --once for one cleanup sweep.
+
+The pilot requires a MongoDB replica set for job/artifact/project transactions. Validate a real run, cancellation during narration/upload, and expiry against the configured database and bucket before deployment. Worker progress is available at /jobs/{jobId}; playback UI follows in F09.
