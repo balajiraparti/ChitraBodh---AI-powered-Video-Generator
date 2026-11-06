@@ -5,3 +5,7 @@ Read PROJECT_STATUS.md before starting feature work. Build the selected slice ag
 ## GitHub checkpoints
 
 After each completed implementation step, feature, or milestone, review the diff, run the relevant checks, and update PROJECT_STATUS.md with progress and remaining gaps. Stage only the intended files, keeping secrets and local artifacts out of Git. Create a descriptive commit and push the current working branch to origin. Verify the remote branch tip and include the branch and short commit ID in the handoff. If a push is blocked, tell the user what remains local and what is needed to sync it. Check for outstanding unpushed commits when resuming work.
+
+## Development branch
+
+Use dev for ongoing implementation and push each completed checkpoint to origin/dev. Before starting, verify that the current branch is dev. Merge reviewed, tested milestones into main through a pull request after the user approves the release. Keep main as the release branch. Branch protection settings require separate configuration on GitHub.
