@@ -1,6 +1,6 @@
 # ChitraBodh project status
 
-Updated 6 November 2026. Use this file to choose the next feature and record what ships. The first dashboard milestone ends when an invited teammate can sign in, enter a topic, and download their narrated vertical video without using a terminal.
+Updated 7 November 2026. Use this file to choose the next feature and record what ships. The first dashboard milestone ends when an invited teammate can sign in, enter a topic, and download their narrated vertical video without using a terminal.
 
 ## Current baseline
 
@@ -16,7 +16,7 @@ Baseline established from repository inspection and recorded prototype results. 
 
 ## Feature queue
 
-**Integration verification:** F02–F08. Invite lookup, link issuance and the dependent F03 session boundary are implemented. Next, verify the MongoDB and SMTP path with test accounts, then save, reload and check draft isolation. Keep one implementation slice active. Each row can be reviewed against its finish condition using fixtures or a test adapter until its integration dependencies land.
+**Integration verification:** F02–F08. Invite lookup, link issuance and the dependent F03 session boundary are implemented. MongoDB connectivity and application indexes were verified on 7 November. Next, verify SMTP and sign-in with test accounts, then save, reload and check draft isolation. Keep one implementation slice active. Each row can be reviewed against its finish condition using fixtures or a test adapter until its integration dependencies land.
 
 | ID | Feature | Depends on | Status | Finish condition |
 |---|---|---|---|---|
@@ -62,3 +62,4 @@ Apply the [screen QA findings](docs/design/Stitch-Screens-QA.md) to each affecte
 | 6 Nov 2026 | F06 added generation submission for new topics and saved drafts, an owner-only receipt endpoint, and a queued state in Create. The transaction writes the project, version snapshot and job together. | 45 tests passed, including simulated duplicate-key races, retries, private ownership and stale revisions. Live MongoDB replica-set concurrency and signed-in browser checks remain pending. F07 connects the worker to queued jobs. |
 | 6 Nov 2026 | F07 and F08 connected queued jobs to the existing pipeline via a serial child-process supervisor, owner-only progress/cancel routes, private R2 uploads and an independent cleanup loop. | 53 regression tests passed, TypeScript and production build passed, and HTTP checks rejected signed-out job/media access. Unit and child-process tests cover FIFO, single slot, cancellation, rollback, owner access, fixed two-hour expiry and deletion retry. MongoDB and R2 configuration is missing, so live generation-to-bucket, browser playback and actual database concurrency remain unverified. Supervisor crash recovery requires confirmed process-tree shutdown on the original host. Next is F09 ready playback/download UI. |
 | 6 Nov 2026 | Created dev from the F07/F08 checkpoint for ongoing development. | Future feature commits go to origin/dev. Reviewed milestones reach main through a pull request after release approval. |
+| 7 Nov 2026 | Connected the local dashboard to the ChitraBodh Atlas database. | Verified authenticated ping, collection read, application index initialization and projects read. Node SRV resolution failed locally; the private dashboard configuration uses TLS and the Atlas seed hosts resolved by Windows DNS. Refresh this local seed list if Atlas topology changes. Signed-in workflows and R2 still require separate integration checks. |
