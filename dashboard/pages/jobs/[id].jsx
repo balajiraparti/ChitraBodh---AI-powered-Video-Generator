@@ -18,6 +18,8 @@ export default function Job({initial}){
 function Progress({initial}){
   const [job,setJob]=useState(initial);
   const [error,setError]=useState('');
+  const [playbackError,setPlaybackError]=useState(false);
+  const [attempt,setAttempt]=useState(0);
   const [confirm,setConfirm]=useState(false);
   const [busy,setBusy]=useState(false);
   const active=['queued','running'].includes(job.state);
@@ -60,7 +62,13 @@ function Progress({initial}){
     <section>
       <p role="status">{job.cancelRequested&&active?'Stopping creation…':active?stages[job.stage]||'Queued':job.safeError||''}</p>
       {active && <><ol>{Object.entries(stages).map(([key,label])=><li key={key} aria-current={job.stage===key?'step':undefined}>{label}</li>)}</ol><p>You can leave this page. We’ll keep working.</p></>}
-      {expired && <><p>The availability window has ended. Your original topic is saved.</p><Link href="/create">Create another video</Link></>}
+      {job.mediaAvailable && job.mediaUrl && <div className="ready-media">
+        <video key={attempt} controls playsInline preload="metadata" aria-label="Generated explainer" src={job.mediaUrl} onError={()=>setPlaybackError(true)}/>
+        {playbackError && <p role="alert">The preview could not load. <button onClick={()=>{setPlaybackError(false);setAttempt(attempt+1)}}>Retry preview</button></p>}
+        <p>Available until <time dateTime={job.expiresAt}>{new Date(job.expiresAt).toISOString().slice(0,16).replace('T',' ')} UTC</time>.</p>
+        <a className="action" href={job.mediaUrl+'?download=1'} download="chitrabodh.mp4">Download MP4</a>
+      </div>}
+      {expired && <><p>The availability window has ended. Your original topic is saved.</p><Link href={'/create?fromJob='+job.jobId}>Create a new video from this idea</Link></>}
       <p role="alert">{error}</p>
       {active&&!job.cancelRequested && (confirm?<div><p>Stop creating this video? Your idea will be saved.</p><button disabled={busy} onClick={cancel}>Stop creation</button><button disabled={busy} onClick={()=>setConfirm(false)}>Keep creating</button></div>:<button onClick={()=>setConfirm(true)}>Cancel creation</button>)}
       {!active&&job.state!=='succeeded'&&<Link href={'/create?draft='+job.projectId}>Open saved idea</Link>}

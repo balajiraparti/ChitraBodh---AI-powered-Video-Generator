@@ -10,22 +10,30 @@ export async function getServerSideProps({req,res,query}) {
   const owner=await currentOwner(req);
   if(!owner)return {redirect:{destination:'/sign-in',permanent:false}};
   if(query.draft!==undefined && typeof query.draft!=='string')return {notFound:true};
-  const {projects,jobs}=await services();
+  const {projects,jobs,versions}=await services();
   const activeJob=await jobs.findOne({ownerId:owner,active:true},{projection:{_id:1}});
   if(activeJob)return {redirect:{destination:'/jobs/'+activeJob._id,permanent:false}};
+  if(query.fromJob!==undefined){
+    if(typeof query.fromJob!=='string')return {notFound:true};
+    const source=await jobs.findOne({_id:query.fromJob,ownerId:owner,state:'succeeded'});
+    const version=source && await versions.findOne({_id:source.versionId,ownerId:owner});
+    if(!version)return {notFound:true};
+    const seed={topic:version.topic,voiceCatalogId:version.settingsSnapshot.voiceCatalogId,captions:version.settingsSnapshot.captions};
+    return {props:{initial:null,seed,voices:narratorChoices()}};
+  }
   const initial=await readDraft(projects,owner,query.draft);
   if(query.draft!==undefined && !initial)return {notFound:true};
   return {props:{initial,voices:narratorChoices()}};
 }
-export default function Create({initial,voices}) {
-  return <Editor key={initial?.id ?? 'new'} initial={initial} voices={voices}/>;
+export default function Create({initial,seed,voices}) {
+  return <Editor key={initial?.id ?? seed?.topic ?? 'new'} initial={initial} seed={seed} voices={voices}/>;
 }
-function Editor({initial,voices}) {
+function Editor({initial,seed,voices}) {
   const router=useRouter();
   const [draft,setDraft]=useState(initial);
-  const [topic,setTopic]=useState(initial?.topic || '');
-  const [voiceCatalogId,setVoice]=useState(initial?.voiceCatalogId ?? voices[0].id);
-  const [captions,setCaptions]=useState(initial?.captions ?? true);
+  const [topic,setTopic]=useState(initial?.topic ?? seed?.topic ?? '');
+  const [voiceCatalogId,setVoice]=useState(initial?.voiceCatalogId ?? seed?.voiceCatalogId ?? voices[0].id);
+  const [captions,setCaptions]=useState(initial?.captions ?? seed?.captions ?? true);
   const available=voices.some(voice=>voice.id===voiceCatalogId && voice.available);
   const [message,setMessage]=useState('');
   const [pending,setPending]=useState(null);

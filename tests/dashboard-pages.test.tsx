@@ -28,7 +28,10 @@ test('successful jobs show expiry at the deadline and after cleanup',async()=>{
   const store={artifacts:{findOne:async(filter:any)=>filter._id==='a'&&filter.ownerId==='owner'?artifact:null}};
   const job={_id:'j',ownerId:'owner',state:'succeeded',artifactId:'a'};
   const before=await jobStatus(store,job,new Date(+expiry-1));
-  assert.match(renderToStaticMarkup(<Job initial={before}/>),/Your video is ready/);
+  const ready=renderToStaticMarkup(<Job initial={before}/>);
+  assert.match(ready,/Your video is ready/);
+  assert.match(ready,/<video[^>]+src="\/api\/v1\/media\/a"/);
+  assert.match(ready,/href="\/api\/v1\/media\/a\?download=1"/);
   for(const state of ['ready','deleted']){
     artifact.state=state;
     const after=await jobStatus(store,job,expiry);
@@ -36,6 +39,7 @@ test('successful jobs show expiry at the deadline and after cleanup',async()=>{
     assert.equal(after.mediaUrl,null);
     const html=renderToStaticMarkup(<Job initial={after}/>);
     assert.match(html,/Your video has expired/);
-    assert.doesNotMatch(html,/Your video is ready/);
+    assert.doesNotMatch(html,/Your video is ready|<video|Download MP4/);
+    assert.match(html,/href="\/create\?fromJob=j"/);
   }
 });

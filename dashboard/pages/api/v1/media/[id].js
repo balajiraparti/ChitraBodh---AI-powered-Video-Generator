@@ -26,7 +26,7 @@ export default async function handler(req,res){
     if(!canReadMedia(artifact,ownerId)){body.destroy();return res.status(410).end();}
     res.setHeader('Content-Type','video/mp4');
     res.setHeader('X-Content-Type-Options','nosniff');
-    res.setHeader('Content-Disposition','inline; filename="chitrabodh.mp4"');
+    res.setHeader('Content-Disposition',(req.query.download==='1'?'attachment':'inline')+'; filename="chitrabodh.mp4"');
     res.setHeader('Accept-Ranges','bytes');
     if(result.ContentLength!==undefined)res.setHeader('Content-Length',result.ContentLength);
     if(result.ContentRange){res.statusCode=206;res.setHeader('Content-Range',result.ContentRange);}
