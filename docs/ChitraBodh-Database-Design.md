@@ -56,13 +56,12 @@ Notation: `!` required; `?` optional. Common fields from Section 1 apply unless 
 
 | Collection | Fields | Checks |
 |---|---|---|
-| Auth collections | Pinned library user/session/account/verification schema | Verified invited email only; hash verification/session secrets as supported; library migrations/indexes; no hand-designed password records |
-| `userGuards` | `_id=authSubject!`, status! active/deleting/deleted, normalizedEmail!, admissionEpoch! Int, securityEpoch! Int, deletionRequestedAt? Date | Shared transaction write point for admission vs account deletion/invite revocation; no tokens |
-| `invites` | normalizedEmail! string≤254, enabled! bool, revokedAt? Date | Unique normalized email; consistent case normalization; no provider-specific dot/plus rewriting |
+| Auth collections | Pinned library user/session/account schema | Self-service email/password account; library-managed password hash and session secrets; library migrations/indexes; no hand-designed password records |
+| `userGuards` | `_id=authSubject!`, status! active/deleting/deleted, normalizedEmail!, securityEpoch! Int, deletionRequestedAt? Date | Shared transaction write point for account deletion and authorization; no passwords or tokens |
 | `preferences` | ownerId!, voiceCatalogId! string≤80, captions! bool, language! `en-IN`, timezone! string≤100 | One/user; enabled compatible voice checked when saving and generating |
 | `voiceCatalog` | `_id` curated string≤80, providerVoiceId!, name!, language!, accent!, genderLabel! male/female/other/unspecified, tone!, enabled!, compatibleModels! bounded array, sampleObjectKey?, lastValidatedAt? | Catalog metadata truthful; sample licensed; disable inaccessible voices; provider ID server-only |
 
-Proposed auth defaults: ten-minute one-use verification, seven-day absolute session. Email send/outbox records use library-compatible delivery IDs and retry states; the delivery service must not send multiple links due to a retried DB transaction. Secrets and raw login URLs must never enter operationalEvents.
+Proposed auth defaults: a 12–128 character password and seven-day absolute session. Better Auth owns password hashing and comparison. Passwords, credentials, and session secrets must never enter operationalEvents.
 
 ### 3.2 Projects and versions
 
@@ -132,7 +131,6 @@ Use named indexes in versioned migrations. Examples use mongosh-style notation; 
 
 | Collection | Index definition | Purpose |
 |---|---|---|
-| invites | `{normalizedEmail:1}` unique | Invitation lookup |
 | userGuards | built-in `_id`; `{normalizedEmail:1}` unique | User guard and email integrity |
 | preferences | `{ownerId:1}` unique | One preference record |
 | projects | `{ownerId:1,status:1,createdAt:-1,_id:-1}` | Stable dashboard keyset pagination |

@@ -6,7 +6,7 @@ This specification refines the [PRD](ChitraBodh-V1-PRD.md) and [dashboard system
 
 ## 1. Scope and contract decisions
 
-Internal invited-user pilot: create or brainstorm an idea, generate a vertical narrated motion explainer, revise, preview/download, and explicitly publish/schedule to one connected Instagram account. No billing, analytics, public registration, custom branding, or YouTube publishing.
+Creator pilot: self-register with email and password, create or brainstorm an idea, generate a vertical narrated motion explainer, revise, preview/download, and explicitly publish/schedule to one connected Instagram account. No billing, analytics, custom branding, or YouTube publishing.
 
 Video target remains 60–90 seconds, with complete 40–90-second lessons accepted. One outstanding generation/revision/variant job per user; one executing globally. First ready media expires in two hours; derivatives inherit earlier dependency expiry. API success never bypasses ownership, expiry, or renderer validation.
 
@@ -24,11 +24,11 @@ The JSON contract defines field types, required properties, route security, and 
 
 Base path `/api/v1`, same-origin HTTPS. Local OpenAPI server URL is a development example, not proof that these routes exist on port 4173. Application responses use UTF-8 JSON, `Cache-Control: private, no-store`, and `X-Request-ID`. JSON dates are RFC3339 UTC with `Z`; IDs are UUIDs except auth subjects and curated voice IDs. Omit unavailable optional fields; use null only where the schema explicitly permits it.
 
-Cookie session name proposed: `__Host-chitrabodh.session`; configure the auth adapter to match it. Cookies are HttpOnly, Secure, Path=/, no Domain, SameSite=Lax unless a verified provider flow requires another policy. Never return the session token in JSON. Seven-day absolute sessions and ten-minute one-use email links are initial policy defaults. No password, signup, API-key-in-browser, or refresh-token endpoint is needed for the pilot.
+Cookie session name proposed: `__Host-chitrabodh.session`; configure the auth adapter to match it. Cookies are HttpOnly, Secure, Path=/, no Domain, SameSite=Lax unless a verified provider flow requires another policy. Never return the session token in JSON. Seven-day absolute sessions are the initial policy default. Email/password registration and sign-in are required; passwords are accepted only over HTTPS and are never logged, returned, or stored by application code.
 
 `GET /auth/csrf` returns a short-lived token bound to the current session or pre-auth browser nonce. All browser mutations require `X-CSRF-Token` and an exact allowed Origin. Sign-in initiation is rate-limited and protected too. Provider callbacks use one-use state/token verification instead of this header. This supplements the auth library's protections; it does not replace them. No wildcard credentialed CORS.
 
-Middleware order: request ID → method/body size/content type → authentication where required → invitation/deletion checks → CSRF/origin → input schema → ownership → idempotency replay → state/time/business rules → transaction → response DTO validation. Do not expose whether another user's resource or command exists. A disconnected DB fails closed.
+Middleware order: request ID → method/body size/content type → authentication where required → deletion checks → CSRF/origin → input schema → ownership → idempotency replay → state/time/business rules → transaction → response DTO validation. Do not expose whether another user's resource or command exists. A disconnected DB fails closed.
 
 Input checks:
 
@@ -54,17 +54,17 @@ Response checks: whitelist DTO fields (never serialize a MongoDB document wholes
 | Method/path | Input → success | Checks and behavior |
 |---|---|---|
 | `GET /auth/csrf` | none → 200 `{csrfToken,expiresAt}` | May set secure pre-auth nonce cookie; no session required; no-store |
-| `POST /auth/email-links` | `{email,returnPath?}` → 202 generic message | CSRF; allowed relative return path; normalize email; invite check before sending; never reveal whether email is invited |
-| `GET /auth/email-links/verify` | query `token` → 303 | Library-backed one-use verification; recheck invite; set session cookie; redirect to stored safe path; invalid/expired link redirects with safe code |
+| `POST /auth/sign-up` | `{email,password}` → 200 session view | CSRF; normalize email; password 12–128 characters; rate limit registration; duplicate account returns safe error; set secure session cookie |
+| `POST /auth/sign-in` | `{email,password}` → 200 session view | CSRF; rate-limit by normalized email and IP; generic invalid-credential response; set secure session cookie |
 | `GET /auth/session` | none → 200 session view | Returns `{authenticated:false,serverNow}` when signed out; signed-in response includes user and expiresAt; no secret |
 | `POST /auth/sign-out` | no body → 204 | CSRF; revoke current session and clear cookie; repeated valid requests safe |
-| `GET /me` | session → 200 profile/settings | Includes current user, preferences, serverNow; revoked invitation denied |
+| `GET /me` | session → 200 profile/settings | Includes current user, preferences, serverNow |
 | `PATCH /me/preferences` | settings + expectedRevision → 200 preferences | Validate enabled voice; changing defaults never changes queued jobs or old outputs |
 | `DELETE /me` | `{confirm:true,expectedRevision}` → 202 deletion receipt | Idempotency-Key required; fresh authentication ≤10 minutes; tombstone user/revoke sessions immediately; background deletion continues |
 
-Public registration and operator invite management are deliberately absent. Initial account creation is allowed only when verified email matches an enabled invite. Do not apply Gmail-specific dot/plus rewriting. Rate-limit sign-in sends to one/minute and five/hour per normalized email plus an IP cap; generic responses must not leak eligibility through different payloads. Email delivery retries need their own outbox/idempotency mechanism, never occur inside a MongoDB transaction.
+Registration is self-service; there is no operator invite allowlist. Do not apply Gmail-specific dot/plus rewriting. Rate-limit registration and sign-in per normalized email and IP; invalid credentials and duplicate-account errors must not expose secrets. Apply a password minimum of 12 characters and a maximum of 128 characters. Password hashing, comparison, and session handling remain the auth library's responsibility; no SMTP outbox is needed for this authentication flow.
 
-Better Auth provides email-link and session functionality; its exact adapter mappings must be pinned and tested when implemented. Our facade shapes above are application decisions, not a representation of the library's native API. [Better Auth magic-link documentation](https://better-auth.com/docs/plugins/magic-link)
+Better Auth provides email/password and session functionality; its exact adapter mappings must be pinned and tested when implemented. Our facade shapes above are application decisions, not a representation of the library's native API. [Better Auth email/password documentation](https://www.better-auth.com/docs/authentication/email-password)
 
 ## 4. Pagination, filters, and polling
 
@@ -127,7 +127,7 @@ For visual-only revisions, application equality checks, not the model's assertio
 | Method/path | Request → response | Checks / failures |
 |---|---|---|
 | `POST /instagram/connect` C | `{returnPath}` → 200 authorizationUrl/expiresAt | One-use state bound to session; no arbitrary return URL; no token to browser |
-| `GET /instagram/callback` | state plus code OR provider error → 303 | No session required by transport, but state binds initiating identity; recheck account/invite; fixed redirect; no raw provider error |
+| `GET /instagram/callback` | state plus code OR provider error → 303 | No session required by transport, but state binds initiating identity; recheck account state; fixed redirect; no raw provider error |
 | `GET /instagram/connection` | → 200 nullable Connection | Safe identity/status/scopes summary, no encrypted or plaintext tokens |
 | `DELETE /instagram/connection` I C | `{expectedRevision}` → 202 DeletionReceipt | Immediately block new dispatch, cancel pending posts, delete token; may not undo in-flight work |
 | `GET /publication-eligibility` | artifactId, connectionId → 200 Eligibility | Server-computed post-now ability and inclusive schedule interval; reasons when blocked |

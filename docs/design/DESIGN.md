@@ -30,7 +30,7 @@ Minimum interactive target 44px. Inputs need persistent labels, visible borders 
 
 ## Layout
 
-Use asymmetric editorial compositions and generous breathing room around diagrams. Keep reading order clear. Collapse to one column on small screens without horizontal overflow. Treat the current boards as brand specimens, not functional product screens. Do not introduce billing, analytics or public signup into the invite-only pilot.
+Use asymmetric editorial compositions and generous breathing room around diagrams. Keep reading order clear. Collapse to one column on small screens without horizontal overflow. Treat the current boards as brand specimens, not functional product screens. Do not introduce billing or analytics; registration uses the product's email/password authentication flow.
 
 ## Motion
 

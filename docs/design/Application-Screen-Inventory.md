@@ -14,8 +14,8 @@ Review scope: this is the complete V1 design coverage set, not 24 new applicatio
 
 | ID | Screen | Route/surface | Required behavior |
 |---|---|---|---|
-| 01 | Sign in | /sign-in | Invite-only email link, no public signup |
-| 02 | Check your email | /sign-in | Generic confirmation, resend, change email, expired/used link |
+| 01 | Sign in | /sign-in | Email/password sign-in and self-service registration |
+| 02 | Authentication recovery | /sign-in | Invalid credentials, duplicate account and rate-limit feedback |
 | 03 | My videos | /dashboard | All/scheduled, load more, separate generation/media/publication states |
 | 04 | My videos empty | /dashboard | First action and layout-matched loading skeleton |
 | 05 | Create video | /create | Topic, idea help, voice, captions, saved draft, 2000-character limit |
@@ -42,7 +42,7 @@ Review scope: this is the complete V1 design coverage set, not 24 new applicatio
 ## Shared constraints
 
 - Keep creator stages to idea → generation → preview/share. Script and storyboard are generated behind the scenes.
-- Private projects per invited user; no organization, role management, public signup, billing, credits, tracking, brand editor, timeline editor or direct YouTube publishing.
+- Private projects per registered user; no organization, role management, billing, credits, tracking, brand editor, timeline editor or direct YouTube publishing.
 - One outstanding generation-related job per user, including revisions/caption variants. Global worker serializes generation; other users wait.
 - Target 60–90 seconds, accept complete lessons of 40–90 seconds. Output 1080×1920, 30fps MP4. No duration slider required.
 - First ready media starts two hours of availability. Revisions/reused variants cannot extend that deadline. Expired artifacts cannot play/download/publish.
@@ -59,7 +59,7 @@ Use one coherent example: 3 November 2026, Asia/Kolkata, first ready at 14:00, c
 
 ```mermaid
 flowchart LR
-  Home[Homepage] --> Auth[Sign in / email link]
+  Home[Homepage] --> Auth[Sign in / sign up]
   Auth --> Library[My videos]
   Library --> Compose[Create video]
   Compose <--> Ideas[Idea assistant]
@@ -82,7 +82,7 @@ flowchart LR
   Library --> Settings[Preferences / account]
 ```
 
-- Sign-in → generic link sent → verified dashboard, or invalid link → request new link.
+- Sign-up → authenticated dashboard; sign-in → authenticated dashboard; invalid credentials or duplicate registration remain on the auth screen with safe recovery.
 - Topic/draft → queued → planning → narration → animating → finishing → ready; failures offer safe recovery.
 - Revision queued/running → new ready version or failure with previous unexpired version preserved.
 - Caption choice → pending render → selected ready variant; no export of a variant that is still rendering.

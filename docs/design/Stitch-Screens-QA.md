@@ -10,7 +10,7 @@ Each outcome applies to the check named in its row. “Revise” identifies a vi
 
 | Screen | Check and outcome | Evidence and action |
 |---|---|---|
-| 01 Sign in | Invite-only entry — Pass | Email field, single-use invitation wording and Send sign-in link give the creator one clear action. |
+| 01 Sign in | Credential entry — Revise | Replace the email-link entry with email/password sign-in, self-service registration, and safe invalid-credential feedback. |
 | 02 Check your email | Recovery and resend — Revise | Generic confirmation, masked recipient, ten-minute validity, change-email and expired-link recovery are present. The resend button says throttling is active in its description but exposes no disabled state. Show the remaining wait and expose disabled semantics during cooldown. |
 | 03 My videos | Busy state and sharing — Revise | Create is disabled during generation. Ready cards expose “Share link” while V1 supports Instagram sharing. Label the action “Share to Instagram” and route it to account/version review. |
 | 04 Empty dashboard | First creation — Revise | The initial CTA and two-hour availability message are clear. Remove “ID: SPEC-EMPTY-04” and the repeated retention notice from the creator view. |

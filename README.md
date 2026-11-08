@@ -112,21 +112,11 @@ The system instruction still targets 60–90 seconds, ideally 190–210 spoken w
 
 Run `npm run dashboard` and open the local URL printed by Next.js. My videos, Create and Settings share the Daylight navigation. Run `npm run dashboard:build` for the production build.
 
-## Invite-only dashboard
+## Email/password dashboard
 
-Copy dashboard/.env.example to dashboard/.env.local. Set the canonical origin to the exact URL you use in the browser (HTTPS outside localhost). Set a randomly generated secret of at least 32 characters, a MongoDB replica-set URI with a database name, an authenticated SMTP URL and a verified sender. Protect the database and email credentials as server secrets.
+Copy dashboard/.env.example to dashboard/.env.local. Set the canonical origin to the exact URL you use in the browser (HTTPS outside localhost), a randomly generated secret of at least 32 characters, and a MongoDB replica-set URI with a database name. Protect the database credentials and auth secret as server secrets.
 
-In that database, an operator enables an invitation with the normalized address, for example in mongosh:
-
-~~~js
-db.invites.updateOne(
-  { normalizedEmail: "creator@example.com" },
-  { $set: { enabled: true }, $setOnInsert: { createdAt: new Date() } },
-  { upsert: true }
-)
-~~~
-
-Restart the dashboard and use /sign-in. For the first integration check, use a test inbox and verify that the link opens /dashboard once, a second use returns to sign-in, and signing out from Settings protects all three workspace routes again. Set enabled to false to withdraw access. The current request endpoint is /api/auth/email-links and the verification callback is /api/auth/magic-link/verify.
+Restart the dashboard and use `/sign-in` to create an account or sign in. Passwords must be 12–128 characters and are hashed by Better Auth; the application never writes, logs, or emails them. The current endpoints are `POST /api/auth/sign-up` and `POST /api/auth/sign-in`. Verify that registration reaches `/dashboard`, signing out protects the workspace routes, and a second account cannot read the first account's projects.
 
 ## Generation worker and private media
 

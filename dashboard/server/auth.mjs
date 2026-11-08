@@ -1,23 +1,19 @@
 import {database} from './database.mjs';
 import { mongodbAdapter } from 'better-auth/adapters/mongodb';
-import nodemailer from 'nodemailer';
 import { createHash } from 'node:crypto';
 import { fromNodeHeaders } from 'better-auth/node';
 import { makeAuth } from './auth-core.mjs';
 
 let connection;
 async function connect() {
-  const {MONGODB_URI, BETTER_AUTH_URL, BETTER_AUTH_SECRET, SMTP_URL, AUTH_FROM} = process.env;
-  if (!MONGODB_URI || !BETTER_AUTH_URL || !SMTP_URL || !AUTH_FROM || BETTER_AUTH_SECRET?.length < 32 || !BETTER_AUTH_SECRET) throw Error('Auth configuration required');
+  const {MONGODB_URI, BETTER_AUTH_URL, BETTER_AUTH_SECRET} = process.env;
+  if (!MONGODB_URI || !BETTER_AUTH_URL || BETTER_AUTH_SECRET?.length < 32 || !BETTER_AUTH_SECRET) throw Error('Auth configuration required');
   const origin = new URL(BETTER_AUTH_URL).origin;
   if (!origin.startsWith('https://') && !['localhost','127.0.0.1'].includes(new URL(origin).hostname)) throw Error('HTTPS required');
   const store=await database();
   const {client,db}=store;
-    const invited = async email => Boolean(await db.collection('invites').findOne({normalizedEmail:email.trim().toLowerCase(),enabled:true},{projection:{_id:1}}));
-    const mail = nodemailer.createTransport(SMTP_URL);
-    const auth = makeAuth({database:mongodbAdapter(db,{client}),baseURL:origin,secret:BETTER_AUTH_SECRET,invited,
-      deliver:(to,url)=>mail.sendMail({from:AUTH_FROM,to,subject:'Sign in to Chitrabodh',text:'Your sign-in link is valid for ten minutes:\n'+url})});
-    return {...store,auth,invited,origin,limits:db.collection('auth_limits')};
+    const auth = makeAuth({database:mongodbAdapter(db,{client}),baseURL:origin,secret:BETTER_AUTH_SECRET});
+    return {...store,auth,origin,limits:db.collection('auth_limits')};
 }
 export function services() {
   return connection ??= connect().catch(error=>{connection=undefined;throw error});
@@ -37,9 +33,9 @@ export async function reserve(limits,key,max,ms) {
 }
 export async function currentOwner(req) {
   if (!req.headers.cookie) return null;
-  const {auth, invited} = await services();
+  const {auth} = await services();
   const session = await auth.api.getSession({headers:fromNodeHeaders(req.headers)});
-  return session && await invited(session.user.email) ? session.user.id : null;
+  return session?.user.id ?? null;
 }
 export async function privatePage({req,res}) {
   res.setHeader('Cache-Control','private, no-store');

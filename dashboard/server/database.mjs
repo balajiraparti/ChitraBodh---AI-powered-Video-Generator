@@ -17,7 +17,6 @@ async function connect(){
       store.jobs.createIndex({state:1,createdAt:1,_id:1}),
       store.projects.createIndex({ownerId:1,status:1,updatedAt:-1,_id:-1}),
       store.artifacts.createIndex({expiresAt:1,state:1}),
-      db.collection('invites').createIndex({normalizedEmail:1},{unique:true}),
       db.collection('auth_limits').createIndex({expiresAt:1},{expireAfterSeconds:0}),
       ...[['user','email'],['verification','identifier'],['session','token']].map(([name,key])=>db.collection(name).createIndex({[key]:1},{unique:true}))
     ]);

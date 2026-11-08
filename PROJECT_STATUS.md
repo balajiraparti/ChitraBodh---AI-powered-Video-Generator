@@ -1,6 +1,6 @@
 # ChitraBodh project status
 
-Updated 8 November 2026. Use this file to choose the next feature and record what ships. The first dashboard milestone ends when an invited teammate can sign in, enter a topic, and download their narrated vertical video without using a terminal.
+Updated 8 November 2026. Use this file to choose the next feature and record what ships. The first dashboard milestone ends when a newly registered creator can sign in, enter a topic, and download their narrated vertical video without using a terminal.
 
 ## Current baseline
 
@@ -16,21 +16,21 @@ Baseline established from repository inspection and recorded prototype results. 
 
 ## Feature queue
 
-**Current verification:** F00, F01 and F04–F06 are Done. F02–F03 and F07–F09 have pending live integration checks. F10–F18 are planned. The first milestone still needs a real invited-inbox-to-download run and the populated library. See the [Daylight implementation audit](docs/design/Daylight-Implementation-Audit.md) for exact board coverage and visual gaps.
+**Current verification:** F00, F01 and F04–F06 are Done. F02–F03 are **In progress** after the 8 November auth model change; F07–F09 have pending live integration checks. F10–F18 are planned. The first milestone needs a real registration-to-download run and the populated library. See the [Daylight implementation audit](docs/design/Daylight-Implementation-Audit.md) for exact board coverage and visual gaps.
 
 | ID | Feature | Depends on | Status | Finish condition |
 |---|---|---|---|---|
-| F00 | Public homepage and product navigation | Daylight design | Done | Home opens at / with topic illustrations, invite-only sign-in and workspace preview links. |
+| F00 | Public homepage and product navigation | Daylight design | Done | Home opens at / with topic illustrations, account entry and workspace preview links. |
 | F01 | Next.js dashboard shell | Daylight design | Done | My videos, Create and Settings routes open directly and through keyboard-accessible desktop and mobile navigation. My videos has an empty state. |
-| F02 | Invite-only email link | MongoDB user and token records | Awaiting integration verification | An invited user receives a single-use, expiring link. All addresses receive the same on-screen response. |
-| F03 | Session and private routes | F01, F02 | Awaiting integration verification | Redeeming a valid link opens the dashboard. Signed-out access redirects to sign-in and sign-out revokes access. |
+| F02 | Email/password registration and sign-in | MongoDB auth records | In progress | A creator can self-register and later sign in with a 12–128-character password. Invalid credentials and duplicates fail safely and rate limiting protects the endpoints. |
+| F03 | Session and private routes | F01, F02 | In progress | Successful registration/sign-in opens the dashboard. Signed-out access redirects to sign-in and sign-out revokes access. |
 | F04 | Topic draft | F03 | Done | A user can save and reopen their own idea of up to 2,000 characters. Another user cannot read it. |
 | F05 | Narrator and caption choices | F04, prototype voices | Done | A draft retains the selected available voice and captions setting across reloads. |
 | F06 | Submit one generation job | F05 | Done | Submission creates a durable job. Double-clicks and simultaneous submissions from the same user produce one outstanding job. |
 | F07 | Worker and progress | F06, local pipeline | Awaiting integration verification | One worker processes queued jobs in order. Users can leave and return to see the current stage, failure or cancellation. |
 | F08 | Private media and expiry | F07 | Awaiting integration verification | Completed media goes to R2. Access closes two hours after first ready, and cleanup removes expired objects. |
 | F09 | Ready video and download | F08 | Awaiting integration verification | The owner can play and download the selected 9:16 MP4 before expiry. Expired projects offer fresh creation from the saved idea. |
-| F10 | My videos list | F04, F07, F09 | Planned | A user sees only their projects, with current state, expiry and pagination. Complete the first milestone with a real invited teammate. |
+| F10 | My videos list | F04, F07, F09 | Planned | A user sees only their projects, with current state, expiry and pagination. Complete the first milestone with a real registered creator. |
 | F11 | Optional idea assistant | F04 | Planned | Up to three suggestions fill the draft only when selected. Generation requires a separate click. |
 | F12 | Saved preferences | F05 | Planned | Voice, captions and timezone persist. New drafts inherit defaults and existing videos retain their settings. |
 | F13 | Revisions | F06–F09 | Planned | A revision preserves the previous ready version and original expiry, including when revision fails. |
@@ -75,3 +75,4 @@ Apply the [screen QA findings](docs/design/Stitch-Screens-QA.md) to each affecte
 | 8 Nov 2026 | F09 added native vertical playback, a private MP4 download, the availability deadline, and fresh creation from the original version after expiry. | 54 tests passed, including rendered player/download and deadline/cleanup states. TypeScript passed. Real signed-in browser playback, downloaded bytes from private R2 and the full fresh-generation journey still require integration verification. Next is F10 My videos. |
 | 8 Nov 2026 | Compared the live Stitch project with the existing screens. Stitch returned 24 numbered app boards, 3 brand studies, 3 homepage/demo designs and 1 uploaded image. | Applied the centered sign-in layout, library and composer columns, mobile stacking, progress stages, ready-video/export layout and expanded homepage illustration. Production build and private page rendering checks passed. Headless Chrome verified preview open/close and sign-in without horizontal overflow at 1280px and 390px. A signed-in desktop/mobile visual walkthrough remains open. |
 | 8 Nov 2026 | Reconciled the feature queue with Daylight board coverage and corrected the baseline and verification summary. | Live Stitch count confirmed. Sample Create, progress and ready components passed desktop/mobile layout checks. Detailed remaining items are in the linked design audit. |
+| 8 Nov 2026 | Replaced invite-only emailed magic links with self-service email/password registration and sign-in in the dashboard and product contracts. | Removed SMTP and invite configuration from the dashboard implementation, enabled Better Auth email/password sessions, and added registration/sign-in UI and test coverage. Targeted auth test, TypeScript, production build and OpenAPI JSON validation passed. F02/F03 are reopened pending MongoDB/browser integration verification; prior inbox-link QA remains historical evidence only. |

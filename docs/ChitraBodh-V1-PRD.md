@@ -17,7 +17,7 @@
 
 **Revision 1.1:** Incorporates founder feedback on selectable Indian-accented narration, Next.js/Node.js, MongoDB, Cloudflare R2, and minimal text/diagram/icon animation. Indian English is a working interpretation of the language request; Hindi/Hinglish remains an explicit open choice. Better Auth is a proposed authentication library, not a founder-confirmed selection.
 
-**Revision 1.2:** Narrows launch to the founder and invited team members; confirms two-hour generated-media retention, scheduling only within that window, one outstanding generation request per user, and no V1 brand customization. Proposes one global generation worker for the small pilot and Gemini 3.8 Flash for writing/planning, subject to sample evaluation. This revision supersedes earlier long-term artifact retention and public-launch assumptions.
+**Revision 1.3:** Opens V1 registration to creators using email and password. It replaces the prior invite-only, emailed magic-link admission flow. Generated-media retention, one outstanding generation request per user, and no V1 brand customization remain unchanged.
 
 > Turn an idea into a clear, 60–90-second educational explainer with motion graphics and synchronized AI narration. Enter an idea, create the video, then preview and share.
 
@@ -56,7 +56,7 @@ ChitraBodh automates these production tasks. A creator supplies an idea and rece
 
 Primary audience: independent educational creators, educators, and coaches explaining concepts to a social-media audience. Brands producing educational content can use the same workflow; brand-team collaboration is outside V1.
 
-**Actual V1 access:** only the founder and invited team members. Use an operator-managed email allowlist with individual accounts and private projects; public self-service signup and organization/role management are not required. The broader audience describes the future product direction, not this pilot's launch population.
+**V1 access:** creators self-register and sign in with an email address and password. Each account has private projects; organization workspaces, roles, and approval chains are not required.
 
 Representative job: “When I have a concept to explain, help me turn it into a clear, attractive short video without needing animation or editing skills.”
 
@@ -103,7 +103,7 @@ The creator is the account holder. Viewers of the exported video are not ChitraB
 - Original topic entry and AI brainstorming; no PDF, URL, slide, or media imports.
 - No voice cloning, avatars, photorealistic video generation, or arbitrary custom character animation.
 - No background music initially, to simplify narration quality and media licensing.
-- Invited team members can use individual accounts; no shared workspaces, roles, approval chains, public galleries, recurring campaigns, or multi-platform calendars.
+- Individual creators use private accounts; no shared workspaces, roles, approval chains, public galleries, recurring campaigns, or multi-platform calendars.
 - One built-in minimal visual treatment; voice and caption preferences remain included. User-directed brand styling is deferred.
 - No external research or fact-verification service initially; see factual quality requirements in Section 9.
 
@@ -129,11 +129,11 @@ Aggregate reliability measurements may be derived from operational jobs. Qualita
 | Backend | Next.js server routes on Node.js, plus a Node.js background worker | Next.js/Node.js confirmed; one web app plus worker recommended |
 | Application database | MongoDB for users, preferences, projects, versions, and jobs | Confirmed; hosting choice open |
 | Media storage | Private Cloudflare R2 buckets | Confirmed |
-| Authentication | Better Auth with MongoDB adapter; verified email link remains proposed | Library/sign-in method proposed; MongoDB alone is not an authentication system |
+| Authentication | Better Auth with MongoDB adapter and email/password sign-up/sign-in | Confirmed product direction; MongoDB alone is not an authentication system |
 | Background execution | Simple sequential job runner with persisted checkpoints and scheduling | Recommended simplification; no multi-agent or workflow-framework dependency |
 | Application/worker hosting | One modest always-on Node-compatible machine for web app and worker; MongoDB and R2 remain external | Simplest proposed team deployment; actual host and spend cap open |
 
-MongoDB stores authentication records as well as product data; an authentication library must still handle login verification and sessions. Better Auth documents both [Next.js integration](https://better-auth.com/docs/integrations/next) and a [MongoDB adapter](https://better-auth.com/docs/adapters/mongo). The proposed email-link flow also needs a transactional email provider; selecting MongoDB does not provide email delivery.
+MongoDB stores authentication records as well as product data; an authentication library must still hash passwords securely, verify credentials, and manage sessions. Better Auth documents both [Next.js integration](https://better-auth.com/docs/integrations/next) and a [MongoDB adapter](https://better-auth.com/docs/adapters/mongo). Email delivery is not required for registration or sign-in in V1.
 
 Cloudflare R2 stores MP4s, audio, thumbnails, previews, and larger timing documents. Database records hold object keys and metadata. Use private buckets and scoped access URLs; R2 is storage and does not itself run the Node.js rendering worker. [R2 overview](https://developers.cloudflare.com/r2/how-r2-works/), [presigned access](https://developers.cloudflare.com/r2/api/s3/presigned-urls/)
 
@@ -165,7 +165,7 @@ All features in this section are P0 for the complete V1, except choices explicit
 
 | ID | Feature | Required behavior | Acceptance criteria |
 |---|---|---|---|
-| FR-01 | Account access | Invited founder/team members sign in, sign out, and return to owned projects. Proposed auth: verified email link with an operator-managed email allowlist. | Non-invited identities are rejected server-side; unauthenticated users cannot read projects; expired links have a resend path. |
+| FR-01 | Account access | Creators register, sign in, sign out, and return to owned projects using email and password. | Duplicate registration, invalid credentials, and unauthenticated users cannot read projects; one account cannot read another account's projects. |
 | FR-02 | Dashboard | Show drafts, processing work, unexpired videos, expiry countdown, and publication states. | Expired media has an explicit label and no playback/download/post action; failed revisions preserve prior output only until its own expiry. |
 | FR-03 | Own idea | Accept a topic or explanation brief in a single text box. | A valid idea can start generation with defaults and no mandatory extra forms. Empty or oversized input receives an inline explanation. |
 | FR-04 | Brainstorming | Offer a short AI conversation and selectable topic suggestions. | Selecting a suggestion fills the idea; user can refine it or generate immediately; chat failure preserves existing text. |
@@ -193,7 +193,7 @@ Keep navigation limited to **Dashboard**, **Create video**, and **Settings**. Sc
 
 | Screen | Primary content | Primary action | Secondary actions and states |
 |---|---|---|---|
-| Sign in | Product identity, invited email field, link-sent state | Continue | Non-invited identity denied; resend link; invalid/expired link; return to intended project after authentication |
+| Sign in / sign up | Product identity, email and password fields, switch between registration and sign-in | Continue | Invalid credentials, duplicate account, password requirements, rate limit, return to intended project after authentication |
 | Dashboard | Project cards/list with title, thumbnail, creation date, generation and publishing labels | Create video | Compact preferred-voice selector with previews; open, rename, delete; scheduled filter; empty/loading states |
 | Idea composer | Topic box; “Help me find an idea”; optional compact preferences | Create video | Saved voice/captions; fixed minimal visual style |
 | Brainstorm panel | Short messages and a few topic suggestions | Use this idea | Refine, request more suggestions, return to own idea |
@@ -790,7 +790,7 @@ Alert operators on sustained provider authentication errors, exhausted allowance
 
 | Test ID | Requirement coverage | Scenario and pass condition |
 |---|---|---|
-| AT-01 | FR-01–03 | An invited team member signs in and generates from one idea without mandatory preferences/script/storyboard screens; a non-invited identity is denied. |
+| AT-01 | FR-01–03 | A creator registers, signs in, and generates from one idea without mandatory preferences/script/storyboard screens; another account is denied access to that creator's work. |
 | AT-02 | FR-04 | User brainstorms, selects an idea, and creates without manually copying AI output. |
 | AT-03 | FR-05–08 | A representative topic produces a valid vertical explainer; teaching points, visuals, and audio agree. |
 | AT-04 | FR-07/09 | Normalization cases including dates, abbreviations, and repeated words produce correct cue and caption timing. |
@@ -828,7 +828,7 @@ Review all benchmark outputs for factual accuracy and meaningful visual explanat
 
 ### 18.4 Pilot validation
 
-Pilot participants: the founder and invited team members, each attempting several videos with their own ideas. Ask whether they can finish without assistance, whether the explanation is useful, and whether the two-hour window is practical for reviewing and posting. Use direct feedback to refine defaults; no behavioral tracking is required. External creator recruitment is deferred.
+Pilot participants: registered creators, each attempting several videos with their own ideas. Ask whether they can finish without assistance, whether the explanation is useful, and whether the two-hour window is practical for reviewing and posting. Use direct feedback to refine defaults; no behavioral tracking is required.
 
 ## 19. Delivery milestones and release gates
 
@@ -840,7 +840,7 @@ No delivery dates are committed until infrastructure, team capacity, and provide
 | M1 — Generation demonstration | Composer, background generation, three initial scene templates, preview, caption variants, download | Five sample topics work end to end; failures preserve input; no mocked finished-video claim |
 | M2 — Creator workspace | Auth, dashboard, persistence, saved preferences, brainstorming, plain-language revision and versioning | AT-01–09 and ownership checks pass |
 | M3 — Instagram workflow | Connection for authorized team profiles, post now, scheduling within expiry, cancel/reschedule, reconciliation | Live team-account publishing and expiry/race/failure cases pass |
-| M4 — Internal V1 pilot | Invited-team access, two-hour cleanup, serial generation, quality review | Benchmark and team review complete; internal launch risks resolved or explicitly accepted |
+| M4 — V1 pilot | Email/password access, two-hour cleanup, serial generation, quality review | Benchmark and pilot review complete; launch risks resolved or explicitly accepted |
 
 Validate Meta publishing for the actual authorized team accounts before declaring the internal workflow complete. Public SaaS access approval is a future rollout concern; an app's development/test restrictions still apply to this pilot. An export-only demo is partial if direct team-profile posting is not working. The complete pilot uses always-on execution for scheduling and two-hour cleanup.
 
@@ -890,7 +890,7 @@ These decisions should be settled before the relevant implementation milestone. 
 | Narration model and voices | Indian male/female options confirmed; select actual accessible, licensed, timing-compatible voice IDs and model | M0 |
 | Gemini model | Gemini 3.8 Flash recommended; compare Gemini 3.5 Flash-Lite on 10 topics before pinning | M0 |
 | Animation catalog | Three core layouts: icon/text, progressive diagram, comparison; one light minimal theme initially | M1 |
-| Authentication | Better Auth with MongoDB adapter and verified email link proposed; choose email delivery provider; no mandatory profile questionnaire | M2 |
+| Authentication | Better Auth with MongoDB adapter and email/password registration; no mandatory profile questionnaire | M2 |
 | Default captions | On, with one toggle | M1 |
 | Instagram auth route | Prefer Instagram Login, contingent on verified requirements and account support | M0/M3 |
 | Connected accounts | One Instagram account per user | M3 |
@@ -902,7 +902,7 @@ These decisions should be settled before the relevant implementation milestone. 
 | Brand customization | Excluded from V1; reconsider next version | M1 |
 | Background music | Omit initially | M1 |
 | Quality targets | Section 17 thresholds, refined from M0/M1 evidence | M4 |
-| Launch audience | Founder and invited team members only, confirmed; no public signup | M4 |
+| Launch audience | Self-service creator registration with private individual accounts | M4 |
 
 ## 23. Dependency references and verification notes
 
@@ -927,6 +927,6 @@ The requirements and architecture in this document are original product specific
 
 ## 24. Definition of done
 
-ChitraBodh V1 is complete when the founder or an invited team member can sign in, enter or discover an idea, click Create video, receive a clear synchronized 60–90-second vertical explainer, optionally request a plain-language change, and download or directly publish/schedule the selected version to an authorized Instagram profile within its two-hour media window. One outstanding generation per user is enforced. Generated media expires and is cleaned up automatically. The implementation must preserve the three-stage experience while passing the quality, recovery, privacy, and publication-integrity criteria in this document.
+ChitraBodh V1 is complete when a creator can register or sign in with email and password, enter or discover an idea, click Create video, receive a clear synchronized 60–90-second vertical explainer, optionally request a plain-language change, and download or directly publish/schedule the selected version to an authorized Instagram profile within its two-hour media window. One outstanding generation per user is enforced. Generated media expires and is cleaned up automatically. The implementation must preserve the three-stage experience while passing the quality, recovery, privacy, and publication-integrity criteria in this document.
 
 No subscriptions, billing, user behavior tracking, public signup, brand customization, mandatory script/storyboard editing, or direct YouTube publication are part of that definition.

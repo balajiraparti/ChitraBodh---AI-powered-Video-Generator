@@ -17,7 +17,7 @@ This document implements the [V1 PRD](ChitraBodh-V1-PRD.md), incorporates the [m
 
 | Subject | Design baseline |
 |---|---|
-| Audience | Founder and invited team members, each with private projects; no public signup or shared organization workspace |
+| Audience | Self-registering creators, each with private projects; no shared organization workspace |
 | Duration | Aim for 60–90 seconds; accept complete lessons of **40–90 seconds**. This supersedes the PRD's strict 60-second minimum, following the subsequent product decision and implemented policy |
 | Output | Vertical 1080 × 1920, 30 fps, H.264/AAC MP4; optional burned-in captions |
 | Visuals | AI chooses narration, examples, objects, diagrams, labels, and actions through validated scene data. Application-owned SVG/Remotion primitives execute it; no arbitrary generated code |
@@ -29,7 +29,7 @@ This document implements the [V1 PRD](ChitraBodh-V1-PRD.md), incorporates the [m
 | Narration | ElevenLabs timestamped speech; curated accessible voices. Adam is a test voice, not fulfillment of the Indian male/female launch catalog |
 | Excluded | Billing, credit wallets, behavioral analytics, brand customization, timeline editor, compulsory script review, YouTube API publishing, and multi-agent orchestration |
 
-**Working defaults, not newly confirmed requirements:** Indian-accented English only; Better Auth with email-link sign-in; one always-on host; scheduling buffers and operational targets below. Hindi/Hinglish, host vendor, email delivery vendor, budget, and final voice catalog remain implementation gates, not blockers to this design.
+**Working defaults, not newly confirmed requirements:** Indian-accented English only; Better Auth with email/password sign-up and sign-in; one always-on host; scheduling buffers and operational targets below. Hindi/Hinglish, host vendor, budget, and final voice catalog remain implementation gates, not blockers to this design.
 
 ### 1.2 Current implementation versus proposed work
 
@@ -42,7 +42,7 @@ This document implements the [V1 PRD](ChitraBodh-V1-PRD.md), incorporates the [m
 | Preferences/revisions | Per-generation voice/caption selection | Saved preferences, immutable versions, revision commands and caption variants |
 | Brainstorming | Not a complete persisted application flow | Small bounded idea-assistance endpoint and draft state |
 | Instagram | Not implemented | OAuth connection, publisher, scheduler, outcome reconciliation |
-| Access control | Localhost/origin checks; no user accounts | Invite enforcement, sessions, ownership, token protection |
+| Access control | Localhost/origin checks; no user accounts | Email/password accounts, sessions, ownership, token protection |
 
 Do not expose the existing localhost server as the team application. This document does not require rewriting the renderer or changing provider keys.
 
@@ -50,7 +50,7 @@ Do not expose the existing localhost server as the team application. This docume
 
 | PRD requirement | Main implementation responsibility | Release evidence |
 |---|---|---|
-| FR-01 accounts | Auth boundary, allowlist, session checks | Invited/non-invited and cross-user tests |
+| FR-01 accounts | Auth boundary, registration/sign-in, session checks | Registration, invalid credentials and cross-user tests |
 | FR-02 dashboard | Project queries and independent job/media/publication states | Reload/restart restores accurate cards |
 | FR-03/04 ideas | Composer, draft autosave, brainstorm service | Select suggestion and generate without copy/paste |
 | FR-05–08 production | Durable worker and existing engine | Valid narrated, explanatory 40–90-second output |
@@ -68,7 +68,7 @@ Use a modular monolith in one repository. Run the web application and background
 ```mermaid
 flowchart TB
     B[Creator browser] -->|HTTPS session| W[Next.js web and API]
-    W --> A[Auth and invite checks]
+    W --> A[Auth and session checks]
     A --> DB[(MongoDB replica set)]
     W --> DB
     W -->|authorized media stream| R2[(Private R2)]
@@ -108,7 +108,7 @@ packages/contracts/      Zod requests, scene/timeline schemas, states, video pol
 packages/engine/         existing planning, speech, timing, render, validators
 packages/database/       MongoDB repositories, indexes, transactions, migrations
 packages/storage/        R2 client, object registry, range streaming
-packages/auth/           server-only auth and invite configuration
+packages/auth/           server-only auth configuration
 packages/publishing/     Meta adapter and publication state transitions
 packages/observability/  structured redacted logs, health metrics
 tests/                   unit, integration, browser, visual, recovery fixtures
@@ -122,7 +122,7 @@ Move incrementally: retain `src/providers.ts`, `src/timing.ts`, visual component
 
 | Route | Contents and actions | Critical states |
 |---|---|---|
-| `/sign-in` | Email-link sign-in for invited users | Sending, generic link-sent, expired link, delivery error |
+| `/sign-in` | Email/password sign-in and registration | Registration, invalid credentials, duplicate account, rate limit |
 | `/dashboard` | Private project cards; create button; voice shortcut; all/scheduled filters | Empty, loading, queued, generating, ready, failed, expired, scheduled, published |
 | `/create` | One topic box, optional idea helper, narrator, captions | Defaults loaded, draft saving, invalid input, existing active job |
 | `/projects/[id]` | Progress or vertical preview; download, revise, version selector, share | Previous version remains usable during a revision; expiry countdown |
@@ -162,11 +162,11 @@ Use semantic forms, keyboard-accessible controls, visible focus, labeled voice s
 
 ### 5.1 Application authentication
 
-Recommend Better Auth with MongoDB and email-link authentication. Its documented MongoDB adapter and magic-link plugin support this direction; an email-delivery service is still required. Pin and integration-test the selected release rather than hand-writing an authentication system. [MongoDB adapter](https://better-auth.com/docs/adapters/mongo), [magic-link plugin](https://better-auth.com/docs/plugins/magic-link)
+Use Better Auth with MongoDB and email/password authentication. Its documented MongoDB adapter and email/password support this direction. Pin and integration-test the selected release rather than hand-writing password storage or authentication. [MongoDB adapter](https://better-auth.com/docs/adapters/mongo), [email/password authentication](https://www.better-auth.com/docs/authentication/email-password)
 
-Maintain an operator-managed `invites` allowlist. Normalize email consistently; check invitation eligibility before sending a sign-in link, on identity creation, and on authenticated requests. Return a generic link-sent response to avoid revealing invited addresses. Proposed settings: one-use 10-minute links, seven-day absolute sessions, rate-limited sends, secure HttpOnly cookies, explicit SameSite policy compatible with callbacks, and session revocation on removal from the allowlist.
+Self-service registration accepts a normalized email and a 12–128 character password. Better Auth stores the password hash; application code never stores, logs, or returns a password. Rate-limit registration and sign-in by IP and normalized email. Use secure HttpOnly cookies and a seven-day absolute session; sign-out revokes the current session.
 
-Use the auth library's supported CSRF/origin protections plus same-origin checks on cookie-authenticated mutation routes. Auth handlers are server-only. Do not log magic links. Restrict post-login redirects to same-origin relative routes. Operators manage invites through a restricted script; there is no V1 organization/role-management UI.
+Use the auth library's supported CSRF/origin protections plus same-origin checks on cookie-authenticated mutation routes. Auth handlers are server-only. Restrict post-login redirects to same-origin relative routes. There is no V1 organization/role-management UI.
 
 ### 5.2 Ownership rule
 
@@ -187,7 +187,6 @@ Use UTC BSON dates internally and ISO 8601 UTC strings in APIs; store IANA timez
 | Collection | Important fields | Lifetime/invariant |
 |---|---|---|
 | Auth-owned collections | User, session, verification/account records managed by auth library | Auth lifecycle; do not duplicate session handling |
-| `invites` | normalizedEmail, enabled, createdAt | Operator-managed admission |
 | `preferences` | ownerId, voiceCatalogId, captions, language, timezone | One per user; only affects new work |
 | `voiceCatalog` | id, providerVoiceId, name, language, accent, genderLabel, tone, previewRef, modelCompatibility, enabled, lastValidatedAt | No false accent claims; inaccessible voices disabled |
 | `projects` | ownerId, title, originalIdea, selectedVersionId, nextVersionNumber, revision, deletedAt | Minimal durable draft/project metadata |
@@ -206,7 +205,6 @@ Temporary narrative/revision payloads, brainstorm history, and post descriptions
 ### 6.2 Required indexes
 
 ```text
-invites:               unique(normalizedEmail)
 preferences:           unique(ownerId)
 projects:              (ownerId, deletedAt, updatedAt desc, _id desc)
 versions:              unique(projectId, number)
@@ -600,7 +598,7 @@ Release gates: all FR-01–17 scenarios covered; two-user privacy and concurrenc
 | Phase | Deliverable | Exit condition |
 |---|---|---|
 | A. Preserve engine contracts | Extract shared job input/output, video policy and schemas; keep CLI working | Existing provider/timing/render tests pass; no visual regression |
-| B. Secure application foundation | Next.js shell, auth/invites, MongoDB schema/indexes, owned drafts/preferences | Two users cannot access each other's data; draft and preferences survive restart |
+| B. Secure application foundation | Next.js shell, email/password auth, MongoDB schema/indexes, owned drafts/preferences | Two users cannot access each other's data; draft and preferences survive restart |
 | C. Durable generation and R2 | Admission/worker leases/checkpoints, object registry, media streaming, cleanup | Browser-independent generation and crash/expiry tests pass |
 | D. Complete creator dashboard | Project cards/progress, brainstorm, revision/version selection, caption variants | Three-stage workflow satisfies FR-02–12; exact selected export |
 | E. Instagram pilot | Verify chosen Meta route, connect, post now, schedule/cancel, reconcile | Authorized live post and failure/race/expiry tests pass |
@@ -608,7 +606,7 @@ Release gates: all FR-01–17 scenarios covered; two-user privacy and concurrenc
 
 Validate Meta eligibility early during Phase B so access problems do not appear only after the dashboard is finished. Build provider-independent dashboard/storage tests before spending narration credits. No historical `.local-runs` import is required by default: they are temporary unowned prototype outputs. Start private application projects fresh; retain the CLI as a developer tool.
 
-Roll out behind an invite-only boundary. Stop generation admission and drain or cancel jobs before changing incompatible engine schemas. Deploy backward-compatible database additions first, then workers/web, and remove old fields only after all active jobs are compatible. Rollback must preserve schema compatibility; fail or migrate incompatible queued jobs explicitly rather than interpreting them with a different renderer. Keep an operator kill switch for new generation and separate one for publication; neither disables cleanup.
+Roll out with self-service registration protected by credential rate limits. Stop generation admission and drain or cancel jobs before changing incompatible engine schemas. Deploy backward-compatible database additions first, then workers/web, and remove old fields only after all active jobs are compatible. Rollback must preserve schema compatibility; fail or migrate incompatible queued jobs explicitly rather than interpreting them with a different renderer. Keep an operator kill switch for new generation and separate one for publication; neither disables cleanup.
 
 ## 16. Architecture decisions and outstanding gates
 
@@ -617,7 +615,7 @@ Roll out behind an invite-only boundary. Stop generation admission and drain or 
 | Modular monolith, separate processes | Simple codebase with render/cleanup isolation | Measured resource or team boundaries require services |
 | MongoDB durable queue | Already required database; avoids extra queue service | Queue scale/operational burden exceeds this pilot |
 | One global generation slot | Matches low-volume pilot and predictable resource use | Product explicitly accepts concurrent generation |
-| Auth library + email allowlist | Individual secure accounts without organization UI | Public launch or different identity requirements |
+| Auth library + email/password | Individual secure accounts without organization UI | Organization or different identity requirements |
 | Private backend media stream | Immediate authorization/expiry checks and no public bucket | Bandwidth cost warrants explicitly designed signed access |
 | Immutable versions/artifacts | Revisions cannot silently alter scheduled output | Retained as a core invariant |
 | Audio-derived timeline | One timing source for captions and motion | A tested alternative alignment requirement emerges |

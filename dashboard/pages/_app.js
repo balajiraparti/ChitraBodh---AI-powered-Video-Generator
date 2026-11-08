@@ -12,7 +12,7 @@ export default function Workspace({ Component, pageProps }) {
     <Head><title>{current?.[1] || (pathname === '/sign-in' ? 'Sign in' : 'Educational explainers')} · Chitrabodh</title><link rel="icon" type="image/svg+xml" href="/favicon.svg" /><meta name="viewport" content="width=device-width, initial-scale=1" /></Head>
     <a className="skip" href="#content">Skip to content</a>
     <header><Link className="brand" href="/"><img src="/moving-chitra.svg" width="54" height="40" alt="" />Chitrabodh</Link>
-      {publicPage && pathname !== '/sign-in' && <div className="entry"><span>Invite-only pilot</span><Link href="/sign-in">Sign in</Link></div>}
+      {publicPage && pathname !== '/sign-in' && <div className="entry"><Link href="/sign-in">Sign in</Link></div>}
       {!publicPage && <nav aria-label="Workspace">{destinations.map(([url, label]) =>
         <Link key={url} href={url} aria-current={pathname === url ? 'page' : undefined}>{label}</Link>)}</nav>}
     </header>

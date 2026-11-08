@@ -9,26 +9,21 @@ export default async function handler(req,res) {
   try {
     const {auth,origin,limits}=await services();
     if(req.method==='POST' && req.headers.origin!==origin) return res.status(403).end();
-    if(req.method==='POST' && path==='email-links') {
-      const result=z.email().safeParse(typeof req.body?.email==='string'?req.body.email.trim().toLowerCase():'');
-      if(!result.success)return res.status(400).end();
-      const email=result.data;
-      if(await reserve(limits,'ip:'+req.socket.remoteAddress,30,3600000) &&
-         await reserve(limits,'minute:'+email,1,60000) && await reserve(limits,'hour:'+email,5,3600000)) {
-        try { await auth.api.signInMagicLink({headers:fromNodeHeaders(req.headers),body:{email,callbackURL:'/dashboard',errorCallbackURL:'/sign-in'}}); }
-        catch { console.error('Sign-in link delivery or issuance failed'); }
-      }
-      return res.status(202).json({message:'If this email has access, you’ll receive a sign-in link.'});
+    if(req.method==='POST' && (path==='sign-up' || path==='sign-in')) {
+      const email=z.email().safeParse(typeof req.body?.email==='string'?req.body.email.trim().toLowerCase():'');
+      const password=typeof req.body?.password==='string' ? req.body.password : '';
+      if(!email.success || password.length<12 || password.length>128)return res.status(400).json({message:'Enter a valid email and a password between 12 and 128 characters.'});
+      if(!await reserve(limits,'ip:'+req.socket.remoteAddress,30,3600000) || !await reserve(limits,'hour:'+email.data,10,3600000)) return res.status(429).json({message:'Please wait before trying again.'});
+      const result=path==='sign-up'
+        ? await auth.api.signUpEmail({headers:fromNodeHeaders(req.headers),body:{email:email.data,password,name:email.data.split('@')[0]},asResponse:true})
+        : await auth.api.signInEmail({headers:fromNodeHeaders(req.headers),body:{email:email.data,password},asResponse:true});
+      const cookies=result.headers?.getSetCookie?.() || [];
+      if(cookies.length)res.setHeader('Set-Cookie',cookies);
+      return res.status(200).json({redirect:'/dashboard'});
     }
-    const verify=req.method==='GET' && path==='magic-link/verify';
     const logout=req.method==='POST' && path==='sign-out';
-    if(!verify && !logout)return res.status(404).end();
+    if(!logout)return res.status(404).end();
     const url=new URL('/api/auth/'+path,origin);
-    if(verify){
-      url.searchParams.set('token',String(req.query.token || ''));
-      url.searchParams.set('callbackURL','/dashboard');
-      url.searchParams.set('errorCallbackURL','/sign-in');
-    }
     const response=await auth.handler(new Request(url,{method:req.method,headers:fromNodeHeaders(req.headers)}));
     const cookies=response.headers.getSetCookie();
     if(cookies.length)res.setHeader('Set-Cookie',cookies);

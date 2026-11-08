@@ -3,7 +3,7 @@
   "info": {
     "title": "ChitraBodh Internal Pilot API",
     "version": "1.0.0",
-    "description": "Proposed API contract, not current localhost implementation. API and database guides define cross-record checks. Target 60–90 seconds; accept 40–90. Cookie session plus CSRF for browser mutations. No billing or public signup."
+    "description": "Proposed API contract, not current localhost implementation. API and database guides define cross-record checks. Target 60–90 seconds; accept 40–90. Cookie session plus CSRF for browser mutations. Email/password self-service registration is supported; no billing."
   },
   "servers": [
     {
@@ -95,14 +95,14 @@
         "security": []
       }
     },
-    "/api/v1/auth/email-links": {
+    "/api/v1/auth/sign-up": {
       "post": {
-        "operationId": "requestEmailLink",
+        "operationId": "signUpEmailPassword",
         "tags": [
           "Auth"
         ],
-        "summary": "Request invited-user sign-in link",
-        "description": "Always return generic accepted message for syntactically valid eligible/ineligible emails. Invite check controls sending, not response disclosure. One send/minute and five/hour/email; email outbox outside DB transaction.",
+        "summary": "Register with email and password",
+        "description": "Creates a self-service account and secure session. Rate-limit registration by IP and normalized email. Passwords are never logged or returned.",
         "parameters": [
           {
             "$ref": "#/components/parameters/Csrf"
@@ -121,7 +121,7 @@
           }
         ],
         "responses": {
-          "202": {
+          "200": {
             "description": "Successful response",
             "headers": {
               "X-Request-ID": {
@@ -142,10 +142,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Message"
+                "$ref": "#/components/schemas/SessionView"
                 },
                 "example": {
-                  "message": "If this email is invited, a sign-in link will arrive shortly.",
+                  "authenticated": true,
                   "serverNow": "2026-10-31T10:00:00Z"
                 }
               }
@@ -181,11 +181,11 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EmailLinkRequest"
+                "$ref": "#/components/schemas/CredentialRequest"
               },
               "example": {
                 "email": "creator@example.com",
-                "returnPath": "/dashboard"
+                "password": "correct-horse-battery-staple"
               }
             }
           }
@@ -193,30 +193,22 @@
         "security": []
       }
     },
-    "/api/v1/auth/email-links/verify": {
-      "get": {
-        "operationId": "verifyEmailLink",
+    "/api/v1/auth/sign-in": {
+      "post": {
+        "operationId": "signInEmailPassword",
         "tags": [
           "Auth"
         ],
-        "summary": "Verify one-use email link",
-        "description": "Auth library verifies one-use token, rechecks invite, sets secure session cookie. Invalid/expired verification redirects to sign-in with safe error code. No token in logs. Return path was allowlisted at initiation.",
+        "summary": "Sign in with email and password",
+        "description": "Verifies credentials and creates a secure session. Invalid credentials receive a safe error; passwords never enter logs.",
         "parameters": [
           {
-            "name": "token",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 2048
-            },
-            "description": "token"
+            "$ref": "#/components/parameters/Csrf"
           }
         ],
         "responses": {
-          "303": {
-            "description": "Redirect to saved allowed path or safe sign-in error route",
+          "200": {
+            "description": "Authenticated session",
             "headers": {
               "X-Request-ID": {
                 "schema": {
@@ -232,22 +224,20 @@
                 },
                 "description": "No shared caching."
               },
-              "Location": {
-                "schema": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 2048,
-                  "pattern": "^/(?!/)",
-                  "description": "Same-origin allowlisted relative path only; reject encoded redirect bypasses."
-                }
-              },
               "Set-Cookie": {
                 "schema": {
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 4096
                 },
-                "description": "Secure HttpOnly session cookie on successful verification only."
+                "description": "Secure HttpOnly session cookie on successful sign-in only."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionView"
+                }
               }
             }
           },
@@ -262,6 +252,16 @@
           },
           "503": {
             "$ref": "#/components/responses/503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialRequest"
+              }
+            }
           }
         },
         "security": []
@@ -6335,7 +6335,7 @@
         ],
         "additionalProperties": false
       },
-      "EmailLinkRequest": {
+      "CredentialRequest": {
         "type": "object",
         "properties": {
           "email": {
@@ -6344,22 +6344,22 @@
             "maxLength": 254,
             "format": "email"
           },
-          "returnPath": {
+          "password": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 2048,
-            "pattern": "^/(?!/)",
-            "description": "Same-origin allowlisted relative path only; reject encoded redirect bypasses."
+            "minLength": 12,
+            "maxLength": 128,
+            "format": "password"
           }
         },
         "required": [
-          "email"
+          "email",
+          "password"
         ],
         "additionalProperties": false,
         "examples": [
           {
             "email": "creator@example.com",
-            "returnPath": "/dashboard"
+            "password": "correct-horse-battery-staple"
           }
         ]
       },

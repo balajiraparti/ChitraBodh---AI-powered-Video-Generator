@@ -21,7 +21,7 @@ Confirmed product constraints: 60–90 seconds, vertical 1080 × 1920, Indian ma
 | Area | Local generation prototype | Internal team pilot |
 |---|---|---|
 | Entry point | CLI or local-only minimal form | Next.js sign-in, composer, preview, status |
-| Identity | Explicit local test identity; bind UI to localhost | Invited email allowlist and verified session |
+| Identity | Explicit local test identity; bind UI to localhost | Email/password registration and verified session |
 | Persistence | Filesystem run manifest and single-process queue | MongoDB projects, jobs, versions, connections |
 | Generated media | Temporary local directory with expiry cleanup | Private R2 plus short-lived local render workspace |
 | Generation | One Node.js runner, one job at a time | Same core runner behind durable job claiming |
@@ -34,7 +34,7 @@ The local identity/storage adapters are prototype conveniences, not approved pub
 
 ```mermaid
 flowchart TD
-    U[Invited user] --> N[Next.js UI and Node.js server routes]
+    U[Registered creator] --> N[Next.js UI and Node.js server routes]
     N --> A[Authentication and ownership checks]
     A --> D[(MongoDB: users, projects, jobs)]
     D --> W[One generation worker]
@@ -61,7 +61,7 @@ This tree is proposed; these source files do not yet exist.
 
 ```text
 app/                         Next.js UI and server entry points
-src/auth/                    Session and allowlist checks
+src/auth/                    Session and credential checks
 src/contracts/               Versioned plan/timeline/request schemas
 src/pipeline/                Sequential generation stages and budgets
 src/providers/               Gemini and ElevenLabs adapters
@@ -194,7 +194,7 @@ On startup, reconcile expired manifests and abandoned local workspaces before ac
 
 ## 9. Authentication and media access
 
-In the team phase, use the proposed Better Auth MongoDB integration and verified email link, with an operator-managed allowlist. The email-delivery provider is still open. Check the allowlist when requesting sign-in and at account/session authorization boundaries; hiding the signup button is insufficient.
+In the team phase, use Better Auth MongoDB integration with self-service email/password registration and sign-in. Enforce secure password hashing through the library, rate-limit authentication, and authorize every request from its verified session; hiding UI controls is insufficient.
 
 The backend derives owner identity from the verified session. Every operation checks project/artifact/connection ownership before returning data or signing a URL. Session presence in browser state is not proof of authorization.
 

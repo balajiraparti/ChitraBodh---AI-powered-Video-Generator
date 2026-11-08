@@ -24,7 +24,7 @@ Created in Stitch: desktop homepage, expanded demo viewer, mobile homepage. The 
 
 Keep concise hero copy and one primary creation CTA. Place the video high on the page. Mobile is a single column with a reachable CTA that does not obscure captions. Use real content labels, 44px targets, visible focus, keyboard-accessible controls and reduced-motion support. No autoplay sound or decorative infinite loops.
 
-Below the hero, show Topic → AI creates → Preview and share. Explain motion graphics, synchronized narration and optional captions in plain language. Keep invite-only status explicit; do not imply open registration, payment or unsupported performance guarantees.
+Below the hero, show Topic → AI creates → Preview and share. Explain motion graphics, synchronized narration and optional captions in plain language. Make email/password sign-in and account creation clear; do not imply payment or unsupported performance guarantees.
 
 ## Implementation boundary
 
