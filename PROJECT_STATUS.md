@@ -1,6 +1,6 @@
 # ChitraBodh project status
 
-Updated 7 November 2026. Use this file to choose the next feature and record what ships. The first dashboard milestone ends when an invited teammate can sign in, enter a topic, and download their narrated vertical video without using a terminal.
+Updated 8 November 2026. Use this file to choose the next feature and record what ships. The first dashboard milestone ends when an invited teammate can sign in, enter a topic, and download their narrated vertical video without using a terminal.
 
 ## Current baseline
 
@@ -20,7 +20,7 @@ Baseline established from repository inspection and recorded prototype results. 
 
 | ID | Feature | Depends on | Status | Finish condition |
 |---|---|---|---|---|
-| F00 | Public homepage and product navigation | Daylight design | Reopened after manual QA | Home opens at / with topic illustrations, invite-only sign-in and workspace preview links. |
+| F00 | Public homepage and product navigation | Daylight design | Done | Home opens at / with topic illustrations, invite-only sign-in and workspace preview links. |
 | F01 | Next.js dashboard shell | Daylight design | Done | My videos, Create and Settings routes open directly and through keyboard-accessible desktop and mobile navigation. My videos has an empty state. |
 | F02 | Invite-only email link | MongoDB user and token records | Awaiting integration verification | An invited user receives a single-use, expiring link. All addresses receive the same on-screen response. |
 | F03 | Session and private routes | F01, F02 | Awaiting integration verification | Redeeming a valid link opens the dashboard. Signed-out access redirects to sign-in and sign-out revokes access. |
@@ -71,3 +71,4 @@ Apply the [screen QA findings](docs/design/Stitch-Screens-QA.md) to each affecte
 | 7 Nov 2026 | F06 manual QA passed. One minor UI issue remains. | Double-clicking Create video on a saved draft produced one queued job and one version. Two concurrent HTTP submissions with different keys for a second creator returned 202 and 409 with the same job ID. Create reopened the outstanding job. Fresh-topic submission also succeeded. During generation submission the disabled Save draft button reads “Saving…”. Give generation its own pending label. |
 | 7 Nov 2026 | F07 manual integration QA passed with the production supervisor and a controlled child process. | The older job ran while the next remained queued. Returning through Create showed “Creating narration”. Keep creating dismissed the confirmation. Stop creation ended the first job, and the next began after it finished. Reload showed cancellation and the saved topic and settings reopened. A forced child failure displayed “Generation failed” with a saved-idea link. A successful child produced the ready page. Live provider narration and rendering remain to be verified. |
 | 7 Nov 2026 | F08 media controls passed against a loopback S3 test endpoint. Expiry exposed a user-facing status defect. | The real storage adapter uploaded a fixture MP4. The owner received 200 and a 16-byte range returned 206. Another creator received 404 and signed-out access received 401. Stored lifetime was 7,200 seconds. Backdating expiry caused owner reads to return 410 before deletion; cleanup left zero objects. After aligning the project, version and artifact timestamps and reloading the job URL, the page still said “Your video is ready”. Show an expired state in F09. Verify delivery and deletion in a configured private R2 bucket. The 12 targeted dashboard, draft, job and media regression tests also passed. |
+| 8 Nov 2026 | Corrected manual QA defects F00, F06 and F08. Home links to a public sample workspace. Only the action being submitted changes its label. Job status now derives media availability from the owned artifact on reload and refresh, and an open ready page tracks expiry. | Verified generated home/preview markup, 54 passing regression tests, TypeScript and production build. Expiry regression covers the exact deadline and post-cleanup page with the original job still succeeded. Fresh browser walkthrough of the three fixes and live R2 delivery remain pending. |

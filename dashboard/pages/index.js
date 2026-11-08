@@ -19,7 +19,7 @@ export default function Home() {
   return <div className="landing"><div className="pitch">
     <h1>Your idea.<br/><em>A clearer picture.</em></h1>
     <p>Turn a topic into a short vertical explainer with moving diagrams, synchronized narration and optional captions.</p>
-    <Link className="action" href="/sign-in">Create a video</Link>
+    <Link className="action" href="/sign-in">Create a video</Link><Link className="tour" href="/preview">Preview the workspace →</Link>
     
   </div><section className="demo" aria-label="Illustrated topic preview">
     <div className="choices">{['Water cycle','Linear search'].map((name,i)=><button key={name} aria-pressed={search === Boolean(i)} onClick={()=>setSearch(Boolean(i))}>{name}</button>)}</div>

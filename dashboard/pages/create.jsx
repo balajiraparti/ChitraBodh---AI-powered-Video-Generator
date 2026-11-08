@@ -28,13 +28,15 @@ function Editor({initial,voices}) {
   const [captions,setCaptions]=useState(initial?.captions ?? true);
   const available=voices.some(voice=>voice.id===voiceCatalogId && voice.available);
   const [message,setMessage]=useState('');
-  const [busy,setBusy]=useState(false);
+  const [pending,setPending]=useState(null);
+  const busy=pending!==null;
   const request=useRef(null);
   const generation=useRef(null);
   const dirty=draft && (topic.trim()!==draft.topic || captions!==draft.captions || voiceCatalogId!==draft.voiceCatalogId);
   async function generate(){
     if(busy || dirty || !available || !topic.trim() || length>2000)return;
-    setBusy(true);
+    setPending('generation');
+    setMessage('');
     try{
       const body=JSON.stringify(draft?{projectId:draft.id,expectedRevision:draft.revision}:{topic,voiceCatalogId,captions});
       if(generation.current?.body!==body)generation.current={body,key:crypto.randomUUID()};
@@ -46,13 +48,13 @@ function Editor({initial,voices}) {
       if(response.status===422){setMessage('Choose an available narrator before generating.');return;}
       throw Error();
     }catch{setMessage('Could not confirm your request. Try again.');}
-    finally{setBusy(false);}
+    finally{setPending(null);}
   }
   const length=[...topic].length;
   async function save(event) {
     event.preventDefault();
     if(busy||!available||!topic.trim()||length>2000)return;
-    setBusy(true);
+    setPending('save');
     setMessage('');
     try{
       const fingerprint=JSON.stringify([topic,voiceCatalogId,captions]);
@@ -69,7 +71,7 @@ function Editor({initial,voices}) {
       const data=await response.json();
       setDraft(data);setTopic(data.topic);setMessage('Draft saved.');
     }catch{setMessage('Could not confirm the save. Your text is still here. Try again.');}
-    finally{setBusy(false);}
+    finally{setPending(null);}
   }
   return <><h1>Create a video</h1><section><form onSubmit={save} className="draft-form">
     <label htmlFor="topic">What would you like to explain?</label>
@@ -81,9 +83,9 @@ function Editor({initial,voices}) {
     </select>
     {!available && <p>Select an available narrator to save this draft.</p>}
     <label><input type="checkbox" checked={captions} disabled={busy} onChange={event=>{setCaptions(event.target.checked);setMessage("");}}/> Include synchronized captions</label>
-    <button className="action" disabled={busy || !available || !topic.trim() || length>2000}>{busy?'Saving…':'Save draft'}</button>
+    <button className="action" disabled={busy || !available || !topic.trim() || length>2000}>{pending==='save'?'Saving…':'Save draft'}</button>
     {dirty && <small>Save your changes before creating the video.</small>}
-    <button type="button" className="action" disabled={busy || dirty || !available || !topic.trim() || length>2000} onClick={generate}>Create video</button>
+    <button type="button" className="action" disabled={busy || dirty || !available || !topic.trim() || length>2000} onClick={generate}>{pending==='generation'?'Submitting…':'Create video'}</button>
     <span role="status">{message}</span>
     {draft && <Link href={'/create?draft='+draft.id}>Open saved draft</Link>}
   </form></section></>;

@@ -19,3 +19,23 @@ test('create page renders the saved draft and progress page renders real stages'
   assert.match(progress,/Creating narration/);
   assert.match(progress,/Cancel creation/);
 });
+
+test('successful jobs show expiry at the deadline and after cleanup',async()=>{
+  // @ts-expect-error The dashboard server module is plain JavaScript.
+  const {jobStatus}=await import('../dashboard/server/job-status.mjs');
+  const expiry=new Date('2026-11-08T12:00:00Z');
+  const artifact={_id:'a',ownerId:'owner',state:'ready',expiresAt:expiry};
+  const store={artifacts:{findOne:async(filter:any)=>filter._id==='a'&&filter.ownerId==='owner'?artifact:null}};
+  const job={_id:'j',ownerId:'owner',state:'succeeded',artifactId:'a'};
+  const before=await jobStatus(store,job,new Date(+expiry-1));
+  assert.match(renderToStaticMarkup(<Job initial={before}/>),/Your video is ready/);
+  for(const state of ['ready','deleted']){
+    artifact.state=state;
+    const after=await jobStatus(store,job,expiry);
+    assert.equal(after.state,'succeeded');
+    assert.equal(after.mediaUrl,null);
+    const html=renderToStaticMarkup(<Job initial={after}/>);
+    assert.match(html,/Your video has expired/);
+    assert.doesNotMatch(html,/Your video is ready/);
+  }
+});
