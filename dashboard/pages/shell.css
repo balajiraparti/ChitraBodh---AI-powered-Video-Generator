@@ -13,3 +13,25 @@ main{max-width:1056px;margin:auto;padding:clamp(24px,6vw,72px) 24px}h1{font-size
 .draft-form select{min-height:44px;padding:8px 12px;font:inherit;border:1px solid #7c887f;border-radius:10px;background:white;color:inherit}.draft-form label:has(input[type=checkbox]){display:flex;align-items:center;gap:8px;min-height:44px}
 li[aria-current=step]{color:#126b58;font-weight:800}section button{min-height:44px;font:inherit;padding:8px 16px;border:1px solid #7c887f;border-radius:10px;margin-right:8px;cursor:pointer}
 .ready-media video{display:block;width:min(100%,340px);aspect-ratio:9/16;max-height:70vh;object-fit:contain;border-radius:16px;background:#202b27}
+
+/* Daylight boards 01–02, 04–05, 07–08 and their mobile counterparts. */
+.auth-layout{display:grid;min-height:65vh;place-items:center}
+.signin{width:min(100%,440px);padding:clamp(24px,4vw,40px)}
+.signin h1{font-size:clamp(28px,4vw,36px);margin-bottom:20px}
+.library-grid,.composer-grid,.ready-media{display:grid;align-items:start;gap:24px}
+.library-grid{grid-template-columns:minmax(0,7fr) minmax(0,5fr)}
+.composer-grid{grid-template-columns:minmax(0,8fr) minmax(0,4fr)}
+.library-grid .empty{padding:clamp(32px,5vw,64px);text-align:left}
+.studio-note{padding:24px;background:#edf1e9;border:1px solid #d9ded6;border-radius:16px}
+.studio-note h2,.export-panel h2,.form-subtitle{margin:0 0 12px;font-size:21px;letter-spacing:-.025em}
+.studio-note a,.back-link{color:#126b58;font-weight:700;display:inline-flex;align-items:center;min-height:44px}
+.studio-note dl{margin:0}.studio-note dt{font-size:.86rem;color:#59665e}.studio-note dd{margin:0 0 14px;font-weight:650}
+.composer-grid section{padding:clamp(20px,3vw,34px)}.form-subtitle{margin-top:14px}
+.ready-media{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}.ready-media video{justify-self:center}
+.export-panel{grid-column:2;grid-row:1}.ready-media p[role=alert]{grid-column:1}
+.stage-list{list-style:none;padding:0}.stage-list li{padding:10px 16px;border-left:3px solid #d9ded6}.stage-list li[aria-current=step]{border-color:#126b58;background:#eef4ef}
+@media(max-width:720px){.library-grid,.composer-grid,.ready-media{grid-template-columns:1fr}.export-panel{grid-column:auto;grid-row:auto}.auth-layout{min-height:55vh}}
+.demo-dialog{width:min(90vw,420px);border:1px solid #d9ded6;border-radius:16px;padding:20px;background:#f7f5ef;color:#202b27}
+.demo-dialog::backdrop{background:rgb(32 43 39 / .6)}.demo-dialog form{text-align:right;margin-bottom:12px}
+.demo-dialog .poster{width:min(100%,38vh)}.expand-preview{margin-top:10px;background:white}
+.draft-form button[type=submit],.draft-form button:not([type]){background:white;color:#126b58;border:1px solid #7c887f}

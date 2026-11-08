@@ -61,12 +61,12 @@ function Progress({initial}){
   return <><h1>{active?'Creating your video':expired?'Your video has expired':job.state==='succeeded'?'Your video is ready':job.state==='cancelled'?'Creation cancelled':'Generation failed'}</h1>
     <section>
       <p role="status">{job.cancelRequested&&active?'Stopping creation…':active?stages[job.stage]||'Queued':job.safeError||''}</p>
-      {active && <><ol>{Object.entries(stages).map(([key,label])=><li key={key} aria-current={job.stage===key?'step':undefined}>{label}</li>)}</ol><p>You can leave this page. We’ll keep working.</p></>}
+      {active && <><h2 className="form-subtitle">Progress</h2><ol className="stage-list">{Object.entries(stages).map(([key,label])=><li key={key} aria-current={job.stage===key?'step':undefined}>{label}</li>)}</ol><p>You can leave this page. We’ll keep working.</p></>}
       {job.mediaAvailable && job.mediaUrl && <div className="ready-media">
         <video key={attempt} controls playsInline preload="metadata" aria-label="Generated explainer" src={job.mediaUrl} onError={()=>setPlaybackError(true)}/>
         {playbackError && <p role="alert">The preview could not load. <button onClick={()=>{setPlaybackError(false);setAttempt(attempt+1)}}>Retry preview</button></p>}
-        <p>Available until <time dateTime={job.expiresAt}>{new Date(job.expiresAt).toISOString().slice(0,16).replace('T',' ')} UTC</time>.</p>
-        <a className="action" href={job.mediaUrl+'?download=1'} download="chitrabodh.mp4">Download MP4</a>
+        <div className="export-panel"><h2>Save your video</h2><p>Available until <time dateTime={job.expiresAt}>{new Date(job.expiresAt).toISOString().slice(0,16).replace('T',' ')} UTC</time>.</p>
+        <a className="action" href={job.mediaUrl+'?download=1'} download="chitrabodh.mp4">Download MP4</a></div>
       </div>}
       {expired && <><p>The availability window has ended. Your original topic is saved.</p><Link href={'/create?fromJob='+job.jobId}>Create a new video from this idea</Link></>}
       <p role="alert">{error}</p>

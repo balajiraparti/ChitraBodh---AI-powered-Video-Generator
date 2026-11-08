@@ -81,11 +81,11 @@ function Editor({initial,seed,voices}) {
     }catch{setMessage('Could not confirm the save. Your text is still here. Try again.');}
     finally{setPending(null);}
   }
-  return <><h1>Create a video</h1><section><form onSubmit={save} className="draft-form">
+  return <><Link className="back-link" href="/dashboard">← My videos</Link><h1>Create a video</h1><div className="composer-grid"><section><form onSubmit={save} className="draft-form">
     <label htmlFor="topic">What would you like to explain?</label>
     <textarea id="topic" rows={6} value={topic} disabled={busy} onChange={e=>{setTopic(e.target.value);setMessage('')}} aria-describedby="topic-count" aria-invalid={length>2000}/>
     <small id="topic-count">{length} / 2,000 characters{length>2000?' · Shorten your idea before saving.':''}</small>
-    <label htmlFor="narrator">Narrator</label>
+    <h2 className="form-subtitle">Narration and captions</h2><label htmlFor="narrator">Narrator</label>
     <select id="narrator" value={voiceCatalogId} disabled={busy} onChange={event=>{setVoice(event.target.value);setMessage("");}}>
       {voices.map(voice=><option key={voice.id} value={voice.id} disabled={!voice.available}>{voice.name}{voice.available?"":" · Unavailable"}</option>)}
     </select>
@@ -96,5 +96,5 @@ function Editor({initial,seed,voices}) {
     <button type="button" className="action" disabled={busy || dirty || !available || !topic.trim() || length>2000} onClick={generate}>{pending==='generation'?'Submitting…':'Create video'}</button>
     <span role="status">{message}</span>
     {draft && <Link href={'/create?draft='+draft.id}>Open saved draft</Link>}
-  </form></section></>;
+  </form></section><aside className="studio-note"><h2>Video format</h2><dl><dt>Frame</dt><dd>Vertical · 9:16</dd><dt>Length</dt><dd>Typically 60–90 seconds</dd><dt>Captions</dt><dd>{captions?"Included":"Off"}</dd></dl></aside></div></>;
 }
