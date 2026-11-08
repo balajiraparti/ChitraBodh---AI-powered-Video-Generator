@@ -2,6 +2,13 @@ import { z } from 'zod';
 import { services,reserve } from '../../../server/auth.mjs';
 import { fromNodeHeaders } from 'better-auth/node';
 
+export function respondToCredentialResult(res,result,path) {
+  const cookies=result.headers?.getSetCookie?.() || [];
+  if(cookies.length)res.setHeader('Set-Cookie',cookies);
+  if(!result.ok)return res.status(result.status).json({message:path==='sign-up'?'We could not create that account. Check your details and try again.':'We could not sign you in. Check your details and try again.'});
+  return res.status(200).json({redirect:'/dashboard'});
+}
+
 export default async function handler(req,res) {
   res.setHeader('Cache-Control','no-store');
   res.setHeader('Referrer-Policy','no-referrer');
@@ -17,9 +24,7 @@ export default async function handler(req,res) {
       const result=path==='sign-up'
         ? await auth.api.signUpEmail({headers:fromNodeHeaders(req.headers),body:{email:email.data,password,name:email.data.split('@')[0]},asResponse:true})
         : await auth.api.signInEmail({headers:fromNodeHeaders(req.headers),body:{email:email.data,password},asResponse:true});
-      const cookies=result.headers?.getSetCookie?.() || [];
-      if(cookies.length)res.setHeader('Set-Cookie',cookies);
-      return res.status(200).json({redirect:'/dashboard'});
+      return respondToCredentialResult(res,result,path);
     }
     const logout=req.method==='POST' && path==='sign-out';
     if(!logout)return res.status(404).end();
