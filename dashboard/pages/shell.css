@@ -35,3 +35,10 @@ li[aria-current=step]{color:#126b58;font-weight:800}section button{min-height:44
 .demo-dialog::backdrop{background:rgb(32 43 39 / .6)}.demo-dialog form{text-align:right;margin-bottom:12px}
 .demo-dialog .poster{width:min(100%,38vh)}.expand-preview{margin-top:10px;background:white}
 .draft-form button[type=submit],.draft-form button:not([type]){background:white;color:#126b58;border:1px solid #7c887f}
+.library-heading,.project-list li{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.library-heading{margin-bottom:24px}.library-heading h1{margin:0}
+.project-list{list-style:none;padding:0;display:grid;gap:12px}
+.project-list li{padding:20px;background:white;border:1px solid #d9ded6;border-radius:16px}
+.project-list h2{font-size:21px;overflow-wrap:anywhere;margin:4px 0}.project-list small{color:#126b58;font-weight:700}
+.project-list p{margin:6px 0}.project-list a{flex:none;display:flex;align-items:center;min-height:44px;text-decoration:underline}
+@media(max-width:600px){.project-list li,.library-heading{align-items:flex-start;flex-direction:column}}

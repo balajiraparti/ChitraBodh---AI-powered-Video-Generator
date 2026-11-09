@@ -1,6 +1,6 @@
 # ChitraBodh project status
 
-Updated 8 November 2026. Use this file to choose the next feature and record what ships. The first dashboard milestone ends when a newly registered creator can sign in, enter a topic, and download their narrated vertical video without using a terminal.
+Updated 9 November 2026. Use this file to choose the next feature and record what ships. The first dashboard milestone ends when a newly registered creator can sign in, enter a topic, and download their narrated vertical video without using a terminal.
 
 ## Current baseline
 
@@ -16,7 +16,7 @@ Baseline established from repository inspection and recorded prototype results. 
 
 ## Feature queue
 
-**Current verification:** F00, F01 and F04–F06 are Done. F02–F03 are **In progress** after the 8 November auth model change; F07–F09 have pending live integration checks. F10–F18 are planned. The first milestone needs a real registration-to-download run and the populated library. See the [Daylight implementation audit](docs/design/Daylight-Implementation-Audit.md) for exact board coverage and visual gaps.
+**Current verification:** F00, F01 and F04–F06 are Done. F02–F03 are **In progress** after the 8 November auth model change; F07–F09 have pending live integration checks. F10 is implemented and verified for listing. F11–F18 are planned. The first milestone needs a real registration-to-download run. See the [Daylight implementation audit](docs/design/Daylight-Implementation-Audit.md) for exact board coverage and visual gaps.
 
 | ID | Feature | Depends on | Status | Finish condition |
 |---|---|---|---|---|
@@ -30,7 +30,7 @@ Baseline established from repository inspection and recorded prototype results. 
 | F07 | Worker and progress | F06, local pipeline | Awaiting integration verification | One worker processes queued jobs in order. Users can leave and return to see the current stage, failure or cancellation. |
 | F08 | Private media and expiry | F07 | Awaiting integration verification | Completed media goes to R2. Access closes two hours after first ready, and cleanup removes expired objects. |
 | F09 | Ready video and download | F08 | Awaiting integration verification | The owner can play and download the selected 9:16 MP4 before expiry. Expired projects offer fresh creation from the saved idea. |
-| F10 | My videos list | F04, F07, F09 | Planned | A user sees only their projects, with current state, expiry and pagination. Complete the first milestone with a real registered creator. |
+| F10 | My videos list | F04, F07, F09 | Done (library verified) | A user sees only their projects, with current state, expiry and pagination. Complete the first milestone with a real registered creator. |
 | F11 | Optional idea assistant | F04 | Planned | Up to three suggestions fill the draft only when selected. Generation requires a separate click. |
 | F12 | Saved preferences | F05 | Planned | Voice, captions and timezone persist. New drafts inherit defaults and existing videos retain their settings. |
 | F13 | Revisions | F06–F09 | Planned | A revision preserves the previous ready version and original expiry, including when revision fails. |
@@ -78,3 +78,4 @@ Apply the [screen QA findings](docs/design/Stitch-Screens-QA.md) to each affecte
 | 8 Nov 2026 | Replaced invite-only emailed magic links with self-service email/password registration and sign-in in the dashboard and product contracts. | Removed SMTP and invite configuration from the dashboard implementation, enabled Better Auth email/password sessions, and added registration/sign-in UI and test coverage. Targeted auth test, TypeScript, production build and OpenAPI JSON validation passed. F02/F03 are reopened pending MongoDB/browser integration verification; prior inbox-link QA remains historical evidence only. |
 | 8 Nov 2026 | Corrected credential-route failure handling and refreshed the Daylight auth audit. | The auth facade now preserves Better Auth invalid-credential and duplicate-registration response statuses instead of returning a false dashboard redirect. Added wrapper regression coverage for 401/422 and updated remaining auth verification work. Targeted auth tests and TypeScript passed; browser/MongoDB integration verification remains open. |
 | 9 Nov 2026 | Aligned the worker with password registration. | Worker checks the owning account exists before starting a job. Publicly registered accounts no longer need a legacy invite record. |
+| 9 Nov 2026 | F10 populated My videos with owner-scoped drafts, active jobs, terminal outcomes, expiry, and signed cursor pagination. | 56 tests passed including live Atlas pagination, cursor rejection and isolation. Production build passed. Signed-out list returned 401; a new test account in Chrome loaded 20+1 drafts and reopened one at 1280px and 390px. QA account/project records were scoped for cleanup. Full real-provider/R2 download journey remains pending. Next feature is F11 optional idea assistant. |

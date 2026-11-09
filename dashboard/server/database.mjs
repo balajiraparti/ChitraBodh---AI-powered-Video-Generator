@@ -15,6 +15,8 @@ async function connect(){
       store.jobs.createIndex({ownerId:1,key:1},{unique:true}),
       store.jobs.createIndex({ownerId:1},{unique:true,partialFilterExpression:{active:true}}),
       store.jobs.createIndex({state:1,createdAt:1,_id:1}),
+      store.projects.createIndex({ownerId:1,createdAt:-1,_id:-1}),
+      store.jobs.createIndex({projectId:1,ownerId:1,createdAt:-1,_id:-1}),
       store.projects.createIndex({ownerId:1,status:1,updatedAt:-1,_id:-1}),
       store.artifacts.createIndex({expiresAt:1,state:1}),
       db.collection('auth_limits').createIndex({expiresAt:1},{expireAfterSeconds:0}),
