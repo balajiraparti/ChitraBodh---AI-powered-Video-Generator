@@ -10,8 +10,10 @@ async function connect(){
   const db=client.db();
   const store={client};
   for(const name of ['jobs','versions','projects','artifacts','workerSlots'])store[name]=db.collection(name);
+  for(const name of ['ideaCommands','ideaLocks','ideaPayloads'])store[name]=db.collection(name);
   try{
     await Promise.all([
+      ...['ideaCommands','ideaLocks','ideaPayloads'].map(name=>store[name].createIndex({expiresAt:1},{expireAfterSeconds:0})),
       store.jobs.createIndex({ownerId:1,key:1},{unique:true}),
       store.jobs.createIndex({ownerId:1},{unique:true,partialFilterExpression:{active:true}}),
       store.jobs.createIndex({state:1,createdAt:1,_id:1}),

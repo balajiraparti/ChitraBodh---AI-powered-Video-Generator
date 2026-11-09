@@ -277,3 +277,7 @@ Database acceptance checks:
 - Real replica-set transactions, unique constraints, backup exclusion and restore recovery are exercised before pilot launch.
 
 This specification is ready to guide migrations and repository implementation. It deliberately does not claim those checks have passed against a running database yet.
+
+### Implemented F11 collections
+
+The dashboard uses `ideaLocks` (one expiring lease per owner), `ideaCommands` (hashed request identity and outcome for 48 hours), and `ideaPayloads` (owner-scoped reply cache and last six conversation pairs for 24 hours). Each has an expiry TTL index; application reads also check the deadline. The lease is acquired before inference; completion writes history, cached reply and command state in a transaction after inference. Configure the backup policy to exclude `ideaPayloads` when deploying. Unsaved editors use a temporary conversation ID and do not create project records.

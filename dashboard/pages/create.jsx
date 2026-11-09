@@ -1,6 +1,7 @@
 import {useRouter} from 'next/router';
 import React,{useRef,useState} from 'react';
 import Link from 'next/link';
+import IdeaAssistant from '../components/IdeaAssistant';
 import {currentOwner,services} from '../server/auth.mjs';
 import {narratorChoices} from '../server/narrators.mjs';
 import {readDraft} from '../server/drafts.mjs';
@@ -85,6 +86,7 @@ function Editor({initial,seed,voices,activeJobId}) {
     <label htmlFor="topic">What would you like to explain?</label>
     <textarea id="topic" rows={6} value={topic} disabled={busy} onChange={e=>{setTopic(e.target.value);setMessage('')}} aria-describedby="topic-count" aria-invalid={length>2000}/>
     <small id="topic-count">{length} / 2,000 characters{length>2000?' · Shorten your idea before saving.':''}</small>
+    <IdeaAssistant draftId={draft?.id} topic={topic} disabled={busy} onChoose={idea=>{setTopic(idea);setMessage("Idea selected. You can edit it before creating a video.");}}/>
     <h2 className="form-subtitle">Narration and captions</h2><label htmlFor="narrator">Narrator</label>
     <select id="narrator" value={voiceCatalogId} disabled={busy} onChange={event=>{setVoice(event.target.value);setMessage("");}}>
       {voices.map(voice=><option key={voice.id} value={voice.id} disabled={!voice.available}>{voice.name}{voice.available?"":" · Unavailable"}</option>)}

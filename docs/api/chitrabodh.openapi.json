@@ -142,7 +142,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                "$ref": "#/components/schemas/SessionView"
+                  "$ref": "#/components/schemas/SessionView"
                 },
                 "example": {
                   "authenticated": true,
@@ -1216,13 +1216,10 @@
           "Ideas"
         ],
         "summary": "Suggest educational topics",
-        "description": "Owned ungenerated draft; one brainstorming request/user in flight, six/minute, six recent message pairs and 8000 chars maximum sent history. No automatic generation. Expired result replay is 410.",
+        "description": "Use draftId for a saved private draft or conversationId for an unsaved editor. Exact Origin and JSON required. One in flight per owner, six calls/minute; expired cached result replay returns 410. No generation or draft write.",
         "parameters": [
           {
             "$ref": "#/components/parameters/Idempotency"
-          },
-          {
-            "$ref": "#/components/parameters/Csrf"
           },
           {
             "name": "Origin",
@@ -5745,8 +5742,11 @@
         "type": "object",
         "properties": {
           "draftId": {
-            "type": "string",
-            "format": "uuid"
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[a-f0-9]{64}$"
           },
           "reply": {
             "type": "string",
@@ -6497,19 +6497,34 @@
         "properties": {
           "draftId": {
             "type": "string",
-            "format": "uuid"
+            "pattern": "^[a-f0-9]{64}$"
           },
           "message": {
             "type": "string",
             "minLength": 1,
             "maxLength": 1000
+          },
+          "conversationId": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "required": [
-          "draftId",
           "message"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "required": [
+              "draftId"
+            ]
+          },
+          {
+            "required": [
+              "conversationId"
+            ]
+          }
+        ]
       },
       "GenerationRequest": {
         "type": "object",

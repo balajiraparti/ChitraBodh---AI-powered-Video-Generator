@@ -42,3 +42,9 @@ li[aria-current=step]{color:#126b58;font-weight:800}section button{min-height:44
 .project-list h2{font-size:21px;overflow-wrap:anywhere;margin:4px 0}.project-list small{color:#126b58;font-weight:700}
 .project-list p{margin:6px 0}.project-list a{flex:none;display:flex;align-items:center;min-height:44px;text-decoration:underline}
 @media(max-width:600px){.project-list li,.library-heading{align-items:flex-start;flex-direction:column}}
+.idea-assistant{border-top:1px solid #d9ded6;padding-top:8px}
+.idea-assistant button{color:#105544;background:#e3eee7}
+.idea-assistant [id=idea-panel]:not([hidden]){display:grid;gap:10px;padding:12px 0}
+.idea-assistant p{margin:0}.idea-assistant ul{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.idea-assistant li{padding:12px;border:1px solid #d9ded6;border-radius:10px;overflow-wrap:anywhere}
+.idea-assistant li button{display:block;margin-top:6px}

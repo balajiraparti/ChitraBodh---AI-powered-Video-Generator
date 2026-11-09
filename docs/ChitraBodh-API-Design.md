@@ -97,7 +97,7 @@ Paths below are relative to `/api/v1`. All require session unless explicitly sta
 | `GET /projects/{projectId}` | → 200 Project | Includes selectedVersionId/activeJobId when applicable; not all history |
 | `PATCH /projects/{projectId}` C | `{expectedRevision,title?,topic?}` → 200 Project | Topic editable only before first version; later changes use revision or new generation |
 | `DELETE /projects/{projectId}` I C | `{expectedRevision}` → 202 DeletionReceipt | Tombstone before purge; cancels pending jobs; in-flight publication may complete |
-| `POST /ideas/brainstorm` I C | `{draftId,message}` → 200 BrainstormReply | Owned ungenerated draft; one in-flight brainstorm/user; max six recent pairs/8,000 input chars; six requests/minute |
+| `POST /ideas/brainstorm` I C | `{draftId or conversationId, message}` → 200 BrainstormReply | Owned ungenerated draft or owner-scoped unsaved editor; exact Origin + JSON; one in-flight brainstorm/user; max six recent pairs/8,000 input chars; six requests/minute |
 | `GET /projects/{projectId}/versions` | cursor/limit → 200 VersionPage | Metadata only; includes expired states, never expired scripts |
 | `POST /projects/{projectId}/selection` C | `{versionId,expectedRevision}` → 200 Project | Same project/owner, ready and unexpired; no change to publication payload |
 
