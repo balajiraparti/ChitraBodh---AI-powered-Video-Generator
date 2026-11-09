@@ -39,7 +39,7 @@ try{
       const userIds=[job.ownerId];
       if(ObjectId.isValid(job.ownerId))userIds.push(new ObjectId(job.ownerId));
       const user=await store.db.collection('user').findOne({_id:{$in:userIds}});
-      if(!user||!await store.db.collection('invites').findOne({normalizedEmail:user.email.trim().toLowerCase(),enabled:true}))throw Error('Invitation removed');
+      if(!user)throw Error('Creator account unavailable');
       const version=await store.versions.findOne({_id:job.versionId,ownerId:job.ownerId});
       if(!version)throw Error('Missing version');
       if(job.cancelRequested)controller.abort();
