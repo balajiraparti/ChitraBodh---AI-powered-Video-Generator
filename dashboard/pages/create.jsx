@@ -12,7 +12,7 @@ export async function getServerSideProps({req,res,query}) {
   if(query.draft!==undefined && typeof query.draft!=='string')return {notFound:true};
   const {projects,jobs,versions}=await services();
   const activeJob=await jobs.findOne({ownerId:owner,active:true},{projection:{_id:1}});
-  if(activeJob)return {redirect:{destination:'/jobs/'+activeJob._id,permanent:false}};
+  if(activeJob && query.draft===undefined)return {redirect:{destination:'/jobs/'+activeJob._id,permanent:false}};
   if(query.fromJob!==undefined){
     if(typeof query.fromJob!=='string')return {notFound:true};
     const source=await jobs.findOne({_id:query.fromJob,ownerId:owner,state:'succeeded'});
@@ -23,12 +23,12 @@ export async function getServerSideProps({req,res,query}) {
   }
   const initial=await readDraft(projects,owner,query.draft);
   if(query.draft!==undefined && !initial)return {notFound:true};
-  return {props:{initial,voices:narratorChoices()}};
+  return {props:{initial,activeJobId:activeJob?String(activeJob._id):null,voices:narratorChoices()}};
 }
-export default function Create({initial,seed,voices}) {
-  return <Editor key={initial?.id ?? seed?.topic ?? 'new'} initial={initial} seed={seed} voices={voices}/>;
+export default function Create({initial,seed,voices,activeJobId}) {
+  return <Editor key={initial?.id ?? seed?.topic ?? 'new'} initial={initial} seed={seed} voices={voices} activeJobId={activeJobId}/>;
 }
-function Editor({initial,seed,voices}) {
+function Editor({initial,seed,voices,activeJobId}) {
   const router=useRouter();
   const [draft,setDraft]=useState(initial);
   const [topic,setTopic]=useState(initial?.topic ?? seed?.topic ?? '');
@@ -42,7 +42,7 @@ function Editor({initial,seed,voices}) {
   const generation=useRef(null);
   const dirty=draft && (topic.trim()!==draft.topic || captions!==draft.captions || voiceCatalogId!==draft.voiceCatalogId);
   async function generate(){
-    if(busy || dirty || !available || !topic.trim() || length>2000)return;
+    if(activeJobId || busy || dirty || !available || !topic.trim() || length>2000)return;
     setPending('generation');
     setMessage('');
     try{
@@ -93,7 +93,8 @@ function Editor({initial,seed,voices}) {
     <label><input type="checkbox" checked={captions} disabled={busy} onChange={event=>{setCaptions(event.target.checked);setMessage("");}}/> Include synchronized captions</label>
     <button className="action" disabled={busy || !available || !topic.trim() || length>2000}>{pending==='save'?'Saving…':'Save draft'}</button>
     {dirty && <small>Save your changes before creating the video.</small>}
-    <button type="button" className="action" disabled={busy || dirty || !available || !topic.trim() || length>2000} onClick={generate}>{pending==='generation'?'Submitting…':'Create video'}</button>
+    {activeJobId && <p>You can edit this draft while your <Link href={"/jobs/"+activeJobId}>current video</Link> is generating. Reopen this draft after it finishes to create another video.</p>}
+    <button type="button" className="action" disabled={activeJobId || busy || dirty || !available || !topic.trim() || length>2000} onClick={generate}>{pending==='generation'?'Submitting…':'Create video'}</button>
     <span role="status">{message}</span>
     {draft && <Link href={'/create?draft='+draft.id}>Open saved draft</Link>}
   </form></section><aside className="studio-note"><h2>Video format</h2><dl><dt>Frame</dt><dd>Vertical · 9:16</dd><dt>Length</dt><dd>Typically 60–90 seconds</dd><dt>Captions</dt><dd>{captions?"Included":"Off"}</dd></dl></aside></div></>;
