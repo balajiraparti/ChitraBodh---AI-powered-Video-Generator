@@ -3,31 +3,16 @@ import React,{useRef,useState} from 'react';
 import Link from 'next/link';
 import IdeaAssistant from '../components/IdeaAssistant';
 import {currentOwner,services} from '../server/auth.mjs';
-import {narratorChoices} from '../server/narrators.mjs';
-import {readDraft} from '../server/drafts.mjs';
+import {createPage} from '../server/create-page.mjs';
 
 export async function getServerSideProps({req,res,query}) {
   res.setHeader('Cache-Control','private, no-store');
   const owner=await currentOwner(req);
   if(!owner)return {redirect:{destination:'/sign-in',permanent:false}};
-  if(query.draft!==undefined && typeof query.draft!=='string')return {notFound:true};
-  const {projects,jobs,versions}=await services();
-  const activeJob=await jobs.findOne({ownerId:owner,active:true},{projection:{_id:1}});
-  if(activeJob && query.draft===undefined)return {redirect:{destination:'/jobs/'+activeJob._id,permanent:false}};
-  if(query.fromJob!==undefined){
-    if(typeof query.fromJob!=='string')return {notFound:true};
-    const source=await jobs.findOne({_id:query.fromJob,ownerId:owner,state:'succeeded'});
-    const version=source && await versions.findOne({_id:source.versionId,ownerId:owner});
-    if(!version)return {notFound:true};
-    const seed={topic:version.topic,voiceCatalogId:version.settingsSnapshot.voiceCatalogId,captions:version.settingsSnapshot.captions};
-    return {props:{initial:null,seed,voices:narratorChoices()}};
-  }
-  const initial=await readDraft(projects,owner,query.draft);
-  if(query.draft!==undefined && !initial)return {notFound:true};
-  return {props:{initial,activeJobId:activeJob?String(activeJob._id):null,voices:narratorChoices()}};
+  return createPage(await services(),owner,query);
 }
 export default function Create({initial,seed,voices,activeJobId}) {
-  return <Editor key={initial?.id ?? seed?.topic ?? 'new'} initial={initial} seed={seed} voices={voices} activeJobId={activeJobId}/>;
+  return <Editor key={initial?.id ?? seed?.sourceJobId ?? 'new'} initial={initial} seed={seed} voices={voices} activeJobId={activeJobId}/>;
 }
 function Editor({initial,seed,voices,activeJobId}) {
   const router=useRouter();
