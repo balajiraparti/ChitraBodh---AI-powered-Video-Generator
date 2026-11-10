@@ -8,13 +8,14 @@ import {database} from '../dashboard/server/database.mjs';
 
 const answer={reply:'Try this visual example.',suggestions:['Follow a drop through the water cycle.']};
 test('idea provider validates replies and tries the configured Gemini fallback without storing interactions',async()=>{
+  const suggestions=['Water','Wind','Sun'].map(title=>({title,description:'Explain '+title}));
   const requests=[];
   const send=async(url,init)=>{
     requests.push(JSON.parse(init.body));
     if(requests.length===1)return new Response(null,{status:503});
-    return Response.json({status:'completed',steps:[{type:'model_output',content:[{type:'text',text:JSON.stringify(answer)}]}]});
+    return Response.json({status:'completed',steps:[{type:'model_output',content:[{type:'text',text:JSON.stringify({...answer,suggestions})}]}]});
   };
-  assert.deepEqual(await suggestIdeas({message:'water'},{GEMINI_API_KEY:'test',GEMINI_MODEL:'primary',GEMINI_FALLBACK_MODELS:'backup'},send),answer);
+  assert.deepEqual(await suggestIdeas({message:'water'},{GEMINI_API_KEY:'test',GEMINI_MODEL:'primary',GEMINI_FALLBACK_MODELS:'backup'},send),{...answer,suggestions:suggestions.map(s=>s.title+'\n'+s.description)});
   assert.deepEqual(requests.map(r=>[r.model,r.store]),[['primary',false],['backup',false]]);
   for(const suggestions of [[],['A','a'],['a','b','c','d'],[42]])assert.throws(()=>parseIdeas(JSON.stringify({...answer,suggestions})));
 });
@@ -67,4 +68,13 @@ test('brainstorm protects draft ownership, serializes calls, replays results and
     for(const bucket of ['brainstorm:'+owner,'brainstorm:global:day'])await limits.deleteOne({_id:owner+createHash('sha256').update(bucket).digest('hex')});
     await store.client.close();
   }
+});
+test('incomplete Gemini output retries on the fallback model',async()=>{
+  let calls=0;
+  const suggestions=['Rain','Clouds','Rivers'].map(title=>({title,description:'Trace the movement of water.'}));
+  const send=async()=>Response.json({status:'completed',steps:[{type:'model_output',content:[{type:'text',text:++calls===1?'{}':JSON.stringify({reply:'Try these.',suggestions})}]}]});
+  const result=await suggestIdeas({message:'water'},{GEMINI_API_KEY:'test',GEMINI_MODEL:'first',GEMINI_FALLBACK_MODELS:'second'},send);
+  assert.equal(calls,2);
+  assert.equal(result.suggestions.length,3);
+  assert.ok(result.suggestions.every(idea=>idea.includes('\n')));
 });

@@ -30,7 +30,7 @@ export async function brainstorm(store,owner,key,body,infer=suggestIdeas){
     if(!cmd)return null;
     if(cmd.hash!==hash)return fail(409,'KEY_REUSED');
     if(cmd.status==='running')return cmd.leaseUntil>new Date()?fail(409,'COMMAND_IN_PROGRESS',2):null;
-    if(cmd.status==='failed')return fail(503,'IDEAS_UNAVAILABLE');
+    if(cmd.status==='failed')return fail(503,cmd.errorCode||'IDEAS_UNAVAILABLE');
     const result=await ideaPayloads.findOne({_id:cmdId,expiresAt:{$gt:new Date()}});
     return result?{status:200,data:result.data,replayed:true}:fail(410,'RESULT_EXPIRED');
   }
@@ -57,7 +57,10 @@ export async function brainstorm(store,owner,key,body,infer=suggestIdeas){
     const pairs=history?.pairs||[];
     let answer;
     try{answer=await infer(ideaInput(pairs,message));}
-    catch{await ideaCommands.updateOne({_id:cmdId,attempt},{$set:{status:'failed'}});return fail(503,'IDEAS_UNAVAILABLE');}
+    catch(error){
+      const code=['IDEAS_INVALID_REPLY','IDEAS_PROVIDER_CONFIG','IDEAS_PROVIDER_LIMIT'].includes(error?.message)?error.message:'IDEAS_UNAVAILABLE';
+      await ideaCommands.updateOne({_id:cmdId,attempt},{$set:{status:'failed',errorCode:code}});return fail(503,code);
+    }
     const finished=new Date(),expiresAt=new Date(+finished+day);
     const data={draftId:draftId??null,...answer,historyExpiresAt:expiresAt.toISOString(),serverNow:finished.toISOString()};
     const committed=await store.client.withSession(session=>session.withTransaction(async()=>{

@@ -17,7 +17,7 @@ export default function IdeaAssistant({draftId,topic,disabled,onChoose}){
       const data=await response.json().catch(()=>null);
       if(!response.ok){
         if(response.status!==409 && response.status!==429)intent.current=null;
-        setNotice(response.status===401?'Sign in again to ask for ideas.':response.status===403?'Ask your team administrator to approve brainstorming for your account.':response.status===429?(data?.error?.code==='GLOBAL_BUDGET_REACHED'?'The team’s daily brainstorming budget has been reached.':'Try again in a minute.'):response.status===409?'Another idea request is in progress. Try again shortly.':'Could not get suggestions. Your topic is still here. Try again.');
+        setNotice(response.status===401?'Sign in again to ask for ideas.':response.status===403?'Ask your team administrator to approve brainstorming for your account.':response.status===429?(data?.error?.code==='GLOBAL_BUDGET_REACHED'?'The team’s daily brainstorming budget has been reached.':'Try again in a minute.'):response.status===409?'Another idea request is in progress. Try again shortly.':({IDEAS_PROVIDER_LIMIT:'The AI provider reached its quota. Try again later.',IDEAS_PROVIDER_CONFIG:'The AI provider rejected its configuration. Ask your administrator to check model access.',IDEAS_INVALID_REPLY:'The AI returned an incomplete set of ideas. Request a fresh set.'}[data?.error?.code] || 'The idea assistant is temporarily unavailable. Try again shortly.'));
         return;
       }
       setResult(data);intent.current=null;setMessage('');
@@ -31,7 +31,7 @@ export default function IdeaAssistant({draftId,topic,disabled,onChoose}){
       <textarea id="idea-focus" rows={2} value={message} disabled={disabled||pending} placeholder="Try a subject, ask a follow-up, or leave this blank for ideas." onChange={e=>setMessage(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();ask();}}}/>
       <button type="button" disabled={disabled||pending} onClick={ask}>{pending?'Finding ideas…':result?'Get more ideas':'Suggest ideas'}</button>
       <div aria-live="polite">{notice || (pending?'Thinking…':'')}</div>
-      {result && <><p>{result.reply}</p><ul>{result.suggestions.map(idea=><li key={idea}>{idea}<button type="button" disabled={disabled||pending} onClick={()=>{onChoose(idea);setOpen(false);document.getElementById('topic')?.focus();}}>Use this idea</button></li>)}</ul></>}
+      {result && <><p>{result.reply}</p><ul>{result.suggestions.map(idea=><li key={idea}><strong>{idea.split('\n')[0]}</strong>{idea.includes('\n') && <p>{idea.slice(idea.indexOf('\n')+1)}</p>}<button type="button" disabled={disabled||pending} onClick={()=>{onChoose(idea);setOpen(false);document.getElementById('topic')?.focus();}}>Use this idea</button></li>)}</ul></>}
     </div>
   </div>;
 }
