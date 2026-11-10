@@ -23,7 +23,7 @@ In a fresh Chrome check, the actual Create and ready page components used two co
 | 07, 10, 18, 21 | F06–F08 | Queue, progress, cancellation, failure and expired states exist. F07 passed with a controlled child. Some recovery specimens are absent, including a distinct offline draft state. Production provider-to-worker verification remains. |
 | 08–09, 22 | F08–F09, F13–F14 | Owner-only player, download, expiry and fresh creation exist. Local S3 access controls passed. Live private R2 playback/download and deletion remain open. Versions, revisions and new caption variants are planned. |
 | 11–14, 23 | F15–F17 | Instagram connection, explicit publishing, scheduling, pending-post management and publication outcomes are planned. Apply the corrected server expiry, cancellation and reconnect rules when implementing them. |
-| 15–17, settings portions of 24 | F12, F15, F18 | Settings is a placeholder with working sign-out. Saved preferences, account connection and destructive-action flows are planned. |
+| 15–17, settings portions of 24 | F12, F15, F18 | Settings supports saved narrator, captions, time zone and sign-out. Account connection and deletion are planned. |
 
 ## Release evidence
 

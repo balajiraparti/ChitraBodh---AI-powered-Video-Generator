@@ -1,6 +1,6 @@
 # ChitraBodh project status
 
-Updated 9 November 2026. Use this file to choose the next feature and record what ships. The first dashboard milestone ends when a newly registered creator can sign in, enter a topic, and download their narrated vertical video without using a terminal.
+Updated 10 November 2026. Use this file to choose the next feature and record what ships. The first dashboard milestone ends when a newly registered creator can sign in, enter a topic, and download their narrated vertical video without using a terminal.
 
 ## Current baseline
 
@@ -16,7 +16,7 @@ Baseline established from repository inspection and recorded prototype results. 
 
 ## Feature queue
 
-**Current verification:** F00, F01 and F04–F06 are Done. F02–F03 are **In progress** after the 8 November auth model change; F07–F09 have pending live integration checks. F10 listing passed manual QA. Explicit draft and expired-video idea links open the selected content during an active job. Creators can edit and save it while generation is gated. F11 passed live browser and Atlas checks. F12–F18 are planned. The first milestone needs a real registration-to-download run. See the [Daylight implementation audit](docs/design/Daylight-Implementation-Audit.md) for exact board coverage and visual gaps.
+**Current verification:** F00, F01 and F04–F06 are Done. F02–F03 are **In progress** after the 8 November auth model change; F07–F09 have pending live integration checks. F10 listing passed manual QA. Explicit draft and expired-video idea links open the selected content during an active job. Creators can edit and save it while generation is gated. F11 passed live browser and Atlas checks. F12 passed browser and Atlas checks. F13–F18 are planned. The first milestone needs a real registration-to-download run. See the [Daylight implementation audit](docs/design/Daylight-Implementation-Audit.md) for exact board coverage and visual gaps.
 
 | ID | Feature | Depends on | Status | Finish condition |
 |---|---|---|---|---|
@@ -32,7 +32,7 @@ Baseline established from repository inspection and recorded prototype results. 
 | F09 | Ready video and download | F08 | Awaiting integration verification | The owner can play and download the selected 9:16 MP4 before expiry. Expired projects offer fresh creation from the saved idea. |
 | F10 | My videos list | F04, F07, F09 | Library implemented; live milestone pending | A user sees only their projects, with current state, expiry and pagination. Complete the first milestone with a real registered creator. |
 | F11 | Optional idea assistant | F04 | Done | Up to three suggestions fill the draft only when selected. Generation requires a separate click. |
-| F12 | Saved preferences | F05 | Planned | Voice, captions and timezone persist. New drafts inherit defaults and existing videos retain their settings. |
+| F12 | Saved preferences | F05 | Done | Voice, captions and timezone persist. New drafts inherit defaults and existing videos retain their settings. |
 | F13 | Revisions | F06–F09 | Planned | A revision preserves the previous ready version and original expiry, including when revision fails. |
 | F14 | Caption variants | F13 | Planned | A caption change renders a separate variant under the same job limit. Only ready variants can be exported. |
 | F15 | Instagram connection | F03 | Planned | Connect, disconnect and reconnect an eligible account. Existing posts retain their intended account. |
@@ -84,3 +84,4 @@ Apply the [screen QA findings](docs/design/Stitch-Screens-QA.md) to each affecte
 | 9 Nov 2026 | F10: Explicit draft links open during an active job. The editor permits saving and links to the active job. | Rendered editor regression covers the job link, save action and disabled generation. The real registration-to-download check remains open. Next: F11. |
 | 9 Nov 2026 | F11: [Create assistant](dashboard/components/IdeaAssistant.jsx) offers one to three provider-generated topics and follow-ups on saved or unsaved ideas. Selection edits the topic only. | Production build and all 59 tests passed, including Atlas limits, concurrent requests, replay, failure and expiry. Signed-in Chrome at 390px returned three live suggestions; selection focused the topic and created zero projects/jobs. Exclude temporary idea payloads from deployment backups. Next feature: F12 saved preferences. Earlier real-provider/R2 download milestone remains open. |
 | 9 Nov 2026 | Fixed the remaining F09 active-job redirect and verified F10 draft navigation. The composer restores the selected source version and links to the current job. | Three targeted route and rendered-page checks passed for both links, source settings, owner isolation, expiry and reopening after the active job ends. Live provider-to-R2 verification remains pending. |
+| 10 Nov 2026 | F12 added private narrator, caption and timezone defaults in Settings. My videos opens a fresh composer with those defaults. | Signed-in Chrome saved preferences, reloaded Settings and opened a new composer with captions off. Atlas regression covered isolation, stale edits, invalid timezone and older draft preservation. Production build passed. Next is F13 revisions. |

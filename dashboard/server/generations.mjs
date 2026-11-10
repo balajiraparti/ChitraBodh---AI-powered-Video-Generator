@@ -1,5 +1,6 @@
 import {randomUUID} from 'node:crypto';
 import {z} from 'zod';
+import {preferences} from './preferences.mjs';
 import {validTopic} from './drafts.mjs';
 import {defaultVoice,narratorChoices} from './narrators.mjs';
 
@@ -38,9 +39,10 @@ export async function submitGeneration(store,ownerId,key,body) {
         if(draft.status!=='draft'||draft.revision!==args.expectedRevision)return {status:409,error:'DRAFT_CHANGED'};
       }
       const topic=draft?.topic ?? args.topic;
-      const voiceCatalogId=args.voiceCatalogId ?? draft?.voiceCatalogId ?? defaultVoice;
+      const saved=!draft && store.preferences && (args.voiceCatalogId===undefined || args.captions===undefined) ? await preferences(store.preferences,ownerId) : null;
+      const voiceCatalogId=args.voiceCatalogId ?? draft?.voiceCatalogId ?? saved?.voiceCatalogId ?? defaultVoice;
       if(!narratorChoices().some(v=>v.id===voiceCatalogId && v.available))return {status:422,error:'VOICE_UNAVAILABLE'};
-      const captions=args.captions ?? draft?.captions ?? true;
+      const captions=args.captions ?? draft?.captions ?? saved?.captions ?? true;
       const now=new Date();
       const job={_id:randomUUID(),ownerId,key,signature,projectId,versionId:randomUUID(),active:true,state:'queued',createdAt:now};
       await jobs.insertOne(job,{session});

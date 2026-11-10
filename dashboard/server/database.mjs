@@ -9,7 +9,7 @@ async function connect(){
   const client=new MongoClient(process.env.MONGODB_URI,{serverSelectionTimeoutMS:5000});
   const db=client.db();
   const store={client};
-  for(const name of ['jobs','versions','projects','artifacts','workerSlots'])store[name]=db.collection(name);
+  for(const name of ['jobs','versions','projects','artifacts','workerSlots','preferences'])store[name]=db.collection(name);
   for(const name of ['ideaCommands','ideaLocks','ideaPayloads'])store[name]=db.collection(name);
   try{
     await Promise.all([

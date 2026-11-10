@@ -1,4 +1,5 @@
 import {currentOwner,services} from '../../../server/auth.mjs';
+import {preferences} from '../../../server/preferences.mjs';
 import {projectPage,LibraryQueryError} from '../../../server/library.mjs';
 import {readDraft,saveDraft} from '../../../server/drafts.mjs';
 
@@ -18,7 +19,7 @@ export default async function handler(req,res) {
     }
     if(req.method!==(id?'PATCH':'POST'))return res.status(405).end();
     if(req.headers.origin!==origin)return res.status(403).end();
-    const result=await saveDraft(projects,owner,id,req.body,req.headers['idempotency-key']);
+    const result=await saveDraft(projects,owner,id,req.body,req.headers['idempotency-key'],id?{}:await preferences(store.preferences,owner));
     if(!result.data)return res.status(result.status).end();
     if(result.status===201)res.setHeader('Location','/api/projects/'+result.data.id);
     return res.status(result.status).json(result.data);

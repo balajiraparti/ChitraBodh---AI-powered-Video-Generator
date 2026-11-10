@@ -13,7 +13,7 @@ export async function readDraft(projects,ownerId,id) {
   const row=await projects.findOne(filter,{sort:{updatedAt:-1,_id:-1}});
   return row ? view(row) : null;
 }
-export async function saveDraft(projects,ownerId,id,body,key) {
+export async function saveDraft(projects,ownerId,id,body,key,defaults={}) {
   if(!validTopic(body?.topic))return {status:400};
   const topic=body.topic.trim();
   const choices={};
@@ -29,7 +29,7 @@ export async function saveDraft(projects,ownerId,id,body,key) {
     if(typeof key!=='string'||!uuid.test(key))return {status:400};
     const _id=createHash('sha256').update(JSON.stringify([ownerId,key])).digest('hex');
     const now=new Date();
-    const settings={voiceCatalogId:defaultVoice,captions:true,...choices};
+    const settings={voiceCatalogId:defaults.voiceCatalogId??defaultVoice,captions:defaults.captions??true,...choices};
     // Preserve topic-only retry keys issued by older clients.
     const fingerprint=Object.keys(choices).length ? JSON.stringify([topic,settings.voiceCatalogId,settings.captions]) : topic;
     const draft={_id,ownerId,topic,...settings,initialDigest:createHash('sha256').update(fingerprint).digest('hex'),status:'draft',revision:1,createdAt:now,updatedAt:now};
