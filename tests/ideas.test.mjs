@@ -26,16 +26,24 @@ test('conversation context keeps the newest complete pairs within the input limi
 test('brainstorm protects draft ownership, serializes calls, replays results and leaves projects and jobs untouched',{skip:process.env.TEST_IDEAS_ATLAS!=='1'},async()=>{
   config({path:'dashboard/.env.local',quiet:true});
   const db=await database(),owner=randomUUID(),store={...db,limits:db.db.collection('auth_limits')};
+  const limits=store.limits;
+  store.limits={updateOne:(filter,...args)=>limits.updateOne({...filter,_id:owner+filter._id},...args)};
   const conversationId=randomUUID(),key=randomUUID(),body={conversationId,message:'why tides change'};
   const {createHash}=await import('node:crypto');
   const hash=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
   const keys=[key],newKey=()=>{const k=randomUUID();keys.push(k);return k;};
   try{
     assert.equal((await brainstorm(store,owner,key,{draftId:'a'.repeat(64),message:'help'})).status,404);
+    assert.equal((await brainstorm(store,owner,key,body)).status,403);
+    await store.db.collection('user').insertOne({_id:owner,email:owner+'@example.test',brainstormApproved:true});
+    await store.ideaCommands.insertOne({_id:hash([owner,key]),hash:hash([conversationId,body.message]),status:'running',leaseUntil:new Date(0)});
     let release,entered;const started=new Promise(r=>entered=r);
     const first=brainstorm(store,owner,key,body,async()=>{entered();await new Promise(r=>release=r);return answer;});
     await started;
-    try{assert.equal((await brainstorm(store,owner,newKey(),body)).error,'COMMAND_IN_PROGRESS');}finally{release();}
+    try{assert.equal((await brainstorm(store,owner,newKey(),body)).error,'COMMAND_IN_PROGRESS');
+      await store.ideaCommands.updateOne({_id:hash([owner,key])},{$set:{leaseUntil:new Date(0)}});
+      await store.ideaLocks.updateOne({_id:owner},{$set:{expiresAt:new Date(0)}});
+    }finally{release();}
     assert.deepEqual((await first).data.suggestions,answer.suggestions);
     const replay=await brainstorm(store,owner,key,body,()=>assert.fail('repeat inference'));
     assert.equal(replay.replayed,true);
@@ -44,14 +52,19 @@ test('brainstorm protects draft ownership, serializes calls, replays results and
     assert.equal((await brainstorm(store,owner,newKey(),body,async()=>{throw Error('provider failure');})).status,503);
     await store.ideaPayloads.updateOne({_id:hash([owner,key])},{$set:{expiresAt:new Date(0)}});
     assert.equal((await brainstorm(store,owner,key,body)).status,410);
-    for(let i=0;i<3;i++)assert.equal((await brainstorm(store,owner,newKey(),body,async()=>answer)).status,200);
+    const globalId=createHash('sha256').update('brainstorm:global:day').digest('hex');
+    await store.limits.updateOne({_id:globalId},{$set:{hits:Array(60).fill(new Date())}});
+    assert.equal((await brainstorm(store,owner,newKey(),body,()=>assert.fail('budget bypass'))).error,'GLOBAL_BUDGET_REACHED');
+    await limits.deleteOne({_id:owner+globalId});
+    for(let i=0;i<2;i++)assert.equal((await brainstorm(store,owner,newKey(),body,async()=>answer)).status,200);
     assert.equal((await brainstorm(store,owner,newKey(),body)).status,429);
     for(const name of ['projects','jobs'])assert.equal(await store[name].countDocuments({ownerId:owner}),0);
   }finally{
+    await store.db.collection('user').deleteOne({_id:owner});
     const ids=keys.map(k=>hash([owner,k]));
     await store.ideaPayloads.deleteMany({_id:{$in:[...ids,hash([owner,conversationId])]}});
     await store.ideaCommands.deleteMany({_id:{$in:ids}});
-    await store.limits.deleteOne({_id:createHash('sha256').update('brainstorm:'+owner).digest('hex')});
+    for(const bucket of ['brainstorm:'+owner,'brainstorm:global:day'])await limits.deleteOne({_id:owner+createHash('sha256').update(bucket).digest('hex')});
     await store.client.close();
   }
 });

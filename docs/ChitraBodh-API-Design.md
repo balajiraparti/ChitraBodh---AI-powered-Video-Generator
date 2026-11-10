@@ -216,3 +216,5 @@ Contract acceptance checks before implementation release:
 7. Perform authorized live voice/storage/Instagram checks separately; mock/spec validation proves neither account permissions nor external provider delivery.
 
 The machine-readable contract can drive UI fixtures and mock responses for Stitch-derived screens. It does not publish an API or make the current local portal comply automatically.
+
+Brainstorm inference requires a verified email or an administrator-approved pilot account. To approve a teammate, verify their identity and set `brainstormApproved: true` on their existing MongoDB `user` record by its exact account ID. Registration never sets this field. Each owner has six admissions per minute and the whole installation has 60 per rolling 24 hours, including recovery attempts. Each admission permits at most two configured Gemini model requests. Cached replies consume no budget. Set `AI_PROVIDER=gemini` for normal operation. NVIDIA is a manual backup. A retry can reclaim an expired running command under its original key. Only the current attempt may publish its reply.

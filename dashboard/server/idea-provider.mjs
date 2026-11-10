@@ -26,7 +26,7 @@ export async function suggestIdeas(input,env=settings(),send=fetch){
   if(!key||!models[0])throw Error('Missing idea provider configuration');
   const signal=AbortSignal.timeout(35000);
   const interactions=!nvidia && env.GEMINI_API!=='generate_content';
-  for(const model of new Set(models)){
+  for(const model of [...new Set(models)].slice(0,2)){
     const base='https://generativelanguage.googleapis.com/v1beta';
     const url=nvidia?'https://integrate.api.nvidia.com/v1/chat/completions':interactions?base+'/interactions':base+'/models/'+encodeURIComponent(model)+':generateContent';
     const prompt=JSON.stringify(input);

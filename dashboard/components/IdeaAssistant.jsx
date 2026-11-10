@@ -17,7 +17,7 @@ export default function IdeaAssistant({draftId,topic,disabled,onChoose}){
       const data=await response.json().catch(()=>null);
       if(!response.ok){
         if(response.status!==409 && response.status!==429)intent.current=null;
-        setNotice(response.status===401?'Sign in again to ask for ideas.':response.status===429?'You’ve reached six requests this minute. Try again in a minute.':response.status===409?'Another idea request is in progress. Try again shortly.':'Could not get suggestions. Your topic is still here. Try again.');
+        setNotice(response.status===401?'Sign in again to ask for ideas.':response.status===403?'Ask your team administrator to approve brainstorming for your account.':response.status===429?(data?.error?.code==='GLOBAL_BUDGET_REACHED'?'The team’s daily brainstorming budget has been reached.':'Try again in a minute.'):response.status===409?'Another idea request is in progress. Try again shortly.':'Could not get suggestions. Your topic is still here. Try again.');
         return;
       }
       setResult(data);intent.current=null;setMessage('');
