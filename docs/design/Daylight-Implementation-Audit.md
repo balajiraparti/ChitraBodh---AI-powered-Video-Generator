@@ -1,32 +1,36 @@
-# Daylight design and feature audit
+# Stitch implementation comparison
 
-8 November 2026 · dev · reviewed application checkpoint 161d640.
+Updated 12 November 2026.
 
-The live [Stitch project](https://stitch.withgoogle.com/u/1/projects/16810763223132817674?pli=1) returned 31 items. The 24 numbered boards comprise 18 desktop boards and six mobile boards. Three brand studies, three homepage/demo designs and one uploaded image account for the rest. This audit used the 30 HTML designs exported in the previous review, the current feature tracker, application routes and recorded manual QA.
+The reference is the owner's downloaded `stitch_chitrabodh_brand_direction_studies` folder, including each `code.html` and `screen.png`. Stitch MCP lists 31 items in project 16810763223132817674. The download contains all 24 numbered boards, three brand studies, three demo boards, and the Daylight design-system file.
 
-## Brand and layout
+## Changes to implemented routes
 
-The app uses the Daylight cream canvas, white surfaces, dark green text, spruce actions, Manrope interface typography and Instrument Serif italic homepage emphasis. The shared header uses the later Moving Chitra logo approved by the owner. The homepage has topic switching and an expanded illustrated preview. The public workspace preview depicts a sample project.
-
-The broad layout matches. One measurable difference is typography: the application title scales up to 52px, while DESIGN.md specifies 32px for application titles. Some section headings scale to 34px versus the specified 24px. The 44px minimum is implemented for key navigation and action buttons; every individual link and input has yet to be measured. Keep scientific labels, API details, fake metrics and impossible actions identified in the [Stitch QA report](Stitch-Screens-QA.md) out of the product.
-
-In a fresh Chrome check, the actual Create and ready page components used two columns at 1280px and one at 390px. Both fit without horizontal overflow. The progress component highlighted the narration stage at both widths. These checks rendered sample props with the application stylesheet. Live authenticated navigation, playback and visual comparison of every alternate state remain separate checks.
-
-## Board coverage
-
-| Stitch boards | Feature tracker | Current implementation and remaining work |
+| Reference | Application | Changes |
 |---|---|---|
-| Homepage desktop, mobile, expanded demo | F00 | Both topic posters, public preview link and expanded dialog exist. A retained, reviewed demo MP4 and synchronized demo transcript are still needed for actual sample playback. |
-| 01–02, sign-in portions of 24 | F02–F03 | Centered email/password sign-in and self-service registration exist. Invalid credentials, duplicate registration, password requirements and rate limits need browser/MongoDB integration verification. Email-link confirmation, resend cooldowns and inbox checks were removed with the previous authentication model. |
-| 03–04, 19 | F01, F10 | Shell and empty library exist. My videos always renders the empty state today. Populated cards, pagination, active-job entry and loading state await F10. Scheduled filtering depends on F17. |
-| 05–06, 20 | F04–F06, F11 | Topic, validation, narrator availability, captions, manual save and submit work. The composer presents output details beside the form on desktop. The optional assistant suggests up to three ideas; selection fills and focuses the topic without submitting. Verified at 390px with a live provider. narrator samples and automatic draft-save feedback shown in Stitch have no current implementation. |
-| 07, 10, 18, 21 | F06–F08 | Queue, progress, cancellation, failure and expired states exist. F07 passed with a controlled child. Some recovery specimens are absent, including a distinct offline draft state. Production provider-to-worker verification remains. |
-| 08–09, 22 | F08–F09, F13–F14 | Owner-only player, download, expiry and fresh creation exist. Local S3 access controls passed. Live private R2 playback/download and deletion remain open. Versions, revisions and new caption variants are planned. |
-| 11–14, 23 | F15–F17 | Instagram connection, explicit publishing, scheduling, pending-post management and publication outcomes are planned. Apply the corrected server expiry, cancellation and reconnect rules when implementing them. |
-| 15–17, settings portions of 24 | F12, F15, F18 | Settings supports saved narrator, captions, time zone and sign-out. Account connection and deletion are planned. |
+| Daylight demo homepage desktop/mobile | / | Exported 7:5 hero, portrait illustration, prompt example selector, topic tabs, narration strip and three-step section. Original icon font bundled locally. |
+| Expanded demo player | Homepage dialog | Exported water-cycle diagram, narration, accessible native dialog. |
+| 01, 02, 24 | /sign-in | Centered white form and original background diagrams. Password registration follows the later approved auth requirement. Board 02's magic-link screen is superseded. |
+| 03, 19 | /dashboard | Portrait project cards on desktop and compact rows on mobile. Real state, expiry, pagination and private video preview sources. |
+| 04, 19 | Empty dashboard | Two-column introduction and canvas previews with the source empty-project illustration. |
+| 05, 20 | /create | Topic editor, narrator selection cards, caption switch, grouped actions and original composition preview. |
+| 06, 20 | Create idea panel | Separate right panel on desktop, stacked on mobile, three live suggestions and selection. Opening focuses the prompt. |
+| 07, 21 | /jobs/[id] while active | Progress panel and current-stage side panel, live status and cancellation. |
+| 08, 22 | /jobs/[id] while ready | Portrait player with adjacent export panel. Private media and two-hour lifetime. |
+| 10, 18, 21 | Failed, cancelled and expired jobs | Real recovery messages and links inside the shared Daylight surface. |
+| 15, 24 | /settings | Narrator cards, caption switch, timezone and save feedback. |
+| Public workspace preview | /preview | Daylight project and canvas surfaces. |
 
-## Release evidence
+## Design scope and adaptations
 
-Five of the 19 feature rows are marked Done (F00, F01, F04–F06). Five have implementation evidence and pending integration verification (F02, F03, F07–F09). Nine are planned (F10–F18). F05 passes its draft-persistence finish condition; provider access for Monika remains unverified. No screen count or feature count indicates a release percentage.
+The approved Moving Chitra logo remains the product identity. Voice labels reflect the available voice catalog. Manual draft saving reflects the implemented feature. The source's canned success notifications, example account email and sample project records are replaced with real application state. Preview illustrations are labelled as samples.
 
-The first milestone requires one creator to register, sign in, submit a topic, see real generation stages, play and download the same MP4 before expiry, and find the project in My videos. Complete the live checks and F10 to close that milestone. Product features already marked Done need only the outstanding screen details listed above where those details extend the original finish condition.
+Boards 09 (revisions), 11–14 (publishing and scheduling), 16 (Instagram connection), and the deletion dialogs in 17 are mapped to planned F13–F18. Their layouts remain the design reference when those features are implemented. Current screens therefore expose the implemented actions. Ready media uses the creator's actual output instead of the stock photos in board 03.
+
+The Daylight reference takes precedence over the Cobalt Lab and Afterlight alternative studies. The copied DESIGN.md preserves the owner's design tokens. The compiled export utilities are scoped to #daylight and work without a Tailwind CDN script.
+
+## Verification
+
+Production build passed. The suite passed 59 tests with three opt-in checks skipped. Browser checks at 1280 × 844 and 390 × 844 covered homepage tab switching and expanded preview, sign-in, private library, settings, create, idea-panel opening, public preview, generation progress and expired recovery. All eight routes at both sizes had no horizontal overflow. Synthetic account and project records were cleaned up. Browser screenshots are retained locally in .cache/design-*.png. This is an implementation comparison, not a pixel-difference score. Future feature boards are not claimed as delivered.
+
+To rebuild the exported utility CSS after editing a template, run Tailwind 3.4.17 with scripts/stitch-tailwind.config.cjs and an input file containing @tailwind utilities. The generated output is dashboard/pages/stitch-utilities.css. The application serves that stylesheet locally.

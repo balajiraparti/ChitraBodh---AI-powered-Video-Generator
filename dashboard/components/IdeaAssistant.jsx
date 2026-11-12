@@ -1,8 +1,9 @@
-import React,{useRef,useState} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
 
-export default function IdeaAssistant({draftId,topic,disabled,onChoose}){
-  const [open,setOpen]=useState(false),[message,setMessage]=useState('');
+export default function IdeaAssistant({draftId,topic,disabled,onChoose,open,setOpen}){
+  const [message,setMessage]=useState('');
   const [result,setResult]=useState(null),[notice,setNotice]=useState(''),[pending,setPending]=useState(false);
+  useEffect(()=>{if(open)document.getElementById('idea-focus')?.focus();},[open]);
   const conversation=useRef(null),intent=useRef(null),inFlight=useRef(false);
   async function ask(){
     if(disabled||inFlight.current)return;
@@ -25,7 +26,7 @@ export default function IdeaAssistant({draftId,topic,disabled,onChoose}){
     finally{inFlight.current=false;setPending(false);}
   }
   return <div className="idea-assistant">
-    <button type="button" className="idea-toggle" aria-expanded={open} aria-controls="idea-panel" onClick={()=>setOpen(!open)}>Brainstorm with AI</button>
+    <h2>Idea assistant</h2><button type="button" className="idea-toggle" aria-expanded={open} aria-controls="idea-panel" onClick={()=>setOpen(!open)}>Close assistant</button>
     <div id="idea-panel" hidden={!open}>
       <label htmlFor="idea-focus">What interests you?</label>
       <textarea id="idea-focus" rows={2} value={message} disabled={disabled||pending} placeholder="Try a subject, ask a follow-up, or leave this blank for ideas." onChange={e=>setMessage(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();ask();}}}/>

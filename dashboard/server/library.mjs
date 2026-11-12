@@ -48,7 +48,7 @@ export async function projectPage(store,ownerId,query={},now=new Date(),secret=p
   const items=visible.map(row=>{
     const job=row.jobs[0],artifact=row.media[0];
     const state=job?.state==='succeeded'?(canReadMedia(artifact,ownerId,now)?'ready':'expired'):(job?.state ?? 'draft');
-    return {id:row._id,topic:row.topic,state,stage:job?.stage ?? null,cancelRequested:job?.cancelRequested ?? false,
+    return {id:row._id,topic:row.topic,state,mediaUrl:state==='ready'?'/api/v1/media/'+artifact._id:null,stage:job?.stage ?? null,cancelRequested:job?.cancelRequested ?? false,
       jobId:job?._id ?? null,expiresAt:artifact?.expiresAt?.toISOString() ?? null};
   });
   return {items,page:{limit,hasMore,nextCursor:hasMore?cursorFor(visible.at(-1),ownerId,until,expires,secret):null},serverNow:now.toISOString()};

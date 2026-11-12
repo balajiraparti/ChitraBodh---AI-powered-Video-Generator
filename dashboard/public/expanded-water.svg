@@ -1,0 +1,71 @@
+<svg fill="none" viewBox="0 0 420 746" xmlns="http://www.w3.org/2000/svg">
+<!-- Atmospheric Gradient Background -->
+<defs>
+<linearGradient gradientunits="userSpaceOnUse" id="skyGrad" x1="210" x2="210" y1="0" y2="520">
+<stop offset="0%" stop-color="#1B2622"></stop>
+<stop offset="65%" stop-color="#22332D"></stop>
+<stop offset="100%" stop-color="#2D433B"></stop>
+</linearGradient>
+<linearGradient gradientunits="userSpaceOnUse" id="oceanGrad" x1="210" x2="210" y1="560" y2="746">
+<stop offset="0%" stop-color="#126B58"></stop>
+<stop offset="100%" stop-color="#09392E"></stop>
+</linearGradient>
+<marker id="arrowUp" markerheight="6" markerwidth="6" orient="auto" refx="3" refy="3">
+<path d="M0,6 L3,0 L6,6 Z" fill="#F2C14E"></path>
+</marker>
+<marker id="arrowDown" markerheight="6" markerwidth="6" orient="auto" refx="3" refy="3">
+<path d="M0,0 L3,6 L6,0 Z" fill="#9AE8D0"></path>
+</marker>
+</defs>
+<rect fill="url(#skyGrad)" height="746" width="420"></rect>
+<!-- Sun Solar (#F2C14E) Specimen Node -->
+<g transform="translate(68, 120)">
+<circle cx="0" cy="0" fill="#F2C14E" fill-opacity="0.16" r="28"></circle>
+<circle cx="0" cy="0" fill="#F2C14E" r="18"></circle>
+<!-- Thermal Radiation Rays -->
+<line stroke="#F2C14E" stroke-linecap="round" stroke-width="2" x1="0" x2="0" y1="-28" y2="-22"></line>
+<line stroke="#F2C14E" stroke-linecap="round" stroke-width="2" x1="0" x2="0" y1="28" y2="22"></line>
+<line stroke="#F2C14E" stroke-linecap="round" stroke-width="2" x1="-28" x2="-22" y1="0" y2="0"></line>
+<line stroke="#F2C14E" stroke-linecap="round" stroke-width="2" x1="28" x2="22" y1="0" y2="0"></line>
+<line stroke="#F2C14E" stroke-linecap="round" stroke-width="2" x1="-20" x2="-15" y1="-20" y2="-15"></line>
+<line stroke="#F2C14E" stroke-linecap="round" stroke-width="2" x1="20" x2="15" y1="20" y2="15"></line>
+<line stroke="#F2C14E" stroke-linecap="round" stroke-width="2" x1="20" x2="15" y1="-20" y2="-15"></line>
+<line stroke="#F2C14E" stroke-linecap="round" stroke-width="2" x1="-20" x2="-15" y1="20" y2="15"></line>
+<text fill="#F2C14E" font-family="Manrope" font-size="11" font-weight="600" letter-spacing="0.04em" x="32" y="5">SOLAR FLUX (WARMING)</text>
+</g>
+<!-- Clouds & Condensation Layer -->
+<g transform="translate(230, 210)">
+<!-- Cloud Shapes (Technical crisp arcs) -->
+<path d="M-50,20 C-50,6 -35,-4 -20,-4 C-16,-16 0,-24 16,-20 C28,-28 46,-20 52,-8 C66,-6 76,4 74,20 Z" fill="#E4E2DD" fill-opacity="0.22" stroke="#BEC9C4" stroke-dasharray="3 3" stroke-width="1.5"></path>
+<path d="M-30,16 C-30,4 -18,-4 -5,-4 C-1,-14 12,-20 25,-16 C35,-24 49,-16 54,-6 C64,-4 70,4 68,16 Z" fill="#FFFFFF" fill-opacity="0.12"></path>
+<text fill="#D9E5DF" font-family="Manrope" font-size="11" font-weight="600" x="78" y="-6">CONDENSATION</text>
+<text fill="#9AE8D0" font-family="Manrope" font-size="9" letter-spacing="0.05em" x="78" y="10">ALTITUDE ~3,200m</text>
+</g>
+<!-- Precipitation Particles (Terra / Ice Vector lines) -->
+<g opacity="0.8" stroke="#9AE8D0" stroke-dasharray="4 6" stroke-width="1.5">
+<line marker-end="url(#arrowDown)" x1="220" x2="210" y1="250" y2="330"></line>
+<line marker-end="url(#arrowDown)" x1="245" x2="235" y1="250" y2="330"></line>
+<line marker-end="url(#arrowDown)" x1="270" x2="260" y1="250" y2="330"></line>
+<line marker-end="url(#arrowDown)" x1="295" x2="285" y1="250" y2="330"></line>
+</g>
+<text fill="#9AE8D0" font-family="Manrope" font-size="10" font-weight="600" x="280" y="300">PRECIPITATION</text>
+<!-- Evaporation Arrows (Thermal Sun Solar Vectors #F2C14E) -->
+<g stroke="#F2C14E" stroke-linecap="round" stroke-width="2">
+<!-- Curving upward convective drafts -->
+<path d="M80,530 C80,470 95,430 95,380" marker-end="url(#arrowUp)" stroke-dasharray="4 4"></path>
+<path d="M125,550 C130,480 145,440 145,370" marker-end="url(#arrowUp)" stroke-dasharray="4 4"></path>
+<path d="M170,540 C165,470 190,430 190,360" marker-end="url(#arrowUp)" stroke-dasharray="4 4"></path>
+</g>
+<g transform="translate(45, 460)">
+<rect fill="#202B27" fill-opacity="0.9" height="24" rx="4" stroke="#3E4945" stroke-width="1" width="94" x="0" y="0"></rect>
+<text fill="#F2C14E" font-family="Manrope" font-size="9" font-weight="700" letter-spacing="0.05em" text-anchor="middle" x="47" y="16">EVAPORATION</text>
+</g>
+<!-- Topographic Landmass & Ocean Horizon -->
+<path d="M0,580 Q100,550 200,570 T420,550 L420,746 L0,746 Z" fill="url(#oceanGrad)"></path>
+<path d="M260,555 Q340,510 420,535 L420,620 Q320,610 260,555 Z" fill="#202B27" opacity="0.6"></path>
+<!-- Ocean surface indicator ripples -->
+<path d="M30,620 Q90,615 150,620" stroke="#9AE8D0" stroke-opacity="0.4" stroke-width="1"></path>
+<path d="M180,640 Q250,635 320,640" stroke="#9AE8D0" stroke-opacity="0.3" stroke-width="1"></path>
+<path d="M60,670 Q140,665 220,670" stroke="#9AE8D0" stroke-opacity="0.35" stroke-width="1"></path>
+<text fill="#9AE8D0" font-family="Manrope" font-size="11" font-weight="600" letter-spacing="0.06em" x="32" y="700">SURFACE RESERVOIR (OCEAN)</text>
+</svg>

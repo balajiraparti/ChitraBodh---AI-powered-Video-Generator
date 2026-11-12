@@ -59,13 +59,13 @@ function Progress({initial}){
     finally{setBusy(false);}
   }
   return <><h1>{active?'Creating your video':expired?'Your video has expired':job.state==='succeeded'?'Your video is ready':job.state==='cancelled'?'Creation cancelled':'Generation failed'}</h1>
-    <section>
+    <div className={active?"job-grid":"job-review"}><section>
       <p role="status">{job.cancelRequested&&active?'Stopping creation…':active?stages[job.stage]||'Queued':job.safeError||''}</p>
-      {active && <><h2 className="form-subtitle">Progress</h2><ol className="stage-list">{Object.entries(stages).map(([key,label])=><li key={key} aria-current={job.stage===key?'step':undefined}>{label}</li>)}</ol><p>You can leave this page. We’ll keep working.</p></>}
+      {active && <><h2 className="form-subtitle">Progress</h2><ol className="stage-list">{Object.entries(stages).map(([key,label],index)=><li key={key} data-complete={index<Object.keys(stages).indexOf(job.stage)} aria-current={job.stage===key?'step':undefined}><span className="stage-marker" aria-hidden="true">{index<Object.keys(stages).indexOf(job.stage)?'✓':index+1}</span><div><strong>{label}</strong><small>{index<Object.keys(stages).indexOf(job.stage)?'Completed':job.stage===key?'In progress':'Waiting'}</small></div></li>)}</ol><p>You can leave this page. We’ll keep working.</p></>}
       {job.mediaAvailable && job.mediaUrl && <div className="ready-media">
         <video key={attempt} controls playsInline preload="metadata" aria-label="Generated explainer" src={job.mediaUrl} onError={()=>setPlaybackError(true)}/>
         {playbackError && <p role="alert">The preview could not load. <button onClick={()=>{setPlaybackError(false);setAttempt(attempt+1)}}>Retry preview</button></p>}
-        <div className="export-panel"><h2>Save your video</h2><p>Available until <time dateTime={job.expiresAt}>{new Date(job.expiresAt).toISOString().slice(0,16).replace('T',' ')} UTC</time>.</p>
+        <div className="export-panel"><h2>Quick export actions</h2><p>Available until <time dateTime={job.expiresAt}>{new Date(job.expiresAt).toISOString().slice(0,16).replace('T',' ')} UTC</time>.</p>
         <a className="action" href={job.mediaUrl+'?download=1'} download="chitrabodh.mp4">Download MP4</a></div>
       </div>}
       {expired && <><p>The availability window has ended. Your original topic is saved.</p><Link href={'/create?fromJob='+job.jobId}>Create a new video from this idea</Link></>}
@@ -73,5 +73,5 @@ function Progress({initial}){
       {active&&!job.cancelRequested && (confirm?<div><p>Stop creating this video? Your idea will be saved.</p><button disabled={busy} onClick={cancel}>Stop creation</button><button disabled={busy} onClick={()=>setConfirm(false)}>Keep creating</button></div>:<button onClick={()=>setConfirm(true)}>Cancel creation</button>)}
       {!active&&job.state!=='succeeded'&&<Link href={'/create?draft='+job.projectId}>Open saved idea</Link>}
       <p><Link href="/dashboard">My videos</Link></p>
-    </section></>;
+    </section>{active && <aside className="studio-note"><h2>{job.stage==='queued'?'Waiting in queue':'Current stage'}</h2><p>{stages[job.stage]||'Queued'}</p><Link href="/dashboard">Back to My videos</Link></aside>}</div></>;
 }

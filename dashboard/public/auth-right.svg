@@ -1,0 +1,18 @@
+<svg fill="none" style="animation-delay: -3s;" viewBox="0 0 400 520" xmlns="http://www.w3.org/2000/svg">
+<!-- Evaporation & Condensation Cycle Flow -->
+<rect height="260" rx="12" stroke="#bec9c4" stroke-width="1" width="180" x="110" y="80"></rect>
+<line stroke="#bec9c4" stroke-width="0.75" x1="110" x2="290" y1="120" y2="120"></line>
+<text fill="#546159" font-family="Manrope" font-size="9" font-weight="600" letter-spacing="0.06em" x="125" y="105">RESEARCH MODEL // V.04</text>
+<!-- Internal cycle curve -->
+<path d="M 150 240 C 150 170, 250 170, 250 240 C 250 300, 150 300, 150 240 Z" stroke="#126B58" stroke-dasharray="2 3" stroke-width="1.2"></path>
+<circle cx="200" cy="185" fill="#126B58" r="3"></circle>
+<circle cx="200" cy="295" fill="#546159" r="3"></circle>
+<!-- Dimension callout lines -->
+<line stroke="#6f7975" stroke-width="0.75" x1="310" x2="310" y1="80" y2="340"></line>
+<line stroke="#6f7975" stroke-width="0.75" x1="305" x2="315" y1="80" y2="80"></line>
+<line stroke="#6f7975" stroke-width="0.75" x1="305" x2="315" y1="340" y2="340"></line>
+<text fill="#6f7975" font-family="Manrope" font-size="8" letter-spacing="0.08em" transform="rotate(90 322 215)" x="322" y="215">H_DIM: 260pt</text>
+<!-- Dispersal concentric rings -->
+<circle cx="200" cy="420" r="36" stroke="#bec9c4" stroke-width="0.8"></circle>
+<circle cx="200" cy="420" r="54" stroke="#bec9c4" stroke-dasharray="4 4" stroke-width="0.8"></circle>
+</svg>

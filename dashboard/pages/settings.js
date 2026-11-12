@@ -1,3 +1,4 @@
+import NarratorCards from '../components/NarratorCards';
 import {useState} from 'react';
 import {currentOwner,services} from '../server/auth.mjs';
 import {preferences} from '../server/preferences.mjs';
@@ -22,10 +23,11 @@ export default function Settings({initial,voices,zones}){
     }catch{setMessage('Could not confirm the save. Reload to check your preferences.');}
     finally{setBusy(false);}
   }
-  return <><h1>Settings</h1><section><h2>Video preferences</h2><p>Choose defaults for new videos.</p><form className="draft-form" onSubmit={save}>
-    <label htmlFor="voice">Default narrator</label><select id="voice" disabled={busy} value={values.voiceCatalogId} onChange={e=>change('voiceCatalogId',e.target.value)}>{voices.map(v=><option key={v.id} value={v.id} disabled={!v.available}>{v.name}{v.available?'':' · Unavailable'}</option>)}</select>
+  return <><h1>Preferences</h1><p>Choose defaults for new videos.</p><div className="prefs-grid"><section><form className="draft-form" onSubmit={save}>
+    <h2>1. Default narrator voice</h2><NarratorCards voices={voices} value={values.voiceCatalogId} disabled={busy} onChange={v=>change('voiceCatalogId',v)}/>
+    <h2>2. Burned-in captions default</h2>
     <label><input type="checkbox" checked={values.captions} disabled={busy} onChange={e=>change('captions',e.target.checked)}/> Include synchronized captions</label>
-    <label htmlFor="zone">Time zone</label><select id="zone" value={values.timezone} disabled={busy} onChange={e=>change('timezone',e.target.value)}>{zones.map(zone=><option key={zone}>{zone}</option>)}</select>
+    <h2>3. Timezone &amp; retention display</h2><label htmlFor="zone">Workspace time zone</label><select id="zone" value={values.timezone} disabled={busy} onChange={e=>change('timezone',e.target.value)}>{zones.map(zone=><option key={zone}>{zone}</option>)}</select>
     <button className="action" disabled={busy}>{busy?'Saving…':'Save preferences'}</button><span role="status">{message}</span>
-  </form></section><form method="post" action="/api/auth/sign-out"><button type="submit">Sign out</button></form></>;
+  </form></section><aside className="studio-note"><h2>Account</h2><form method="post" action="/api/auth/sign-out"><button type="submit">Sign out</button></form></aside></div></>;
 }

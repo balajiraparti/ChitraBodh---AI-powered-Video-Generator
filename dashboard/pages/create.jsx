@@ -1,6 +1,8 @@
 import {useRouter} from 'next/router';
 import React,{useRef,useState} from 'react';
 import Link from 'next/link';
+import NarratorCards from '../components/NarratorCards';
+import StitchComposition from '../components/StitchComposition';
 import IdeaAssistant from '../components/IdeaAssistant';
 import {currentOwner,services} from '../server/auth.mjs';
 import {createPage} from '../server/create-page.mjs';
@@ -16,6 +18,7 @@ export default function Create({initial,seed,voices,activeJobId}) {
 }
 function Editor({initial,seed,voices,activeJobId}) {
   const router=useRouter();
+  const [ideasOpen,setIdeasOpen]=useState(false);
   const [draft,setDraft]=useState(initial);
   const [topic,setTopic]=useState(initial?.topic ?? seed?.topic ?? '');
   const [voiceCatalogId,setVoice]=useState(initial?.voiceCatalogId ?? seed?.voiceCatalogId ?? voices[0].id);
@@ -67,22 +70,22 @@ function Editor({initial,seed,voices,activeJobId}) {
     }catch{setMessage('Could not confirm the save. Your text is still here. Try again.');}
     finally{setPending(null);}
   }
-  return <><Link className="back-link" href="/dashboard">← My videos</Link><h1>Create a video</h1><div className="composer-grid"><section><form onSubmit={save} className="draft-form">
-    <label htmlFor="topic">What would you like to explain?</label>
+  return <><Link className="back-link" href="/dashboard">← Back to My videos</Link><h1>Create a video</h1><p>Enter a topic to generate a vertical video with synchronized diagrams.</p><div className="composer-grid"><section><form onSubmit={save} className="draft-form">
+    <div className="topic-tools"><label htmlFor="topic">What would you like to explain?</label><button type="button" aria-expanded={ideasOpen} aria-controls="idea-panel" onClick={()=>setIdeasOpen(!ideasOpen)}>Help me find an idea</button></div>
     <textarea id="topic" rows={6} value={topic} disabled={busy} onChange={e=>{setTopic(e.target.value);setMessage('')}} aria-describedby="topic-count" aria-invalid={length>2000}/>
     <small id="topic-count">{length} / 2,000 characters{length>2000?' · Shorten your idea before saving.':''}</small>
-    <IdeaAssistant draftId={draft?.id} topic={topic} disabled={busy} onChoose={idea=>{setTopic(idea);setMessage("Idea selected. You can edit it before creating a video.");}}/>
-    <h2 className="form-subtitle">Narration and captions</h2><label htmlFor="narrator">Narrator</label>
-    <select id="narrator" value={voiceCatalogId} disabled={busy} onChange={event=>{setVoice(event.target.value);setMessage("");}}>
-      {voices.map(voice=><option key={voice.id} value={voice.id} disabled={!voice.available}>{voice.name}{voice.available?"":" · Unavailable"}</option>)}
-    </select>
+    <h2 className="form-subtitle">Narration &amp; Output</h2>
+    <NarratorCards voices={voices} value={voiceCatalogId} disabled={busy} onChange={v=>{setVoice(v);setMessage('');}}/>
     {!available && <p>Select an available narrator to save this draft.</p>}
     <label><input type="checkbox" checked={captions} disabled={busy} onChange={event=>{setCaptions(event.target.checked);setMessage("");}}/> Include synchronized captions</label>
-    <button className="action" disabled={busy || !available || !topic.trim() || length>2000}>{pending==='save'?'Saving…':'Save draft'}</button>
+
     {dirty && <small>Save your changes before creating the video.</small>}
     {activeJobId && <p>You can edit this draft while your <Link href={"/jobs/"+activeJobId}>current video</Link> is generating. Reopen this draft after it finishes to create another video.</p>}
+    <div className="composer-actions">
     <button type="button" className="action" disabled={activeJobId || busy || dirty || !available || !topic.trim() || length>2000} onClick={generate}>{pending==='generation'?'Submitting…':'Create video'}</button>
+    <button className="action" disabled={busy || !available || !topic.trim() || length>2000}>{pending==='save'?'Saving…':'Save draft'}</button>
+    </div>
     <span role="status">{message}</span>
     {draft && <Link href={'/create?draft='+draft.id}>Open saved draft</Link>}
-  </form></section><aside className="studio-note"><h2>Video format</h2><dl><dt>Frame</dt><dd>Vertical · 9:16</dd><dt>Length</dt><dd>Typically 60–90 seconds</dd><dt>Captions</dt><dd>{captions?"Included":"Off"}</dd></dl></aside></div></>;
+  </form></section><div className="composer-side"><div hidden={!ideasOpen}><IdeaAssistant open={ideasOpen} setOpen={setIdeasOpen} draftId={draft?.id} topic={topic} disabled={busy} onChoose={idea=>{setTopic(idea);setMessage("Idea selected. You can edit it before creating a video.");}}/></div>{!ideasOpen && <StitchComposition/>}</div></div></>;
 }

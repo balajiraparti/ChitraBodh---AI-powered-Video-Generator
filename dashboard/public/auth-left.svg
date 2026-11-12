@@ -1,0 +1,19 @@
+<svg fill="none" viewBox="0 0 400 520" xmlns="http://www.w3.org/2000/svg">
+<!-- Flow vectors representing synthesis cycles -->
+<circle cx="200" cy="140" r="48" stroke="#bec9c4" stroke-dasharray="3 3" stroke-width="1.2"></circle>
+<circle cx="200" cy="140" r="12" stroke="#6f7975" stroke-width="1"></circle>
+<circle cx="200" cy="140" fill="#126B58" r="2.5"></circle>
+<!-- Curving educational motion paths -->
+<path d="M 200 188 C 200 240, 110 260, 110 320 C 110 380, 240 400, 240 460" stroke="#bec9c4" stroke-linecap="round" stroke-width="1.2"></path>
+<path d="M 200 188 C 200 230, 280 260, 280 320 C 280 380, 160 400, 160 460" stroke="#bec9c4" stroke-dasharray="4 4" stroke-width="1"></path>
+<!-- Vector labels and indicators -->
+<line stroke="#bec9c4" stroke-width="0.75" x1="80" x2="320" y1="320" y2="320"></line>
+<circle cx="110" cy="320" fill="#F7F5EF" r="4" stroke="#546159" stroke-width="1.5"></circle>
+<circle cx="280" cy="320" fill="#F7F5EF" r="4" stroke="#126B58" stroke-width="1.5"></circle>
+<text fill="#6f7975" font-family="Manrope" font-size="9" letter-spacing="0.08em" x="60" y="315">NODE_01</text>
+<text fill="#6f7975" font-family="Manrope" font-size="9" letter-spacing="0.08em" x="290" y="315">FLUID_STATE</text>
+<!-- Waveform lines in lower quadrant -->
+<path d="M 40 440 Q 90 410 140 440 T 240 440 T 340 440" stroke="#6f7975" stroke-opacity="0.6" stroke-width="1"></path>
+<path d="M 40 455 Q 90 425 140 455 T 240 455 T 340 455" stroke="#bec9c4" stroke-opacity="0.5" stroke-width="1"></path>
+<path d="M 40 470 Q 90 440 140 470 T 240 470 T 340 470" stroke="#bec9c4" stroke-opacity="0.3" stroke-width="1"></path>
+</svg>

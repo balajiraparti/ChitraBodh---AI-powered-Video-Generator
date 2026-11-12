@@ -1,0 +1,36 @@
+# Stitch source inventory
+
+Reference export supplied by the owner. SHA-256 hashes identify the reviewed HTML.
+
+| Screen directory | HTML SHA-256 |
+|---|---|
+| 01_sign_in | fc51296aaccbab2119e23c8e9b6504e3c05fcfb6e3bc3f45625b8cea2e7ed206 |
+| 02_check_your_email | 2370512460b16e30035fe87739633c2db401b5e1d34d386f7278f853cd67566d |
+| 03_my_videos | 88668f085bef12ce3205de9bb8fc3e4da34b2ac428a6f2d95b41f6bd66fd03e7 |
+| 04_my_videos_empty | cb84b11f2c4c6effa6c91488e800af18e41ddce2a4f5fba5a685a2027748bc2a |
+| 05_create_video | f0afddc732b094cc05a205c82b809402ed4819dc00a4ea46fc59c01cf63234f7 |
+| 06_idea_assistant | 6e656b89dff6761cd3986ea073a070f5c7fe3ad3a0d396d3e9a30d6c32be67aa |
+| 07_creating_your_video | dc9be7d14aeff335f45cd9c4393e09712bb454cadc76cb5399f24f93257e0a9d |
+| 08_video_ready | 764b403cc329368dfe5af626fbecfd5ac8d596bb5754a762368941ae96f4f679 |
+| 09_revision_and_versions | 7c8649dc10fb351bc5f0b27393bb03dd4ce107e05a6276c6ecc342bc6db712dd |
+| 10_generation_failed_and_expired | b51b879410f5a92565662363419d818297311a51ec97212feb5fdb383a58843f |
+| 11_share_to_instagram | ba542c6bc016446a8162de328952f42d66821d908814cddd98a28c03940589c3 |
+| 12_schedule_instagram_post | d0988760639712c8e93fb8e71e6c280e50c48fc88b9117eadbae8d50e8274be5 |
+| 13_scheduled_posts | 1df90f3be1719d179887455f681f9da433d245941a8d3c8f31139b1d91c59051 |
+| 14_publication_results | ea25ad776b01281251e08f14388528fbe7b4ed5592c3c879007a1dd2046fb29e |
+| 15_preferences | 01b21c7abd235a8f6df32627ab8f18f1400bc0289dfbf307babc4840c55e7b5b |
+| 16_instagram_connection | 10b06ac32ff4802d53a2481fa6d4c480b5b923b0a3209caa186d4dc847dc480c |
+| 17_account_and_confirmations | 313a79db832cf8d80a334cc857e5bf0b2fc88a8813c7f2bc1f33ee59760ced3a |
+| 18_application_recovery_states | 51df0dff3821c85da430501ab3e1bfcb63bedfec9128eb13f69d85381a0d95ff |
+| 19_mobile_dashboard | 9ceab8dd19b24850f357207406121fad4888fb49ad834e2829742f2bc0f3024e |
+| 20_mobile_create_and_ideas | 79981c9e92604b68384de4039a537d3e4b748259360585e912eac4c35ea5e205 |
+| 21_mobile_generation | ee7984a15e68044881fa5dc1bb2d1b24bc8b40efbf24e73468e4282293d59472 |
+| 22_mobile_video_review | 9cd15b17d1136170c8c5913b3a5ab034770d92754e2857e3e9c201ec47a36d24 |
+| 23_mobile_publishing | cf0dbee46b106e374dfe89c5a64b9de4692618ecc509c9edf356c9ed0b6b091b |
+| 24_mobile_settings_and_sign_in | 9847b1afa19635c6a4698c1201c6b9c73e8f83c66eabb28a200491a888ba26d1 |
+| chitrabodh_direction_01_daylight_studio | ba7fef40e20c2b3e43d78ba0c72816b69f6819dc0617475ec2f85c9457d1b3e7 |
+| chitrabodh_direction_02_cobalt_lab | 8b14b56075fbb5f456d8bcddf90a0f4a631b225654ae5d3675f37a744ad38d1b |
+| chitrabodh_direction_03_afterlight | 430ffe31f29c7abc8b8b844dd318223761b722cf6d5288f7017b362928140b12 |
+| daylight_demo_homepage_desktop | 76a4baec4929f21ebeed8188ad235bea250378f242c4bde097b756365fc367a4 |
+| daylight_demo_homepage_mobile | f6c27aa6daeb5dee4175ff8a3a0e73a809c7fcc4ba461e9eb4eda266ec6e5b6f |
+| daylight_expanded_demo_player | 7b71ca6662d97306d91e63b3d92b8058ac114250e2342a99befd9a15f5125f01 |

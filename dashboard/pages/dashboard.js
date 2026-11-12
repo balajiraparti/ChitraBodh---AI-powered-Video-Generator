@@ -70,11 +70,11 @@ function LibraryView({initial}){
   if(items.length)return <>
     <div className="library-heading"><h1>My videos</h1><Link className="action" href="/create?new=1">Create a video</Link></div>
     {refreshError&&<p role="status">Could not refresh progress. Reconnecting…</p>}
-    <ul className="project-list">{items.map(item=>{
+    <p>Videos are available for two hours after they are ready. Download before they expire.</p><ul className="project-list">{items.map(item=>{
       const state=item.state==='ready' && Date.parse(item.expiresAt)<=now?'expired':item.state;
       const status=state==='running'?(item.cancelRequested?'Stopping creation':stages[item.stage]||'Creating video'):labels[state]||state;
       const href=item.jobId?'/jobs/'+item.jobId:'/create?draft='+item.id;
-      return <li key={item.id}><div><small>{status}</small><h2>{item.topic}</h2>
+      return <li key={item.id}><div><small className="state-chip">{status}</small><h2>{item.topic}</h2><div className="library-frame">{state==='ready' && item.mediaUrl?<video preload="metadata" muted playsInline src={item.mediaUrl+"#t=0.1"}/>:<div className="frame-status"><span className="material-symbols-outlined" aria-hidden="true">{state==='expired'?'timer_off':state==='draft'?'edit_note':state==='failed'?'error':'hourglass_top'}</span><strong>{status}</strong><small>{state==='expired'?'The two-hour availability window has ended.':state==='draft'?'Your idea is saved.':'Your idea stays saved here.'}</small></div>}</div>
         {item.expiresAt&&<p>{state==='expired'?'Expired':'Available until'} <time dateTime={item.expiresAt}>{item.expiresAt.slice(0,16).replace('T',' ')} UTC</time></p>}
       </div><Link href={href}>{state==='draft'?'Open draft':state==='ready'?'Review video':state==='expired'?'View expired video':'View job'}</Link></li>;
     })}</ul>
@@ -82,7 +82,7 @@ function LibraryView({initial}){
     {error&&<p role="alert">{error}</p>}
   </>;
   return <><h1>My videos</h1><div className="library-grid"><section className="empty">
-    <svg width="150" height="104" viewBox="0 0 150 104" aria-hidden="true"><rect x="39" y="5" width="72" height="94" rx="13" fill="#fff" stroke="#126b58" strokeWidth="2"/><circle cx="86" cy="32" r="11" fill="#f2c14e"/><path d="M47 76 Q62 48 76 64 T103 51 V88 H47Z" fill="#cee5da"/><path d="M47 80 Q70 61 83 74 T103 70" stroke="#126b58" strokeWidth="2" fill="none"/></svg>
-    <h2>Create your first explainer</h2><p>Start with a topic. Your finished videos will appear here.</p>
-    <Link className="action" href="/create?new=1">Create a video</Link></section><aside className="studio-note"><h2>Video availability</h2><p>Your videos are available for two hours after they are ready. Download a copy to keep it.</p><Link href="/preview">View the workspace example →</Link></aside></div></>;
+    <img src="/empty-project.svg" width="48" height="48" alt=""/>
+    <h2>Your first explanation starts with an idea.</h2><p>Start with a topic. Your finished videos will appear here.</p>
+    <Link className="action" href="/create?new=1">Create your first explainer</Link></section><aside className="studio-note"><h2>Canvas preview</h2><div className="empty-frames" aria-hidden="true"><i/><i/></div><h2>Video availability</h2><p>Your videos are available for two hours after they are ready. Download a copy to keep it.</p><Link href="/preview">View the workspace example →</Link></aside></div></>;
 }
