@@ -8,7 +8,7 @@
 
 **Product:** ChitraBodh (चित्रबोध)  
 **Tagline:** Ideas in motion. Made clear.  
-**Document version:** 1.2  
+**Document version:** 1.4\
 **Prepared:** 26 October 2026  
 **Status:** Detailed V1 baseline for product review and implementation planning  
 **Audience:** Founder, product designer, engineers, and QA
@@ -18,6 +18,8 @@
 **Revision 1.1:** Incorporates founder feedback on selectable Indian-accented narration, Next.js/Node.js, MongoDB, Cloudflare R2, and minimal text/diagram/icon animation. Indian English is a working interpretation of the language request; Hindi/Hinglish remains an explicit open choice. Better Auth is a proposed authentication library, not a founder-confirmed selection.
 
 **Revision 1.3:** Opens V1 registration to creators using email and password. It replaces the prior invite-only, emailed magic-link admission flow. Generated-media retention, one outstanding generation request per user, and no V1 brand customization remain unchanged.
+
+**Revision 1.4 (14 November 2026):** Filebase replaces Cloudflare R2 as the selected media store. Direct S3 access was verified with a sample MP4. The application adapter and generated-video walkthrough are pending.
 
 > Turn an idea into a clear, 60–90-second educational explainer with motion graphics and synchronized AI narration. Enter an idea, create the video, then preview and share.
 
@@ -128,14 +130,14 @@ Aggregate reliability measurements may be derived from operational jobs. Qualita
 | Frontend | Next.js with React and TypeScript | Next.js confirmed; TypeScript recommended |
 | Backend | Next.js server routes on Node.js, plus a Node.js background worker | Next.js/Node.js confirmed; one web app plus worker recommended |
 | Application database | MongoDB for users, preferences, projects, versions, and jobs | Confirmed; hosting choice open |
-| Media storage | Private Cloudflare R2 buckets | Confirmed |
+| Media storage | Private Filebase buckets | Confirmed |
 | Authentication | Better Auth with MongoDB adapter and email/password sign-up/sign-in | Confirmed product direction; MongoDB alone is not an authentication system |
 | Background execution | Simple sequential job runner with persisted checkpoints and scheduling | Recommended simplification; no multi-agent or workflow-framework dependency |
-| Application/worker hosting | One modest always-on Node-compatible machine for web app and worker; MongoDB and R2 remain external | Simplest proposed team deployment; actual host and spend cap open |
+| Application/worker hosting | One modest always-on Node-compatible machine for web app and worker; MongoDB and Filebase remain external | Simplest proposed team deployment; actual host and spend cap open |
 
 MongoDB stores authentication records as well as product data; an authentication library must still hash passwords securely, verify credentials, and manage sessions. Better Auth documents both [Next.js integration](https://better-auth.com/docs/integrations/next) and a [MongoDB adapter](https://better-auth.com/docs/adapters/mongo). Email delivery is not required for registration or sign-in in V1.
 
-Cloudflare R2 stores MP4s, audio, thumbnails, previews, and larger timing documents. Database records hold object keys and metadata. Use private buckets and scoped access URLs; R2 is storage and does not itself run the Node.js rendering worker. [R2 overview](https://developers.cloudflare.com/r2/how-r2-works/), [presigned access](https://developers.cloudflare.com/r2/api/s3/presigned-urls/)
+The target Filebase integration stores generated media. MongoDB holds the object registry and ownership metadata. The worker renders on local disk and uploads validated output. Playback and download use authenticated application routes. [Filebase documentation](https://filebase.com/docs/)
 
 ElevenLabs documents a speech endpoint that returns audio and character-level alignment, including normalized alignment. Model and voice compatibility must be tested before choosing the launch catalog. [Official timing API](https://elevenlabs.io/docs/api-reference/text-to-speech/convert-with-timestamps)
 
@@ -478,19 +480,19 @@ Invalid alignment receives a bounded retry. If timing remains unusable, fail wit
 | Durable job records | Proposed MongoDB job collections with indexed due times, atomic claims, retry scheduling, and leases |
 | Sequential job runner | Ordinary Node.js code for provider calls, validation, saved checkpoints, and attempt budgets |
 | Render worker | Remotion composition and media verification within the same Node.js worker deployment |
-| Cloudflare R2 | Audio, alignment/timeline documents, previews, thumbnails, final video artifacts |
+| Filebase | Audio, alignment/timeline documents, previews, thumbnails, final video artifacts |
 | Scheduler/publishing worker | Due-post scanning, preflight, provider processing, publishing and reconciliation |
 | Provider adapters | Gemini, ElevenLabs, Meta; centralize model/version/configuration handling |
 
-Implementation direction: one Next.js application for the frontend and Node.js server routes, MongoDB for application data, Cloudflare R2 for media, and one separately running Node.js worker process for background generation/rendering and scheduled publishing. Keep code in one repository and share schemas/types. A separate Express service, Redis installation, agent framework, or workflow platform is not required for the initial design.
+Implementation direction: one Next.js application for the frontend and Node.js server routes, MongoDB for application data, Filebase for media, and one separately running Node.js worker process for background generation/rendering and scheduled publishing. Keep code in one repository and share schemas/types. A separate Express service, Redis installation, agent framework, or workflow platform is not required for the initial design.
 
-The component table describes logical responsibilities, not a mandate for a microservice per row. Long render jobs must not rely on keeping a browser request or short-lived web function open. One always-on machine can run the Next.js app and worker for the internal team. Rendering runs in a child process so it cannot block publication checks or expiry cleanup. Restrict generation execution to one job globally; keep MongoDB and R2 as the shared durable services. No autoscaling, multi-region deployment, or team-administration UI is required.
+The component table describes logical responsibilities, not a mandate for a microservice per row. Long render jobs must not rely on keeping a browser request or short-lived web function open. One always-on machine can run the Next.js app and worker for the internal team. Rendering runs in a child process so it cannot block publication checks or expiry cleanup. Restrict generation execution to one job globally; keep MongoDB and Filebase as the shared durable services. No autoscaling, multi-region deployment, or team-administration UI is required.
 
 An existing workstation is sufficient for attended rendering experiments, but sleeping/offline machines cannot enforce timely cleanup or scheduled posting. Use an always-on host for the complete team pilot. Choose a host after benchmarking one render; hosting vendor and a monthly spending cap remain open, and no unsupported zero-cost promise is made.
 
 Proposed minimal job implementation: persist jobs in MongoDB, index status/next-run time, atomically claim eligible work with a lease and expected state, and renew/recover leases. Each claim gets a fencing/version value so stale workers cannot commit results. Store a job request before acknowledging it. Do not rely on in-memory timers or MongoDB TTL cleanup to trigger publication. Replica-set transactions may be used for related writes; critical dispatch/cancel decisions must share an atomic job record. [MongoDB atomicity documentation](https://www.mongodb.com/docs/manual/core/write-operations-atomicity/)
 
-For R2, issue scoped presigned access from the backend, configure permitted browser origins, and test media seeking and Meta's media fetch behavior. Generate publish URLs near processing time with sufficient validity. R2 keys/credentials remain server-side; the worker uses temporary local disk for render intermediates and uploads validated media to R2.
+Keep Filebase credentials and object keys server-side. Verify seeking through the authenticated media route. For future Instagram publishing, issue a scoped, expiring application URL near dispatch and verify Meta can fetch it within the original media deadline.
 
 ### 11.2 Creation data flow
 
@@ -508,7 +510,7 @@ flowchart TD
     O --> T[ChitraBodh timing and caption logic]
     T --> R[Remotion render worker]
     R --> V[Media validation]
-    V --> S[(Private Cloudflare R2)]
+    V --> S[(Private Filebase)]
     V --> D
     D --> B
     B --> W
@@ -525,7 +527,7 @@ flowchart TD
     D --> Q[Scheduler and durable queue]
     Q --> C[Preflight and atomic job claim]
     C --> M[Meta media preparation and processing]
-    S[(MP4 in Cloudflare R2)] --> M
+    S[(MP4 in Filebase)] --> M
     M --> F[Publish when due and media ready]
     F --> R[Confirm or reconcile outcome]
     R --> D
@@ -545,7 +547,7 @@ A privacy notice must explain provider processing. Do not promise zero provider 
 
 ## 12. Data model and versioning
 
-This is a logical data model for MongoDB collections; exact document schemas and API contracts belong to implementation design. Enforce application-level schema validation, ownership, unique idempotency/version indexes, and relationship integrity. Store large media/timing objects in R2 with references in MongoDB rather than embedding binary audio/video in project documents.
+This is a logical data model for MongoDB collections; exact document schemas and API contracts belong to implementation design. Enforce application-level schema validation, ownership, unique idempotency/version indexes, and relationship integrity. Store large media/timing objects in Filebase with references in MongoDB rather than embedding binary audio/video in project documents.
 
 | Entity | Key fields | Invariants |
 |---|---|---|
@@ -738,8 +740,8 @@ Implementation requirements:
 
 - Persist expires_at and show an “Available until” timestamp/countdown on preview and scheduled items.
 - Deny playback, download, revision reuse, and new publishing work at expiry. Signed URLs cannot outlive that deadline, and private media must not be left in a public CDN cache.
-- Run an explicit cleanup task at least once per minute. Delete generated R2 objects, local render files, multipart-upload remnants, and application caches. Target deletion within one minute of expiry under healthy operation; retain deletion-pending state and alert on failures. Do not promise physical deletion succeeded before it is verified.
-- R2 lifecycle rules alone are insufficient for precise two-hour cleanup: Cloudflare describes deletion as typically occurring within 24 hours of the expiration value. Use explicit deletes; lifecycle rules may only be a backup safeguard. [R2 lifecycle behavior](https://developers.cloudflare.com/r2/buckets/object-lifecycles/)
+- Run an explicit cleanup task at least once per minute. Delete generated Filebase objects, local render files, multipart-upload remnants, and application caches. Target deletion within one minute of expiry under healthy operation; retain deletion-pending state and alert on failures. Do not promise physical deletion succeeded before it is verified.
+Enforce the two-hour access deadline in the application. The cleanup worker explicitly deletes expired objects and retries failures.
 - Scheduling, browser activity, and replaying a preview do not extend retention. Honor the scheduling buffer in Section 14.3.
 - On manual deletion, revoke access and request immediate object cleanup using the same mechanism. Late worker results must not recreate deleted media.
 - Keep reusable built-in icons/fonts/templates separate from generated user objects; they are application assets, not a user's retained video.
@@ -836,7 +838,7 @@ No delivery dates are committed until infrastructure, team capacity, and provide
 
 | Milestone | Deliverable | Exit condition |
 |---|---|---|
-| M0 — Provider and rendering feasibility | One topic through Gemini, Indian-accented male/female ElevenLabs voice samples and timings, and a local Remotion render; validate R2 media access and Meta access path early | Both voice categories validated; correct audio/timing, 60–90-second MP4, documented provider/model/license decisions and Meta access requirements |
+| M0 — Provider and rendering feasibility | One topic through Gemini, Indian-accented male/female ElevenLabs voice samples and timings, and a local Remotion render; validate Filebase media access and Meta access path early | Both voice categories validated; correct audio/timing, 60–90-second MP4, documented provider/model/license decisions and Meta access requirements |
 | M1 — Generation demonstration | Composer, background generation, three initial scene templates, preview, caption variants, download | Five sample topics work end to end; failures preserve input; no mocked finished-video claim |
 | M2 — Creator workspace | Auth, dashboard, persistence, saved preferences, brainstorming, plain-language revision and versioning | AT-01–09 and ownership checks pass |
 | M3 — Instagram workflow | Connection for authorized team profiles, post now, scheduling within expiry, cancel/reschedule, reconciliation | Live team-account publishing and expiry/race/failure cases pass |
@@ -896,7 +898,7 @@ These decisions should be settled before the relevant implementation milestone. 
 | Connected accounts | One Instagram account per user | M3 |
 | Scheduling limits | Within two-hour retention confirmed; propose at least 10 minutes ahead and 15 minutes before expiry; never retry beyond expiry | M3 |
 | Concurrency | One outstanding request per user confirmed; one team-wide active generation with FIFO queue proposed | M1/M2 |
-| Infrastructure providers and budget | Next.js/Node.js, MongoDB, R2 confirmed; recommend one always-on app/worker machine; choose host and monthly spending cap | M0/M3 |
+| Infrastructure providers and budget | Next.js/Node.js, MongoDB, Filebase confirmed; recommend one always-on app/worker machine; choose host and monthly spending cap | M0/M3 |
 | Background job mechanism | Sequential Node.js worker with MongoDB-backed job records proposed; benchmark and test lease recovery | M1/M3 |
 | Retention | Two-hour generated-media window confirmed; ready-time start, one-minute cleanup target, and minimal metadata/log policy proposed in Section 16.3 | M2 |
 | Brand customization | Excluded from V1; reconsider next version | M1 |
@@ -919,11 +921,10 @@ The requirements and architecture in this document are original product specific
 | [YouTube Shorts upload help](https://support.google.com/youtube/answer/12779649) | Manual vertical-video upload guidance | Reviewed 26 October 2026; V1 has no YouTube API integration |
 | [ElevenLabs Voice Library](https://elevenlabs.io/docs/eleven-creative/voices/voice-library) | Language/accent/gender selection and API plan restriction | Reviewed 26 October 2026; actual launch voices not yet selected or auditioned |
 | [Better Auth MongoDB adapter](https://better-auth.com/docs/adapters/mongo) and [Next.js integration](https://better-auth.com/docs/integrations/next) | Proposed authentication layer for the selected stack | Reviewed 26 October 2026; library choice remains proposed |
-| [R2 presigned URLs](https://developers.cloudflare.com/r2/api/s3/presigned-urls/) | Scoped private-object access | Reviewed 26 October 2026; playback and publishing paths still need testing |
+| [Filebase documentation](https://filebase.com/docs/) | S3-compatible object storage | Direct upload and download verified. Authenticated application delivery remains pending. |
 | [MongoDB atomicity](https://www.mongodb.com/docs/manual/core/write-operations-atomicity/) | Conditional atomic document updates for job claims | Reviewed 26 October 2026; complete job reliability requires application logic and tests |
 | [Gemini 3.8 Flash](https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash) and [Gemini 3.5 Flash-Lite](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite) | Current model capabilities and candidate IDs | Reviewed 26 October 2026; no ChitraBodh benchmark completed yet |
 | [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing) | Free-tier availability and dated paid rates | Reviewed 26 October 2026; verify account access and current rates before integration |
-| [R2 lifecycle behavior](https://developers.cloudflare.com/r2/buckets/object-lifecycles/) | Lifecycle deletion is not a precise two-hour timer | Reviewed 26 October 2026; explicit cleanup is required |
 
 ## 24. Definition of done
 

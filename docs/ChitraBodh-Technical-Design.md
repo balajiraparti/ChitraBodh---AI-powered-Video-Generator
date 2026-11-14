@@ -12,7 +12,7 @@
 
 Build the smallest system that can produce convincing, synchronized explainers and then support the founder's internal team. Keep business rules in ordinary application code and validated data structures. The component names below are responsibilities, not separate microservices.
 
-Confirmed stack: Next.js, Node.js, MongoDB, Cloudflare R2, Gemini planning, ElevenLabs speech/timing, and Remotion. Better Auth with MongoDB is proposed for the team phase. Model IDs and voice IDs must be tested and pinned at implementation time.
+Confirmed stack: Next.js, Node.js, MongoDB, Filebase, Gemini planning, ElevenLabs speech/timing, and Remotion. Better Auth with MongoDB is proposed for the team phase. Model IDs and voice IDs must be tested and pinned at implementation time.
 
 Confirmed product constraints: 60–90 seconds, vertical 1080 × 1920, Indian male/female narrator choices, optional captions, minimal diagrams/icons/text, no brand customization or billing, and no behavior tracking. Media expires after two hours. Instagram posting/scheduling must use a valid connected profile and fit inside media retention.
 
@@ -23,10 +23,10 @@ Confirmed product constraints: 60–90 seconds, vertical 1080 × 1920, Indian ma
 | Entry point | CLI or local-only minimal form | Next.js sign-in, composer, preview, status |
 | Identity | Explicit local test identity; bind UI to localhost | Email/password registration and verified session |
 | Persistence | Filesystem run manifest and single-process queue | MongoDB projects, jobs, versions, connections |
-| Generated media | Temporary local directory with expiry cleanup | Private R2 plus short-lived local render workspace |
+| Generated media | Temporary local directory with expiry cleanup | Private Filebase plus short-lived local render workspace |
 | Generation | One Node.js runner, one job at a time | Same core runner behind durable job claiming |
 | Publication | Deferred until core media quality passes | Post now and short-window scheduling for authorized team accounts |
-| Deployment | Attended developer workstation | One always-on Node-compatible host plus MongoDB and R2 |
+| Deployment | Attended developer workstation | One always-on Node-compatible host plus MongoDB and Filebase |
 
 The local identity/storage adapters are prototype conveniences, not approved public security or retention bypasses. Do not deploy the unauthenticated local entry point for team use. On startup, the local runner sweeps expired files before serving anything; timely deletion while the machine is off cannot be guaranteed. The complete two-hour operational target requires the always-on team deployment.
 
@@ -42,7 +42,7 @@ flowchart TD
     W --> E[ElevenLabs narrator]
     W --> T[Timing and template composition]
     T --> R[Render child process]
-    R --> S[(Cloudflare R2: temporary media)]
+    R --> S[(Filebase: temporary media)]
     W --> D
     N --> S
     D --> P[Lightweight publishing loop]
@@ -68,7 +68,7 @@ src/providers/               Gemini and ElevenLabs adapters
 src/timing/                  Text normalization, alignment, cue mapping
 src/video/                   Remotion compositions, layouts, assets
 src/jobs/                    Commands, state transitions, leases
-src/storage/                 Local/R2 artifact access and object manifest
+src/storage/                 Local/Filebase artifact access and object manifest
 src/publishing/              Instagram adapter and reconciliation
 src/retention/               Expiry access checks and deletion workflow
 worker/                      Generation/publication/cleanup entry point
@@ -172,7 +172,7 @@ generated/{ownerId}/{projectId}/{versionId}/preview/...
 
 These paths are private object keys, not publicly exposed URLs. Register intended keys in the manifest before uploading, then finalize size/checksum/state. A crash after upload but before commit must leave discoverable cleanup work. Incomplete uploads and temporary local directories also need entries or a safely scoped sweep.
 
-R2 supports scoped presigned access; keep credentials server-side. [R2 presigned URL documentation](https://developers.cloudflare.com/r2/api/s3/presigned-urls/)
+Serve private media through the authenticated backend. Check ownership and expiry before streaming each request, including byte ranges. Keep Filebase credentials server-side.
 
 ### 8.2 Deadline semantics
 
@@ -181,10 +181,10 @@ R2 supports scoped presigned access; keep credentials server-side. [R2 presigned
 - Caption-only derivatives and media-reusing revisions use the earliest dependency expiry. Fully new synthesis/rendering can create a new window.
 - At expiry, access checks deny new playback/download/revision/publication; existing signed URLs expire no later than the same instant.
 - An already-running file download may complete, and previously downloaded copies cannot be recalled. No guarantee of deletion from third-party provider systems is implied.
-- Delete expired R2/local objects with an explicit cleanup scan every minute; record and alert on delayed cleanup. No media backups or public caches.
+- Delete expired Filebase/local objects with an explicit cleanup scan every minute; record and alert on delayed cleanup. No media backups or public caches.
 - Failed/cancelled jobs purge generated material immediately; active work is bounded by a proposed 20-minute deadline.
 
-Cloudflare's lifecycle processing is not a precise two-hour timer. Use application deletes as the primary mechanism. [Lifecycle behavior](https://developers.cloudflare.com/r2/buckets/object-lifecycles/)
+Enforce the two-hour access deadline in the application. The cleanup worker explicitly deletes expired objects and retries failures.
 
 ### 8.3 Cleanup resilience
 
@@ -253,7 +253,7 @@ Provider/API fees are operator costs. No credit wallet or subscription system is
 | Local adapters first | Prove media quality without infrastructure setup | Ready to invite team members |
 | One Node generation worker | Matches low-volume/no-concurrency goal | Queue delay becomes unacceptable |
 | MongoDB job records | Reuses the chosen database | Measured reliability/throughput demands a queue service |
-| Private R2 + explicit cleanup | Matches temporary-media requirement | Retention policy changes explicitly |
+| Private Filebase + explicit cleanup | Matches temporary-media requirement | Retention policy changes explicitly |
 | Deferred full UI and publishing | Avoid building around unproven video output | Quality gates pass |
 
 Remaining decisions: exact model/voice IDs after smoke tests, Hindi/Hinglish scope, authentication/email provider confirmation, always-on host and spending cap, and acceptance of proposed buffer/timeout values. These do not prevent designing or implementing the local pipeline with existing defaults.

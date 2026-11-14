@@ -2,7 +2,7 @@
 
 Version 1.0 · 31 October 2026 · **Proposed implementation specification. No database migration has been applied.**
 
-References: [PRD](ChitraBodh-V1-PRD.md), [system design](ChitraBodh-Dashboard-System-Design.md), [API design](ChitraBodh-API-Design.md), [OpenAPI](api/chitrabodh.openapi.json). MongoDB is the metadata/queue database; private R2 holds generated payloads. Better Auth manages identity/session mechanics. There is no billing schema or behavioral tracking collection.
+References: [PRD](ChitraBodh-V1-PRD.md), [system design](ChitraBodh-Dashboard-System-Design.md), [API design](ChitraBodh-API-Design.md), [OpenAPI](api/chitrabodh.openapi.json). MongoDB is the metadata/queue database; private Filebase holds generated payloads. Better Auth manages identity/session mechanics. There is no billing schema or behavioral tracking collection.
 
 ## 1. Persistence conventions and invariants
 
@@ -44,7 +44,7 @@ erDiagram
     USER ||--o{ LIFECYCLE_JOB : requests_deletion
 ```
 
-VERSION optionally references one parent VERSION. Shared generated dependencies use `dependencyObjectIds` plus immutable source hashes; no cross-user cache. Project.selectedVersionId must reference its own version. Each artifact variant points to an object and thumbnail (thumbnail may be absent until ready). R2 keys are never foreign keys supplied by a browser.
+VERSION optionally references one parent VERSION. Shared generated dependencies use `dependencyObjectIds` plus immutable source hashes; no cross-user cache. Project.selectedVersionId must reference its own version. Each artifact variant points to an object and thumbnail (thumbnail may be absent until ready). Filebase keys are never foreign keys supplied by a browser.
 
 Deleting a parent is logical first. Cascades are application-managed, bounded, resumable lifecycle jobs; never one unbounded transaction over all a user's history. References may point to tombstones for history, but cannot grant access or new work. Reconciliation scans detect broken refs and fail closed.
 
@@ -121,7 +121,7 @@ One artifact slot per `(versionId,variant)`; failures/retries update pending slo
 
 `commands`: ownerId!, type!, key! UUID, requestHash! SHA256, state! accepted/completed/failed, targetId?, resourceId?, resourceType?, responseStatus?, safeError?, expiresAt!, purgeAt?; no raw body. Command creation/linked work is atomic. Unique `(ownerId,type,key)` persists through tombstone and all unresolved work. `purgeAt` is set only after work terminal AND no unresolved publication ambiguity, at least24hours after acceptance. For synchronous external brainstorming, persist command reservation first; resolve via attempt/result ref. Never hold DB transaction open during inference.
 
-`ephemeralPayloads`: ownerId!, kind! generation_input/revision_input/brainstorm/post_description, parentId!, payload! type-validated bounded object, expiresAt!, purgeAt!. This separate database/namespace is excluded from backups, exports, telemetry, and snapshots. Explicit sweeper denies reads at expiry and deletes; TTL is eventual fallback. Initial generation/revision input lasts at most 24 hours and is removed sooner on deletion; generated content is still purged immediately after failure. Keeping only the bounded user instruction temporarily permits an explicit retry. Brainstorm history has at most six recent user/assistant pairs and expires after 24 hours of inactivity; post description is removed at terminal outcome or media expiry. Generated plan/audio/timing are in R2 instead, never payload backups.
+`ephemeralPayloads`: ownerId!, kind! generation_input/revision_input/brainstorm/post_description, parentId!, payload! type-validated bounded object, expiresAt!, purgeAt!. This separate database/namespace is excluded from backups, exports, telemetry, and snapshots. Explicit sweeper denies reads at expiry and deletes; TTL is eventual fallback. Initial generation/revision input lasts at most 24 hours and is removed sooner on deletion; generated content is still purged immediately after failure. Keeping only the bounded user instruction temporarily permits an explicit retry. Brainstorm history has at most six recent user/assistant pairs and expires after 24 hours of inactivity; post description is removed at terminal outcome or media expiry. Generated plan/audio/timing are in Filebase instead, never payload backups.
 
 `operationalEvents`: ownerId? (only when necessary), jobId?, requestId?, category!, stage?, at!, elapsedMs?, safeCode?, purgeAt! = at+7days. No raw topic, script, post text, provider response, fetch URL or IP-based behavior profile. `schemaMigrations`: unique name!, checksum!, appliedAt!, state!, operator/buildRef!.
 
@@ -159,7 +159,7 @@ Use named indexes in versioned migrations. Examples use mongosh-style notation; 
 
 MongoDB partial unique indexes enforce uniqueness only for matching documents; queries should include matching predicates to benefit from partial indexes. [Partial indexes](https://www.mongodb.com/docs/manual/core/index-partial/)
 
-TTL indexes use `{expireAfterSeconds:0}` on Date fields and delete asynchronously. Never use TTL to dispatch posts, deny access exactly on time, release worker slots, or delete object registries before R2 cleanup. Always check expiry in application logic. [TTL indexes](https://www.mongodb.com/docs/manual/core/index-ttl/)
+TTL indexes use `{expireAfterSeconds:0}` on Date fields and delete asynchronously. Never use TTL to dispatch posts, deny access exactly on time, release worker slots, or delete object registries before Filebase cleanup. Always check expiry in application logic. [TTL indexes](https://www.mongodb.com/docs/manual/core/index-ttl/)
 
 FIFO selection chooses oldest eligible queued job `(createdAt,_id)` while only one global slot is idle; the eligibility scan may require a small in-memory sort of a bounded pilot candidate set. Benchmark `explain("executionStats")`; do not claim the nextRunAt index alone optimizes both range and FIFO sort. Scheduled-project filter may join active publishJobs or use a transactionally maintained projection; for the pilot use bounded aggregation and measure before denormalizing. Do not add unbounded regex/full-text search to V1.
 
@@ -208,7 +208,7 @@ Connection: connected→needs_reconnection|disconnecting; needs_reconnection→c
 
 ## 6. Transactions and cross-system consistency
 
-Use short transactions with majority write concern and snapshot read concern. Retry transient transaction conflicts with bounded jitter; retry unknown commit results using the driver's supported commit protocol, not by replaying external calls. Build indexes before accepting writes. Provider/email/R2 operations never run inside a DB transaction.
+Use short transactions with majority write concern and snapshot read concern. Retry transient transaction conflicts with bounded jitter; retry unknown commit results using the driver's supported commit protocol, not by replaying external calls. Build indexes before accepting writes. Provider/email/Filebase operations never run inside a DB transaction.
 
 **Prevent snapshot write-skew:** reading a live user/project/connection is insufficient when another transaction deletes/revokes it. Admission/ready/dispatch transaction conditionally increments the relevant guard's admissionEpoch/dispatchEpoch/accessEpoch while verifying its live state. Deletion/revocation updates that same document; a concurrent write conflict serializes the decision. A no-op `$set` is not the intended guard. Consistent order: user guard → project → connection → artifact → slot/job/command. This design deliberately favors safety over high concurrency in the small pilot.
 
@@ -228,7 +228,7 @@ Use short transactions with majority write concern and snapshot read concern. Re
 | T12 Dispatch intent | Live user/project/connection/artifact guard writes; current job fence/revision; due≤now<deadline and expiry; set publishing/dispatchIntentAt | After commit caller cannot promise cancellation; if send/response uncertain, reconcile |
 | T13 Publish confirmation | Match known dispatch identity; set confirmed mediaId/time or outcome_unknown; update duplicate block | Can record evidence after media expiry; do not require expired bytes to reconcile |
 | T14 Delete/disconnect | Tombstone shared guard first; account deletion revokes sessions, disconnect removes connection tokens, project deletion revokes project access; create lifecycle job and command | Bounded cascade later; already-sent publish cannot be undone locally |
-| T15 Expire/cleanup commit | Mark media expired/delete_pending; revoke grants; after external delete verify mark deleted/clear refs | R2 failure keeps registry and retry work; no TTL removal of obligations |
+| T15 Expire/cleanup commit | Mark media expired/delete_pending; revoke grants; after external delete verify mark deleted/clear refs | Filebase failure keeps registry and retry work; no TTL removal of obligations |
 
 Cross-database ephemeral payload creation must participate in the same replica-set transaction if used for accepted commands; do not accidentally place it on an independent cluster and assume atomicity. If deployment separates clusters, use registered payload upload + reconciliation and acknowledge only after durable reference/payload existence. All nontransactional external effects require an explicit outbox/attempt/registry boundary.
 
@@ -236,7 +236,7 @@ Cross-database ephemeral payload creation must participate in the same replica-s
 
 Fresh version: `expiresAt = firstReadyAt + 2h`. Derivative: min(firstReadyAt+2h, every reused dependency.expiresAt). All generated objects for the version share that deadline; unneeded intermediates deleted sooner. Before ready, provisional deadline is the20minute execution deadline. Queueing creates no media. On failure/cancel, purge immediately; minimal status/idea remains.
 
-The explicit cleanup loop runs at least once/minute, handles both expiresAt and provisionalDeadline, and retries delete_pending objects. Access decisions check now against expiry on every call independently of deletion. Registry and minimal deletion proof remain until complete; physical deletion lag alerts after5minutes. Local and R2 temporary objects, multipart uploads, generated payloads, thumbnails, caches, and late uploads are included. No generated-media backups.
+The explicit cleanup loop runs at least once/minute, handles both expiresAt and provisionalDeadline, and retries delete_pending objects. Access decisions check now against expiry on every call independently of deletion. Registry and minimal deletion proof remain until complete; physical deletion lag alerts after5minutes. Local and Filebase temporary objects, multipart uploads, generated payloads, thumbnails, caches, and late uploads are included. No generated-media backups.
 
 Before marking physical cleanup complete, stop or reconcile outstanding writers for that job. A PUT already in flight can finish after an earlier DELETE: retain object tombstones, rescan recently deleted attempt prefixes after writer termination, and delete any reappearing bytes. No late writer may update the registry back to committed. A lifecycle receipt must remain pending/needs_attention while writer termination or storage deletion is uncertain.
 
@@ -270,7 +270,7 @@ Database acceptance checks:
 - Replay/collision tests cover command hashes, expiration, tombstoned results and nonterminal retention.
 - Fenced old worker cannot commit; actual old process termination required before new claim.
 - Shared-guard transaction tests race user/project deletion and disconnect against admission, ready and publish dispatch.
-- Expiry boundaries, reused dependency deletion, late uploads, R2 failure, crash after upload, and missing registry reconciliation are tested.
+- Expiry boundaries, reused dependency deletion, late uploads, Filebase failure, crash after upload, and missing registry reconciliation are tested.
 - Unknown publication blocks duplicates across reconnect; confirmed outcomes can be recorded after expiry.
 - Cursor traversal with timestamp ties/new inserts/expiry remains owner-scoped and documented.
 - TTL deletes only expendable records; cleanup obligations and publication uncertainty cannot disappear early.

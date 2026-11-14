@@ -53,4 +53,4 @@ Configure the provider credentials locally and audition one Indian-accented Engl
 
 ## Intentionally deferred
 
-Team sign-in, dashboard idea submission, AI idea brainstorming, dashboard voice selection, MongoDB, R2, deployed workers and Instagram publishing/scheduling are not implemented. They remain in the product plan. The two-hour local deletion policy requires the preview process to remain running; after downtime, cleanup resumes on startup.
+Team sign-in, dashboard idea submission, AI idea brainstorming, dashboard voice selection, MongoDB, Filebase, deployed workers and Instagram publishing/scheduling are not implemented. They remain in the product plan. The two-hour local deletion policy requires the preview process to remain running; after downtime, cleanup resumes on startup.

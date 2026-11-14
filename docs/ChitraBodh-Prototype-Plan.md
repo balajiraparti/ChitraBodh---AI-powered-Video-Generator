@@ -26,7 +26,7 @@ Initial scope:
 - MP4 rendering, basic media validation, and expiry cleanup.
 - Text-only evaluation summaries.
 
-Deferred until the video-quality gate passes: full dashboard, authentication, MongoDB/R2 integration, durable team queue, Instagram connection/publishing/scheduling. These are staged implementation tasks, not removals from the approved internal V1 scope.
+Deferred until the video-quality gate passes: full dashboard, authentication, MongoDB/Filebase integration, durable team queue, Instagram connection/publishing/scheduling. These are staged implementation tasks, not removals from the approved internal V1 scope.
 
 No billing, user tracking, brand customization, custom avatars, background music, or general-purpose editing timeline.
 
@@ -41,7 +41,7 @@ No billing, user tracking, brand customization, custom avatars, background music
 | Permitted font and icons | Consistent visuals | Bundle and record license/source; avoid remote asset dependency |
 | Temporary local storage | Intermediate artifacts | Configure ignored directory, manifest, expiry checks and cleanup |
 | API spending ceiling | Repeated live tests | Agree a small explicit run/batch allowance before unattended batch execution |
-| MongoDB/R2/auth/Meta configuration | Later team phases only | Do not block local pipeline work on these |
+| MongoDB/Filebase/auth/Meta configuration | Later team phases only | Do not block local pipeline work on these |
 
 Never ask for API keys in a committed document or source file. Set secrets outside version control. Missing credentials should not prevent building schemas/templates and tests with authored fixtures, but real provider integration remains unproven until credentials are configured.
 
@@ -113,7 +113,7 @@ flowchart LR
 
 ### P6 — Internal team integration
 
-**Build:** Next.js composer/preview/status screens; Better Auth email/password registration and sign-in; MongoDB job/version records; one outstanding generation per user; single global generation slot; R2 media; always-on expiry cleanup. Keep one repository and one app/worker host.
+**Build:** Next.js composer/preview/status screens; Better Auth email/password registration and sign-in; MongoDB job/version records; one outstanding generation per user; single global generation slot; Filebase media; always-on expiry cleanup. Keep one repository and one app/worker host.
 
 **Check:** two users submit simultaneously; one executes, the other waits, and neither can access the other's media. Duplicate tabs from one user do not create a second request. A render crash does not block cleanup or permanently hold the queue.
 

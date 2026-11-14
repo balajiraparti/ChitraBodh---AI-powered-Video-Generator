@@ -24,7 +24,7 @@ This document implements the [V1 PRD](ChitraBodh-V1-PRD.md), incorporates the [m
 | Generation | One outstanding generation-related job per user; one executing generation globally; other users wait FIFO |
 | Retention | First ready output starts a two-hour availability window. Reused dependencies and caption variants cannot extend it |
 | Publishing | Explicit Instagram publish-now and scheduling within the retention window; download for manual Shorts upload |
-| Stack | Next.js/React/TypeScript, Node.js workers, MongoDB, private Cloudflare R2, existing Remotion engine |
+| Stack | Next.js/React/TypeScript, Node.js workers, MongoDB, private Filebase, existing Remotion engine |
 | AI | Preserve current Gemini Interactions adapter and configured model fallback; NVIDIA remains an operator-selectable alternative, not a required second service |
 | Narration | ElevenLabs timestamped speech; curated accessible voices. Adam is a test voice, not fulfillment of the Indian male/female launch catalog |
 | Excluded | Billing, credit wallets, behavioral analytics, brand customization, timeline editor, compulsory script review, YouTube API publishing, and multi-agent orchestration |
@@ -38,7 +38,7 @@ This document implements the [V1 PRD](ChitraBodh-V1-PRD.md), incorporates the [m
 | Planning/speech/rendering | TypeScript pipeline, provider adapters, Zod validation, ElevenLabs alignment, React/Remotion, FFmpeg/FFprobe | Extract reusable engine interfaces; retain working behavior |
 | UI/server | Local Node HTTP portal; in-memory latest-job status | Next.js dashboard and authenticated APIs |
 | Jobs | Local manifest, filesystem global lock, bounded requests | MongoDB admission, durable checkpoints, leases, recovery, user ownership |
-| Storage | `.local-runs` with local cleanup | R2 object registry, authenticated access, durable deletion |
+| Storage | `.local-runs` with local cleanup | Filebase object registry, authenticated access, durable deletion |
 | Preferences/revisions | Per-generation voice/caption selection | Saved preferences, immutable versions, revision commands and caption variants |
 | Brainstorming | Not a complete persisted application flow | Small bounded idea-assistance endpoint and draft state |
 | Instagram | Not implemented | OAuth connection, publisher, scheduler, outcome reconciliation |
@@ -63,7 +63,7 @@ Do not expose the existing localhost server as the team application. This docume
 
 ## 3. Architecture and deployment boundaries
 
-Use a modular monolith in one repository. Run the web application and background processes independently on one always-on machine for the pilot. MongoDB and R2 are shared durable services. No Redis, Kubernetes, event bus, separate Express backend, or workflow framework is required initially.
+Use a modular monolith in one repository. Run the web application and background processes independently on one always-on machine for the pilot. MongoDB and Filebase are shared durable services. No Redis, Kubernetes, event bus, separate Express backend, or workflow framework is required initially.
 
 ```mermaid
 flowchart TB
@@ -71,15 +71,15 @@ flowchart TB
     W --> A[Auth and session checks]
     A --> DB[(MongoDB replica set)]
     W --> DB
-    W -->|authorized media stream| R2[(Private R2)]
+    W -->|authorized media stream| Filebase[(Private Filebase)]
     G[Generation supervisor] -->|claim and checkpoint| DB
     G --> P[Gemini or configured NVIDIA]
     G --> E[ElevenLabs]
     G --> C[Isolated render child: Remotion and FFmpeg]
     C --> T[Temporary local workspace]
-    G --> R2
+    G --> Filebase
     O[Operations worker: publication and cleanup] --> DB
-    O --> R2
+    O --> Filebase
     O --> M[Meta Instagram API]
     M -->|scoped media fetch| W
     W --> EM[Transactional email]
@@ -93,7 +93,7 @@ flowchart TB
 | Generation supervisor | One global generation slot, provider calls, checkpointing, budgets, render child lifecycle | Separate process; CPU-heavy work in a child process/container |
 | Operations worker | Publication polling, due scheduling, token maintenance, cleanup and reconciliation | Separate from generation so a render cannot block expiry or scheduling |
 | MongoDB replica set | Auth/product metadata, queues, transactions, leases, object registry | Required for proposed multi-document invariants; not a standalone MongoDB deployment |
-| R2 | Private generated objects and checkpoints | No public bucket; no user-generated media backups |
+| Filebase | Private generated objects and checkpoints | No public bucket; no user-generated media backups |
 | Reverse proxy | HTTPS, request size/time limits, streaming, rate-limit perimeter | Public ports only 80/443; databases and worker controls remain private |
 
 Database jobs are the queue and durable command record. Committing a job makes it discoverable by workers; no separate queue publish can be lost after a database commit.
@@ -107,7 +107,7 @@ apps/operations/          publishing, cleanup, reconciliation loops
 packages/contracts/      Zod requests, scene/timeline schemas, states, video policy
 packages/engine/         existing planning, speech, timing, render, validators
 packages/database/       MongoDB repositories, indexes, transactions, migrations
-packages/storage/        R2 client, object registry, range streaming
+packages/storage/        Filebase client, object registry, range streaming
 packages/auth/           server-only auth configuration
 packages/publishing/     Meta adapter and publication state transitions
 packages/observability/  structured redacted logs, health metrics
@@ -200,7 +200,7 @@ Use UTC BSON dates internally and ISO 8601 UTC strings in APIs; store IANA timez
 | `commands` | ownerId, commandType, idempotencyKey, requestHash, resourceId, responseStatus, purgeAt | Proposed 24-hour replay window; no raw request payload |
 | `operationalEvents` | jobId, stage, category, time, elapsedMs, correlationId | Redacted diagnostics, seven-day proposed retention |
 
-Temporary narrative/revision payloads, brainstorm history, and post descriptions use a separate non-backed-up ephemeral collection or registered R2 objects, with explicit expiry. Store only hashes/references in durable job records. Remove generated plan/timeline references at expiry while preserving safe tombstones and deletion evidence. An expired version is not a permanent script archive.
+Temporary narrative/revision payloads, brainstorm history, and post descriptions use a separate non-backed-up ephemeral collection or registered Filebase objects, with explicit expiry. Store only hashes/references in durable job records. Remove generated plan/timeline references at expiry while preserving safe tombstones and deletion evidence. An expired version is not a permanent script archive.
 
 ### 6.2 Required indexes
 
@@ -230,7 +230,7 @@ MongoDB single-document conditional writes are atomic; multi-document changes ne
 - **Schedule:** verify owned artifact/connection, insert command and immutable publish payload/job together. Check time constraints again immediately before dispatch.
 - **Delete/disconnect:** tombstone project or connection and cancel eligible pending jobs transactionally; an already-dispatched external call is reconciled rather than declared cancelled.
 
-R2 and external APIs cannot participate in MongoDB transactions. Use registered intended objects, checkpoints, idempotent cleanup, and reconciliation for those boundaries.
+Filebase and external APIs cannot participate in MongoDB transactions. Use registered intended objects, checkpoints, idempotent cleanup, and reconciliation for those boundaries.
 
 ## 7. API contracts
 
@@ -321,7 +321,7 @@ sequenceDiagram
     participant AI as Planning API
     participant VO as ElevenLabs
     participant R as Renderer
-    participant S as R2
+    participant S as Filebase
     U->>API: Create + idempotency key
     API->>DB: Transaction: project/version/job/command
     DB-->>API: Committed
@@ -378,7 +378,7 @@ Checkpoint after validated plan, validated speech/alignment, timeline, and valid
 | Planning, including fallback/repairs | Four total API calls per generation job across planning providers |
 | Narration, including retries/key fallback | Three total ElevenLabs calls per generation job |
 | Renderer | One initial attempt plus one retry for a transient process failure, within the same execution deadline |
-| R2 upload | Up to three attempts for transient failures; same registered key/checksum and deadline |
+| Filebase upload | Up to three attempts for transient failures; same registered key/checksum and deadline |
 | Backoff | Bounded exponential delay with jitter; respect Retry-After and remaining deadline |
 
 Increment provider counters durably **before** sending a request, including after worker recovery. Do not multiply stage retries by provider retries. Preserve current Gemini fallback conditions and ElevenLabs backup-key behavior: only explicit quota exhaustion permits the configured narration backup; not auth, paid-voice restriction, abuse protection, or generic rate limiting.
@@ -389,7 +389,7 @@ Persist request-start and request-reference metadata. A lost speech response may
 
 ### 9.1 Object registry and ready commit
 
-Use keys such as `generated/{ownerId}/{projectId}/{versionId}/{attemptId}/{kind}/{opaqueName}`. Never accept client-supplied storage paths. Register an intended key before uploading, then record checksum/size and committed state. This makes uploads discoverable after a crash between R2 success and database commit. Aborted multipart uploads and local directories also require cleanup ownership records or a safely scoped sweep.
+Use keys such as `generated/{ownerId}/{projectId}/{versionId}/{attemptId}/{kind}/{opaqueName}`. Never accept client-supplied storage paths. Register an intended key before uploading, then record checksum/size and committed state. This makes uploads discoverable after a crash between Filebase success and database commit. Aborted multipart uploads and local directories also require cleanup ownership records or a safely scoped sweep.
 
 For entirely new work, first ready commit sets `expiresAt = readyAt + 2 hours`. All associated plans, audio, alignment, timeline, thumbnails, and variants share that deadline. During execution they have a provisional deadline tied to the job. For reused content:
 
@@ -401,17 +401,17 @@ Never reset expiry by copying, re-rendering captions, viewing, scheduling, or re
 
 ### 9.2 Browser and Meta access
 
-Use an authenticated backend streaming route for pilot playback/download. It checks ownership, tombstones, readiness, and expiry **on every request**, then streams from R2 with backpressure and bounded memory. Support HEAD, one byte range, `206`, `416`, accurate content length/type, and sanitized download filename. Set private/no-store caching and avoid logging media credentials. Authorize thumbnails in the same way.
+Use an authenticated backend streaming route for pilot playback/download. It checks ownership, tombstones, readiness, and expiry **on every request**, then streams from Filebase with backpressure and bounded memory. Support HEAD, one byte range, `206`, `416`, accurate content length/type, and sanitized download filename. Set private/no-store caching and avoid logging media credentials. Authorize thumbnails in the same way.
 
-This intentionally adds web bandwidth but allows new requests to be denied immediately on manual deletion, unlike an already-issued direct storage URL. Already downloaded bytes or an established stream cannot be recalled. R2 supports scoped presigned URLs; they are an alternative for future scaling, with lifetime capped by expiry and an explicitly accepted revocation delay. [R2 presigned URLs](https://developers.cloudflare.com/r2/api/s3/presigned-urls/)
+Serve private media through the authenticated backend. Check ownership and expiry before streaming each request, including byte ranges. Keep Filebase credentials server-side.
 
 Meta cannot send the user's session cookie. Issue an opaque random media-fetch token bound to **one publish job, one artifact, and an expiry no later than media expiry**. Store its hash, never the token. The HTTPS fetch route rechecks publication authorization, tombstones, and expiry, supports repeated HEAD/range/GET requests during processing, and streams only the pinned MP4. It is a bearer capability, not a public bucket or one-use link. Redact its URL from proxy logs; rate-limit without blocking legitimate provider retries. Verify live Meta compatibility before release.
 
 ### 9.3 Cleanup and metadata
 
-The operations worker scans due objects at least once a minute. Expiry access checks do not depend on that scan: at `now >= expiresAt`, deny new access and reuse even if deletion is delayed. Mark deletion pending, delete R2/local objects and incomplete uploads, verify completion, then retain only minimal tombstones. Object-not-found is successful deletion. Retry failures with backoff and alert if more than five minutes overdue.
+The operations worker scans due objects at least once a minute. Expiry access checks do not depend on that scan: at `now >= expiresAt`, deny new access and reuse even if deletion is delayed. Mark deletion pending, delete Filebase/local objects and incomplete uploads, verify completion, then retain only minimal tombstones. Object-not-found is successful deletion. Retry failures with backoff and alert if more than five minutes overdue.
 
-R2 lifecycle expiration is a backstop, not the application's precise two-hour timer. Use explicit deletion and monitor it. [R2 lifecycle documentation](https://developers.cloudflare.com/r2/buckets/object-lifecycles/)
+Enforce the two-hour access deadline in the application. The cleanup worker explicitly deletes expired objects and retries failures.
 
 | Data | Proposed retention |
 |---|---|
@@ -506,7 +506,7 @@ Edits use revision-based compare-and-set before dispatch. Changing artifact/desc
 | Bad alignment or out-of-range duration | Repair within existing budget or fail; no guessed timestamps/silence padding |
 | Worker dies after synthesis | Recover checkpoint if stored and valid; otherwise record uncertain cost before bounded retry |
 | Worker loses database access | Stop new provider calls/commits when lease cannot renew; terminate child safely |
-| R2 write or ready commit fails | Keep candidate inaccessible; reconcile registered objects; no false Ready |
+| Filebase write or ready commit fails | Keep candidate inaccessible; reconcile registered objects; no false Ready |
 | Delete races with upload | Tombstone wins; fenced commit rejected; late objects registered for deletion |
 | Old dependency expires during revision | Abort reuse; previous output remains expired; offer fresh generation |
 | Caption variant requested twice | Unique version/variant record and active job deduplicate |
@@ -535,7 +535,7 @@ Account deletion revokes access first, cancels eligible work/schedules, removes 
 
 Use a reproducible Linux image with supported Node.js, pinned Remotion/browser dependencies, FFmpeg/FFprobe, and bundled licensed fonts. Run web, generation, and operations as separately supervised processes/containers. Allocate renderer CPU/memory limits and temporary-disk quotas so web and cleanup remain responsive. Disable automatic scaling of generation until global-slot recovery is tested.
 
-A **4-vCPU/8-GB host is a starting benchmark candidate, not a measured sizing guarantee**. Measure peak RSS, disk, render time, and stream throughput before choosing a paid plan. Provision MongoDB as a transaction-capable replica set and private R2 separately. No claim that the complete always-on system is free; quotas, email, licensing, compute, and narration rights must be checked for the actual deployment.
+A **4-vCPU/8-GB host is a starting benchmark candidate, not a measured sizing guarantee**. Measure peak RSS, disk, render time, and stream throughput before choosing a paid plan. Provision MongoDB as a transaction-capable replica set and private Filebase separately. No claim that the complete always-on system is free; quotas, email, licensing, compute, and narration rights must be checked for the actual deployment.
 
 Environments: local development, isolated staging, internal production. Use separate databases, buckets, callback URLs, and secrets. Provider configuration, Graph API version, template/schema versions, and video policy are explicit configuration. Startup checks validate required secret presence without printing values, database indexes, storage access, codecs, and browser availability.
 
@@ -567,7 +567,7 @@ Alert on absent worker heartbeat, orphan render process, growing queue, disk pre
 | Generation stuck | Inspect safe job stage/lease, confirm child termination, recover checkpoint or fail job; never blindly release slot |
 | Provider rejects credentials | Pause new provider work, update secret, run a bounded smoke test; preserve drafts |
 | Render memory/disk failure | Terminate owned process, purge temporary work, adjust measured resource limits, retry within budget |
-| Deletion overdue | Keep access denied, restore R2 connectivity, retry registered deletes and orphan scan, verify backlog clears |
+| Deletion overdue | Keep access denied, restore Filebase connectivity, retry registered deletes and orphan scan, verify backlog clears |
 | Unknown publication | Inspect stored container/media evidence; reconcile before any new publish intent |
 | Host/DB restore | Keep dispatch disabled, sweep expiries/deletions, reconcile active leases and ambiguous publications, then resume |
 
@@ -585,9 +585,9 @@ Preserve current engine tests; add application tests around real invariants rath
 | Provider contract | Structured output, malformed plans, 429/503, invalid voice, bounded counters across restart, response loss |
 | Browser E2E | Sign-in, draft, brainstorm selection, generation return-after-refresh, revision, caption variant, preview/download, settings, expiry |
 | Publishing integration | OAuth state replay, token revoke, schedule/edit/cancel races, no early/late dispatch, lost response and reconciliation |
-| Fault injection | Kill render/supervisor, DB/R2 outage, process pause beyond lease, lost ready commit, host restart with overdue schedules |
+| Fault injection | Kill render/supervisor, DB/Filebase outage, process pause beyond lease, lost ready commit, host restart with overdue schedules |
 | Content review | Water/nitrogen cycles, binary/linear search, comparison and pronunciation topics; narration/visual agreement and meaningful motion |
-| Live acceptance | Actual selected voices, Gemini model/endpoint, R2 media fetch, and an explicitly authorized team Instagram test post |
+| Live acceptance | Actual selected voices, Gemini model/endpoint, Filebase media fetch, and an explicitly authorized team Instagram test post |
 
 Use the PRD's 20-topic benchmark before calling the full pilot ready; do not treat valid JSON or successful FFmpeg decode as proof of explanation accuracy. Inspect frames at motion checkpoints and listen to narration. Serious factual errors block the affected supported topic/template until fixed. Export remains a linear MP4, not an interactive clickable lesson.
 
@@ -599,7 +599,7 @@ Release gates: all FR-01–17 scenarios covered; two-user privacy and concurrenc
 |---|---|---|
 | A. Preserve engine contracts | Extract shared job input/output, video policy and schemas; keep CLI working | Existing provider/timing/render tests pass; no visual regression |
 | B. Secure application foundation | Next.js shell, email/password auth, MongoDB schema/indexes, owned drafts/preferences | Two users cannot access each other's data; draft and preferences survive restart |
-| C. Durable generation and R2 | Admission/worker leases/checkpoints, object registry, media streaming, cleanup | Browser-independent generation and crash/expiry tests pass |
+| C. Durable generation and Filebase | Admission/worker leases/checkpoints, object registry, media streaming, cleanup | Browser-independent generation and crash/expiry tests pass |
 | D. Complete creator dashboard | Project cards/progress, brainstorm, revision/version selection, caption variants | Three-stage workflow satisfies FR-02–12; exact selected export |
 | E. Instagram pilot | Verify chosen Meta route, connect, post now, schedule/cancel, reconcile | Authorized live post and failure/race/expiry tests pass |
 | F. Operate internal V1 | Always-on deployment, monitoring, backups/runbooks, benchmark review | Full acceptance gate and team walkthrough complete |
@@ -623,4 +623,4 @@ Roll out with self-service registration protected by credential rate limits. Sto
 
 Before deployment, settle: host/domain and spend cap; MongoDB hosting/backups; email sender/vendor; authentication library version; actual accessible Indian male/female voices and usage rights; English-only launch confirmation; selected Meta flow, API version, permissions and authorized team profiles; Remotion/license eligibility; acceptance of proposed queue/timeouts, metadata retention, and scheduling buffers. These choices do not change the architecture or require additional creator steps.
 
-**Next implementation slice:** Phase A/B, then one authenticated user creates a video through a durable MongoDB job, streams it from R2, and sees it expire correctly. That vertical slice proves the application foundation before expanding revisions and Instagram publishing.
+**Next implementation slice:** Phase A/B, then one authenticated user creates a video through a durable MongoDB job, streams it from Filebase, and sees it expire correctly. That vertical slice proves the application foundation before expanding revisions and Instagram publishing.

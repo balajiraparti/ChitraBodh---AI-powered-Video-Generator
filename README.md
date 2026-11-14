@@ -82,11 +82,11 @@ Tests exercise scene validation, caption/cue timing, provider request contracts 
 
 Implementation contracts: [API design](docs/ChitraBodh-API-Design.md), [OpenAPI JSON](docs/api/chitrabodh.openapi.json), and [database design](docs/ChitraBodh-Database-Design.md). Run `python scripts/validate-api-contract.py` for offline contract/example checks (requires Python `jsonschema`; no provider calls). These documents describe the planned application, not currently deployed endpoints.
 
-The [dashboard system design](docs/ChitraBodh-Dashboard-System-Design.md) defines the next application build: authenticated dashboard, durable generation, MongoDB/R2, revisions, retention, and Instagram publishing. It distinguishes the working engine from planned application features.
+The [dashboard system design](docs/ChitraBodh-Dashboard-System-Design.md) defines the next application build: authenticated dashboard, durable generation, MongoDB/Filebase, revisions, retention, and Instagram publishing. It distinguishes the working engine from planned application features.
 
 First, add API credentials and review a real narrated export for pronunciation, factual accuracy, cue timing, visual usefulness, latency and cost. Test several topics before building the dashboard.
 
-The following remain planned: Next.js application, team authentication, MongoDB, Cloudflare R2, background deployment, Instagram account connection, publish-now and scheduling within the two-hour retention window. There are no subscriptions, user analytics or brand customization in this prototype.
+The local prototype uses local files. The separate Next.js dashboard includes team authentication and MongoDB jobs. Connecting Filebase to generated videos, background deployment and Instagram publishing remain open.
 
 Design documents are in `docs/`. Implementation entry point: `src/cli.ts`; pipeline: `src/pipeline.ts`; renderer: `src/video/Explainer.tsx`.
 
@@ -120,7 +120,7 @@ Restart the dashboard and use `/sign-in` to create an account or sign in. Passwo
 
 ## Generation worker and private media
 
-The pilot runs one generation supervisor on one host. Run these services from the repository root after configuring MongoDB and a private R2 bucket in dashboard/.env.local:
+The pilot runs one generation supervisor on one host. The service commands below apply after the Filebase adapter is wired into the worker, dashboard media route and cleanup process. The current adapter still requires Cloudflare R2 configuration.
 
 ~~~sh
 npm run worker
@@ -131,7 +131,7 @@ The worker loads generation keys from the root .env and dashboard infrastructure
 
 After a supervisor crash, stop and verify the entire old worker/render process tree on its original host. Only then run npm run worker:recover -- --confirm-process-tree-stopped. This deliberately requires an operator to confirm that orphaned browser processes have ended. Recovery refuses a live recorded PID or another host. Interrupted jobs become failed drafts instead of being automatically rerun with more provider calls.
 
-Keep the R2 bucket private, including disabling r2.dev and public custom domains. The server uses @aws-sdk/client-s3 against R2's S3 endpoint. Video files are uploaded under random object keys. Authenticated media reads check ownership and expiry on every request, support a single byte range and stop ongoing streams at expiry. No object URL or storage credential is returned to the browser.
+For Filebase, use the existing server-only root `.env` settings `endpoint` (https://s3.filebase.io), `region`, `accessKeyId`, `secretAccessKey` and Signature V4. The verified bucket name is `chitrabodh-ai`. The integration should read the bucket from `FILEBASE_BUCKET` and share the configured S3 client across all three processes. Keep MongoDB and authentication settings in `dashboard/.env.local`. Store opaque object keys in MongoDB and serve playback and download through the authenticated media route. Verify owner access, range reads and expiry before enabling uploads of creator content. [Filebase documentation](https://filebase.com/docs/)
 
 The first successful ready commit starts a two-hour availability window. Future outputs retain that original deadline. Run the independent cleanup process continuously, even when rendering stops. It polls every fifteen seconds and retries failed deletions. Metadata survives deletion, and the API rejects expired media regardless of cleanup availability. Failed uploads are registered before transfer and become eligible for cleanup after twenty minutes once their job stops. Scratch runs are removed after upload and periodically purged by the worker. Use npm run media:cleanup -- --once for one cleanup sweep.
 
