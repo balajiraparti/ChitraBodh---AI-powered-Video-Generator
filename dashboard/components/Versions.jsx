@@ -8,9 +8,13 @@ export default function Versions({job}){
   const [pending,setPending]=useState(false);
   const [error,setError]=useState('');
   const intent=useRef(null);
+  const trimmedInstruction = instruction.trim();
+  const length = [...trimmedInstruction].length;
+  const excess = length - 1000;
+  const canSubmit = !pending && length > 0 && excess <= 0;
   async function revise(event){
     event.preventDefault();
-    if(pending||!instruction.trim())return;
+    if (!canSubmit) return;
     setPending(true);setError('');
     const body=JSON.stringify({sourceVersionId:job.versionId,expectedRevision:job.projectRevision,instruction:instruction.trim()});
     if(intent.current?.body!==body)intent.current={body,key:crypto.randomUUID()};
@@ -23,5 +27,15 @@ export default function Versions({job}){
     finally{setPending(false);}
   }
   return <section><h2>Versions</h2><ul>{job.versions.map(v=><li key={v.id}>{v.id===job.jobId?<strong>Version {v.number} · {v.state}</strong>:<Link href={'/jobs/'+v.id}>Version {v.number} · {v.state}</Link>}</li>)}</ul>
-    {job.mediaAvailable && <form className="draft-form" onSubmit={revise}><label htmlFor="revision">What should change in this video?</label><textarea id="revision" rows={3} value={instruction} onChange={e=>setInstruction(e.target.value)} disabled={pending} placeholder="For example, explain evaporation using a puddle."/><small>All versions share the original download deadline.</small><button className="action" disabled={pending||!instruction.trim()||[...instruction.trim()].length>1000}>{pending?'Submitting…':'Create revised video'}</button><span role="status">{error}</span></form>}</section>;
+    {job.mediaAvailable && <form className="draft-form" onSubmit={revise}>
+      <label htmlFor="revision">What should change in this video?</label>
+      <textarea id="revision" rows={3} value={instruction} onChange={e=>setInstruction(e.target.value)}
+        disabled={pending} aria-describedby="revision-count revision-limit-error" aria-invalid={excess > 0}
+        placeholder="For example, explain evaporation using a puddle."/>
+      <small id="revision-count">{length.toLocaleString('en-US')} of 1,000 characters</small>
+      <small id="revision-limit-error" role="status">{excess > 0 && `Remove ${excess} more character${excess === 1 ? '' : 's'} to submit.`}</small>
+      <small>All versions share the original download deadline.</small>
+      <button className="action" disabled={!canSubmit}>{pending?'Submitting…':'Create revised video'}</button>
+      <span role="status">{error}</span>
+    </form>}</section>;
 }
