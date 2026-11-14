@@ -1,6 +1,6 @@
 # ChitraBodh project status
 
-Updated 12 November 2026. Use this file to choose the next feature and record what ships. The first dashboard milestone ends when a newly registered creator can sign in, enter a topic, and download their narrated vertical video without using a terminal.
+Updated 14 November 2026. Use this file to choose the next feature and record what ships. The first dashboard milestone ends when a newly registered creator can sign in, enter a topic, and download their narrated vertical video without using a terminal.
 
 ## Current baseline
 
@@ -16,7 +16,7 @@ Baseline established from repository inspection and recorded prototype results. 
 
 ## Feature queue
 
-**Current verification:** F00, F01 and F04–F06 are Done. F02–F03 are **In progress** after the 8 November auth model change; F07–F09 have pending live integration checks. F10 listing passed manual QA. Explicit draft and expired-video idea links open the selected content during an active job. Creators can edit and save it while generation is gated. F11 passed live browser and Atlas checks. F12 passed browser and Atlas checks. F13–F18 are planned. The first milestone needs a real registration-to-download run. See the [Daylight implementation audit](docs/design/Daylight-Implementation-Audit.md) for exact board coverage and visual gaps.
+**Current verification:** F00, F01 and F04–F06 are Done. F02–F03 are **In progress** after the 8 November auth model change; F07–F09 have pending live integration checks. F10 listing passed manual QA. Explicit draft and expired-video idea links open the selected content during an active job. Creators can edit and save it while generation is gated. F11 passed live browser and Atlas checks. F12 passed browser and Atlas checks. F13 revision admission and version history passed integration QA. F14–F18 are planned. The first milestone needs a real registration-to-download run. See the [Daylight implementation audit](docs/design/Daylight-Implementation-Audit.md) for exact board coverage and visual gaps.
 
 | ID | Feature | Depends on | Status | Finish condition |
 |---|---|---|---|---|
@@ -33,7 +33,7 @@ Baseline established from repository inspection and recorded prototype results. 
 | F10 | My videos list | F04, F07, F09 | Library implemented; live milestone pending | A user sees only their projects, with current state, expiry and pagination. Complete the first milestone with a real registered creator. |
 | F11 | Optional idea assistant | F04 | Done | Up to three suggestions fill the draft only when selected. Generation requires a separate click. |
 | F12 | Saved preferences | F05 | Done | Voice, captions and timezone persist. New drafts inherit defaults and existing videos retain their settings. |
-| F13 | Revisions | F06–F09 | Planned | A revision preserves the previous ready version and original expiry, including when revision fails. |
+| F13 | Revisions | F06–F09 | Implemented, live render verification pending | A revision preserves the previous ready version and original expiry, including when revision fails. |
 | F14 | Caption variants | F13 | Planned | A caption change renders a separate variant under the same job limit. Only ready variants can be exported. |
 | F15 | Instagram connection | F03 | Planned | Connect, disconnect and reconnect an eligible account. Existing posts retain their intended account. |
 | F16 | Publish now | F09, F15 | Planned | User confirms account and ready artifact. Eligibility is rechecked. An uncertain result offers a status check and prevents duplicate submission. |
@@ -90,3 +90,4 @@ Apply the [screen QA findings](docs/design/Stitch-Screens-QA.md) to each affecte
 | 10 Nov 2026 | F11 now requests exactly three titled ideas with visual descriptions. Incomplete responses and transport failures can try the configured fallback within the two-call budget. | Production build and three provider checks passed. Restarted dashboard. A signed-in water-cycle request returned 503, then a fresh retry returned 200 with three described ideas. Provider availability remains intermittent. |
 
 | 12 Nov 2026 | Aligned implemented F00–F12 screens to the owner-supplied Stitch Daylight exports. Added portrait library cards, narrator cards, a side-panel idea assistant, original illustrations, icon font and exported homepage layout. | Source inventory and comparison are in docs/design. Production build passed. The suite passed 59 tests with three opt-in checks skipped. Desktop and 390px phone browser checks passed for homepage topic switching and expanded preview, sign-in, populated library, composer, idea-panel opening, preferences, workspace preview, progress and expiry with no horizontal overflow. Planned F13–F18 boards remain mapped for future implementation. Existing provider-to-R2 milestone remains open. |
+| 14 Nov 2026 | F13 added revision requests on ready videos, immutable numbered attempts, version navigation and original-deadline retention. | Atlas verified ownership, concurrent replay, cancellation, failure and successful artifact publication with a fixture. Chrome submitted version 2, cancelled and reopened the original download link. TypeScript and production build passed. Live provider-to-R2 revision render remains pending. Next feature: F14 caption variants. |

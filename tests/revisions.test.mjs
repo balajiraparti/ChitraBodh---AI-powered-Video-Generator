@@ -1,0 +1,48 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {config} from 'dotenv';
+import {database} from '../dashboard/server/database.mjs';
+import {submitRevision} from '../dashboard/server/revisions.mjs';
+import {cancelJob,finishJob} from '../dashboard/server/jobs.mjs';
+import {projectPage} from '../dashboard/server/library.mjs';
+import {jobStatus} from '../dashboard/server/job-status.mjs';
+
+test('Atlas revisions preserve the playable source and share its deadline across success, failure and cancellation',{skip:process.env.TEST_REVISIONS_ATLAS!=='1'},async()=>{
+  config({path:'dashboard/.env.local',quiet:true});
+  const store=await database(), ownerId=randomUUID(),projectId=randomUUID(),sourceVersionId=randomUUID(),artifactId=randomUUID();
+  const filter={ownerId,projectId},firstReadyAt=new Date(Date.now()-60000),expiresAt=new Date(+firstReadyAt+7200000);
+  const sourceJob={...filter,_id:randomUUID(),key:randomUUID(),state:'succeeded',versionId:sourceVersionId,artifactId,active:false};
+  try{
+    await store.projects.insertOne({_id:projectId,ownerId,revision:1,topic:'Water cycle',createdAt:firstReadyAt,status:'ready',firstReadyAt,expiresAt,artifactId});
+    await store.jobs.insertOne(sourceJob);
+    await store.versions.insertOne({...filter,_id:sourceVersionId,number:1,state:'ready',artifactId,topic:'Water cycle',settingsSnapshot:{voiceCatalogId:'adam',captions:false}});
+    await store.artifacts.insertOne({...filter,_id:artifactId,state:'ready',expiresAt});
+    const args={sourceVersionId,expectedRevision:1,instruction:'Use a puddle example'};
+    const key=randomUUID();
+    assert.equal((await submitRevision(store,randomUUID(),projectId,key,args)).status,404);
+    const [a,b]=await Promise.all([submitRevision(store,ownerId,projectId,key,args),submitRevision(store,ownerId,projectId,key,args)]);
+    assert.equal(a.status,202);assert.equal(a.data.jobId,b.data.jobId);
+    assert.equal((await submitRevision(store,ownerId,projectId,randomUUID(),args)).error,'ACTIVE_JOB_EXISTS');
+    assert.ok((await jobStatus(store,sourceJob)).mediaAvailable);
+    await cancelJob(store,ownerId,a.data.jobId);
+    let project=await store.projects.findOne({_id:projectId});
+    assert.equal(project.status,'ready');assert.equal(project.artifactId,artifactId);
+    const request=async()=>{project=await store.projects.findOne({_id:projectId});const response=await submitRevision(store,ownerId,projectId,randomUUID(),{...args,expectedRevision:project.revision});assert.equal(response.status,202);return store.jobs.findOne({_id:response.data.jobId});};
+    const failed=await request();await finishJob(store,failed,'failed');
+    assert.ok((await jobStatus(store,sourceJob)).mediaAvailable);
+    const library=await projectPage(store,ownerId,{},new Date(),'qa');
+    assert.equal(library.items[0].jobId,sourceJob._id);
+    const success=await request(),artifact={...filter,_id:randomUUID(),state:'uploading'};
+    await store.artifacts.insertOne(artifact);
+    await finishJob(store,success,'succeeded',{},artifact,{title:'Puddles'});
+    assert.equal(+(await store.artifacts.findOne({_id:artifact._id})).expiresAt,+expiresAt);
+    assert.equal(await store.revisionInputs.countDocuments({ownerId}),0);
+    assert.deepEqual((await jobStatus(store,sourceJob)).versions.map(v=>v.number),[4,3,2,1]);
+    await store.artifacts.updateOne({_id:artifactId},{$set:{expiresAt:new Date(0)}});
+    assert.equal((await submitRevision(store,ownerId,projectId,randomUUID(),args)).status,410);
+  }finally{
+    for(const coll of ['jobs','versions','projects','artifacts','revisionInputs','revisionPlans'])await store[coll].deleteMany({ownerId});
+    await store.client.close();
+  }
+});

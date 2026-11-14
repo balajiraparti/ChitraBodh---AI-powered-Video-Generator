@@ -1,4 +1,5 @@
 import React,{useEffect,useState} from 'react';
+import Versions from '../../components/Versions';
 import Link from 'next/link';
 import {currentOwner,services} from '../../server/auth.mjs';
 import {jobStatus} from '../../server/job-status.mjs';
@@ -71,7 +72,7 @@ function Progress({initial}){
       {expired && <><p>The availability window has ended. Your original topic is saved.</p><Link href={'/create?fromJob='+job.jobId}>Create a new video from this idea</Link></>}
       <p role="alert">{error}</p>
       {active&&!job.cancelRequested && (confirm?<div><p>Stop creating this video? Your idea will be saved.</p><button disabled={busy} onClick={cancel}>Stop creation</button><button disabled={busy} onClick={()=>setConfirm(false)}>Keep creating</button></div>:<button onClick={()=>setConfirm(true)}>Cancel creation</button>)}
-      {!active&&job.state!=='succeeded'&&<Link href={'/create?draft='+job.projectId}>Open saved idea</Link>}
+      {!active&&!job.isRevision&&job.state!=='succeeded'&&<Link href={'/create?draft='+job.projectId}>Open saved idea</Link>}
       <p><Link href="/dashboard">My videos</Link></p>
-    </section>{active && <aside className="studio-note"><h2>{job.stage==='queued'?'Waiting in queue':'Current stage'}</h2><p>{stages[job.stage]||'Queued'}</p><Link href="/dashboard">Back to My videos</Link></aside>}</div></>;
+    </section>{active && <aside className="studio-note"><h2>{job.stage==='queued'?'Waiting in queue':'Current stage'}</h2><p>{stages[job.stage]||'Queued'}</p><Link href="/dashboard">Back to My videos</Link></aside>}</div>{job.versions?.length>0 && <Versions job={job}/>}</>;
 }

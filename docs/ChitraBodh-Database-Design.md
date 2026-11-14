@@ -281,3 +281,9 @@ This specification is ready to guide migrations and repository implementation. I
 ### Implemented F11 collections
 
 The dashboard uses `ideaLocks` (one expiring lease per owner), `ideaCommands` (hashed request identity and outcome for 48 hours), and `ideaPayloads` (owner-scoped reply cache and last six conversation pairs for 24 hours). Each has an expiry TTL index; application reads also check the deadline. The lease is acquired before inference; completion writes history, cached reply and command state in a transaction after inference. Configure the backup policy to exclude `ideaPayloads` when deploying. Unsaved editors use a temporary conversation ID and do not create project records.
+
+### Implemented F13 revision records
+
+Each revision job references its source version. Each attempt receives a new version number in the same transaction as job admission. A successful revision replaces the project's current artifact pointer. All earlier ready versions remain available through their job links until the original deadline.
+
+The worker stores the accepted storyboard in `revisionPlans` when committing ready media. `revisionInputs` holds the creator's instruction until the attempt ends. Both collections use the original project deadline for TTL cleanup and must be excluded from backups. The worker checks the deadline before reading either payload. For older videos produced before storyboard retention, the worker uses the saved topic and revision request.

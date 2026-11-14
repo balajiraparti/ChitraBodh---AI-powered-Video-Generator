@@ -1,3 +1,4 @@
+import {readFile} from 'node:fs/promises';
 import {ObjectId} from 'mongodb';
 import {config} from 'dotenv';
 config({path:'.env',quiet:true});
@@ -46,14 +47,22 @@ try{
       const settings=version.settingsSnapshot;
       if(!narratorChoices().some(v=>v.id===settings.voiceCatalogId&&v.available))throw Error('Voice unavailable');
       const voice=settings.voiceCatalogId==='adam'?(process.env.ELEVENLABS_MALE_VOICE_ID||'pNInz6obpgDQGcFmaJgB'):(process.env.ELEVENLABS_FEMALE_VOICE_ID||'C3aqZfd4M0h7Ys5tWGIS');
-      manifest=await executePipeline({demo:false,topic:version.topic,voice,captions:settings.captions},
+      let revisionContext;
+      if(job.kind==='revision'){
+        const input=await store.revisionInputs.findOne({_id:version._id,ownerId:job.ownerId,expiresAt:{$gt:new Date()}});
+        if(!input)throw Error('Revision expired');
+        const original=await store.revisionPlans.findOne({_id:job.sourceVersionId,ownerId:job.ownerId,expiresAt:{$gt:new Date()}});
+        revisionContext=JSON.stringify({requestedChanges:input.instruction,sourceStoryboard:original?.plan??null});
+      }
+      manifest=await executePipeline({demo:false,topic:version.topic,voice,captions:settings.captions,revisionContext},
         async stage=>{
           await store.jobs.updateOne({_id:job._id,active:true,workerToken:token},{$set:{stage:pipelineStages[stage]||'planning'}});
         },pid=>store.workerSlots.updateOne({_id:'generation',token},{$set:{childPid:pid}}),controller.signal);
       controller.signal.throwIfAborted();
       const artifact=await uploadMedia(store,storage,job,runPath(manifest.id)+'/video.mp4',controller.signal);
       controller.signal.throwIfAborted();
-      await finishJob(store,job,'succeeded',{},artifact);
+      const plan=JSON.parse(await readFile(runPath(manifest.id)+'/plan.json','utf8'));
+      await finishJob(store,job,'succeeded',{},artifact,plan);
     }catch(error){
       if(error.unsafeToRelease){unsafeToRelease=true;throw error;}
       await finishJob(store,job,'failed',{safeError:'We could not finish this video. Your idea is saved.'});

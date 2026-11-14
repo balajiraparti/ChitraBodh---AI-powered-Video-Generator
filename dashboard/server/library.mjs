@@ -35,7 +35,9 @@ export async function projectPage(store,ownerId,query={},now=new Date(),secret=p
   const rows=await store.projects.aggregate([
     {$match:match},{$sort:{createdAt:-1,_id:-1}},{$limit:limit+1},
     {$lookup:{from:'jobs',localField:'_id',foreignField:'projectId',pipeline:[
-      {$match:{ownerId}},{$sort:{createdAt:-1,_id:-1}},{$limit:1},
+      {$match:{ownerId}},
+      {$addFields:{unsuccessfulRevision:{$cond:[{$and:[{$eq:['$kind','revision']},{$in:['$state',['failed','cancelled']]}]},1,0]}}},
+      {$sort:{unsuccessfulRevision:1,createdAt:-1,_id:-1}},{$limit:1},
       {$project:{state:1,stage:1,cancelRequested:1,artifactId:1}}
     ],as:'jobs'}},
     {$lookup:{from:'artifacts',localField:'jobs.artifactId',foreignField:'_id',pipeline:[

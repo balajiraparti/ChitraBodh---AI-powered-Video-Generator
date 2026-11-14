@@ -23,7 +23,7 @@ export function configuration(voice?:string):ProviderConfig{
  if(!config.elevenKey||!config.voiceId)throw new Error('Set ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID in .env.');
  return config;
 }
-export async function generate(options:{demo:boolean;topic?:string;voice?:string;captions:boolean;reviewedPlanFile?:string;signal?:AbortSignal;onProgress?:(state:string)=>void|Promise<void>}){
+export async function generate(options:{demo:boolean;topic?:string;voice?:string;captions:boolean;revisionContext?:string;reviewedPlanFile?:string;signal?:AbortSignal;onProgress?:(state:string)=>void|Promise<void>}){
  options.signal?.throwIfAborted();
  const config=options.demo?undefined:configuration(options.voice);
  if(!options.demo&&(!options.topic?.trim()||[...options.topic].length>2000))throw new Error('Provide a topic between 1 and 2,000 characters.');
@@ -44,7 +44,7 @@ export async function generate(options:{demo:boolean;topic?:string;voice?:string
    for(let attempt=0;attempt<4&&!accepted;attempt++){
     await state('Planning scenes');
     let plan;
-    try{plan=attempt===0&&options.reviewedPlanFile?validatePlan(JSON.parse(await readFile(options.reviewedPlanFile,'utf8'))):await planVideo(options.topic!,config!,budget,feedback,signal);}
+    try{plan=attempt===0&&options.reviewedPlanFile?validatePlan(JSON.parse(await readFile(options.reviewedPlanFile,'utf8'))):await planVideo(options.topic!,config!,budget,[options.revisionContext && "Revise the source lesson according to these requested changes: "+options.revisionContext,feedback].filter(Boolean).join("\n"),signal);}
     catch(error){if(error instanceof ProviderError||signal.aborted||attempt===3)throw error;console.log(error instanceof Error?error.message:'Invalid storyboard');const candidate=(error as Error & {candidate?:unknown}).candidate;feedback=`Correct the previous plan error, retaining required topic-specific animation fields: ${error instanceof Error?error.message:'invalid plan'}. Previous candidate: ${JSON.stringify(candidate??null).slice(0,24000)}`;continue;}
     await state('Generating narration');
     const narration=await narrate(plan,config!,budget,signal);
