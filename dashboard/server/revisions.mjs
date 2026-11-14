@@ -10,6 +10,18 @@ const request=z.object({
   expectedRevision:z.number().int().positive(),
   voiceCatalogId:z.string().optional(),captions:z.boolean().optional()
 }).strict();
+function sourcePlanFilter(ownerId, versionId) {
+  return {_id:versionId, ownerId, expiresAt:{$gt:new Date()}, 'plan.scenes.0':{$exists:true}};
+}
+
+export async function loadRevisionContext(store, job) {
+  const original = await store.revisionPlans.findOne(sourcePlanFilter(job.ownerId, job.sourceVersionId));
+  if (!original) throw Object.assign(new Error('Source storyboard unavailable'), {code:'SOURCE_STORYBOARD_UNAVAILABLE'});
+  const input = await store.revisionInputs.findOne({_id:job.versionId, ownerId:job.ownerId, expiresAt:{$gt:new Date()}});
+  if (!input) throw new Error('Revision expired');
+  return JSON.stringify({requestedChanges:input.instruction, sourceStoryboard:original.plan});
+}
+
 export async function submitRevision(store,ownerId,projectId,key,body){
   const parsed=request.safeParse(body);
   if(!parsed.success || !z.uuid().safeParse(key).success)return {status:400,error:'INVALID_REQUEST'};
@@ -31,6 +43,8 @@ export async function submitRevision(store,ownerId,projectId,key,body){
       const media=await store.artifacts.findOne({_id:source.artifactId,ownerId},{session});
       if(!canReadMedia(media,ownerId)||!(project.expiresAt>new Date()))return {status:410,error:'SOURCE_EXPIRED'};
       if(project.status!=='ready'||project.revision!==args.expectedRevision)return {status:409,error:'PROJECT_CHANGED'};
+      const storyboard = await store.revisionPlans.findOne(sourcePlanFilter(ownerId, source._id), {session, projection:{_id:1}});
+      if (!storyboard) return {status:409,error:'SOURCE_STORYBOARD_UNAVAILABLE'};
       const voiceCatalogId=args.voiceCatalogId??source.settingsSnapshot.voiceCatalogId;
       if(!narratorChoices().some(v=>v.id===voiceCatalogId && v.available))return {status:422,error:'VOICE_UNAVAILABLE'};
       const now=new Date(),versionId=randomUUID();

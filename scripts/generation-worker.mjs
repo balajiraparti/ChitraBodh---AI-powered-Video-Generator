@@ -1,5 +1,6 @@
 import {readFile} from 'node:fs/promises';
 import {ObjectId} from 'mongodb';
+import {loadRevisionContext} from '../dashboard/server/revisions.mjs';
 import {config} from 'dotenv';
 config({path:'.env',quiet:true});
 config({path:'dashboard/.env.local',override:true,quiet:true});
@@ -47,13 +48,7 @@ try{
       const settings=version.settingsSnapshot;
       if(!narratorChoices().some(v=>v.id===settings.voiceCatalogId&&v.available))throw Error('Voice unavailable');
       const voice=settings.voiceCatalogId==='adam'?(process.env.ELEVENLABS_MALE_VOICE_ID||'pNInz6obpgDQGcFmaJgB'):(process.env.ELEVENLABS_FEMALE_VOICE_ID||'C3aqZfd4M0h7Ys5tWGIS');
-      let revisionContext;
-      if(job.kind==='revision'){
-        const input=await store.revisionInputs.findOne({_id:version._id,ownerId:job.ownerId,expiresAt:{$gt:new Date()}});
-        if(!input)throw Error('Revision expired');
-        const original=await store.revisionPlans.findOne({_id:job.sourceVersionId,ownerId:job.ownerId,expiresAt:{$gt:new Date()}});
-        revisionContext=JSON.stringify({requestedChanges:input.instruction,sourceStoryboard:original?.plan??null});
-      }
+      const revisionContext = job.kind === 'revision' ? await loadRevisionContext(store,job) : undefined;
       manifest=await executePipeline({demo:false,topic:version.topic,voice,captions:settings.captions,revisionContext},
         async stage=>{
           await store.jobs.updateOne({_id:job._id,active:true,workerToken:token},{$set:{stage:pipelineStages[stage]||'planning'}});
@@ -65,7 +60,10 @@ try{
       await finishJob(store,job,'succeeded',{},artifact,plan);
     }catch(error){
       if(error.unsafeToRelease){unsafeToRelease=true;throw error;}
-      await finishJob(store,job,'failed',{safeError:'We could not finish this video. Your idea is saved.'});
+      const safeError = error.code === 'SOURCE_STORYBOARD_UNAVAILABLE'
+        ? 'The source storyboard is unavailable. Create a new video using the original topic.'
+        : 'We could not finish this video. Your idea is saved.';
+      await finishJob(store,job,'failed',{safeError});
     }finally{
       clearInterval(heartbeat);clearTimeout(timeout);await pulse;
       current=undefined;

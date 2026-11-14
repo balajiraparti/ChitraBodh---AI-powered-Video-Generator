@@ -22,6 +22,10 @@ export default function Versions({job}){
       const response=await fetch('/api/v1/projects/'+job.projectId+'/revisions',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':intent.current.key},body});
       const result=await response.json();
       if(response.ok){await router.push("/jobs/"+encodeURIComponent(result.jobId));return;}
+      if(result.error?.code==='SOURCE_STORYBOARD_UNAVAILABLE'){
+        setError(<>{'This version’s storyboard is unavailable. '}<Link href={'/create?fromJob='+encodeURIComponent(job.jobId)}>Create a new video from this idea</Link></>);
+        return;
+      }
       setError(result.error?.code==='ACTIVE_JOB_EXISTS'?'Finish your current video before requesting a revision.':response.status===410?'This video has expired.':response.status===409?'Reload to see the latest versions.':'Could not request a revision. Try again.');
     }catch{setError('Could not confirm the revision. Try again.');}
     finally{setPending(false);}

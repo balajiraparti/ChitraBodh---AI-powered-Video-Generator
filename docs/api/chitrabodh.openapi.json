@@ -1651,7 +1651,7 @@
           "Generation"
         ],
         "summary": "Queue plain-language revision",
-        "description": "Queue plain-language revision. See API guide for ownership and state checks.",
+        "description": "Requires a retained storyboard for the selected ready version. A 409 SOURCE_STORYBOARD_UNAVAILABLE response means the creator can start a new video from the saved idea.",
         "parameters": [
           {
             "name": "projectId",

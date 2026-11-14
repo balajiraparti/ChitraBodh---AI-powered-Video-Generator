@@ -108,7 +108,7 @@ Brainstorm returns short reply, one to three suggestions, and history expiry. It
 | Method/path | Request → response | Checks / failures |
 |---|---|---|
 | `POST /generations` I C | Exactly one of topic or projectId; preferences overrides → 202 GenerationReceipt | Existing project also requires expectedRevision; owned live project; snapshot topic/settings; unique active-owner admission |
-| `POST /projects/{projectId}/revisions` I C | `{sourceVersionId,instruction,expectedRevision,voiceCatalogId?,captions?}` → 202 receipt | Source same project, ready/unexpired; new immutable version |
+| `POST /projects/{projectId}/revisions` I C | `{sourceVersionId,instruction,expectedRevision,voiceCatalogId?,captions?}` → 202 receipt | Requires the selected ready, unexpired version and its retained storyboard. A missing storyboard returns 409 SOURCE_STORYBOARD_UNAVAILABLE before creating a job or version. Open the composer from the source job to start a new video with its saved idea and settings. |
 | `GET /jobs/active` | → 200 nullable job | Discover active work after reload |
 | `GET /jobs/{jobId}` | → 200 Job | State/stage/budget-independent safe error; no secret/provider content |
 | `POST /jobs/{jobId}/cancel` I C | `{expectedRevision}` → 200 Job | Queued cancellation immediate; running becomes cancel_requested; completed state conflict |
