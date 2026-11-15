@@ -1,6 +1,6 @@
 import {pipeline} from 'node:stream/promises';
 import {currentOwner,services} from '../../../../server/auth.mjs';
-import {objectStorage} from '../../../../server/r2.mjs';
+import {artifactStorage} from '../../../../server/filebase.mjs';
 import {canReadMedia} from '../../../../server/media.mjs';
 export const config={api:{responseLimit:false}};
 export default async function handler(req,res){
@@ -21,7 +21,7 @@ export default async function handler(req,res){
     const range=req.headers.range;
     if(range && !/^bytes=(?:[0-9]+-[0-9]*|-[0-9]+)$/.test(range))return res.status(416).end();
     expiryTimer=setTimeout(()=>{controller.abort();res.destroy();},+new Date(artifact.expiresAt)-Date.now());
-    const result=await objectStorage().get(artifact.objectKey,range,controller.signal);
+    const result=await artifactStorage(artifact).get(artifact.objectKey,range,controller.signal);
     body=result.Body;
     if(!canReadMedia(artifact,ownerId)){body.destroy();return res.status(410).end();}
     res.setHeader('Content-Type','video/mp4');

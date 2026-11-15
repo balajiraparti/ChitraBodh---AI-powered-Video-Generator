@@ -44,7 +44,7 @@ erDiagram
     USER ||--o{ LIFECYCLE_JOB : requests_deletion
 ```
 
-VERSION optionally references one parent VERSION. Shared generated dependencies use `dependencyObjectIds` plus immutable source hashes; no cross-user cache. Project.selectedVersionId must reference its own version. Each artifact variant points to an object and thumbnail (thumbnail may be absent until ready). Filebase keys are never foreign keys supplied by a browser.
+VERSION optionally references one parent VERSION. Shared generated dependencies use `dependencyObjectIds` plus immutable source hashes; no cross-user cache. Project.selectedVersionId must reference its own version. Each artifact variant points to an object and thumbnail (thumbnail may be absent until ready). The worker sets `storageProvider: "filebase"` on new MP4 artifact records before uploading. Reads and cleanup use that field. Older records without it resolve to the previous R2 bucket. Object keys are assigned on the server.
 
 Deleting a parent is logical first. Cascades are application-managed, bounded, resumable lifecycle jobs; never one unbounded transaction over all a user's history. References may point to tombstones for history, but cannot grant access or new work. Reconciliation scans detect broken refs and fail closed.
 

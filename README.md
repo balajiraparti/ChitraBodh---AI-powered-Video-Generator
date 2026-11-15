@@ -86,7 +86,7 @@ The [dashboard system design](docs/ChitraBodh-Dashboard-System-Design.md) define
 
 First, add API credentials and review a real narrated export for pronunciation, factual accuracy, cue timing, visual usefulness, latency and cost. Test several topics before building the dashboard.
 
-The local prototype uses local files. The separate Next.js dashboard includes team authentication and MongoDB jobs. Connecting Filebase to generated videos, background deployment and Instagram publishing remain open.
+The local prototype uses local files. The separate Next.js dashboard includes team authentication, MongoDB jobs and Filebase storage for generated and revised MP4s. Background deployment and Instagram publishing remain open.
 
 Design documents are in `docs/`. Implementation entry point: `src/cli.ts`; pipeline: `src/pipeline.ts`; renderer: `src/video/Explainer.tsx`.
 
@@ -120,7 +120,7 @@ Restart the dashboard and use `/sign-in` to create an account or sign in. Passwo
 
 ## Generation worker and private media
 
-The pilot runs one generation supervisor on one host. The service commands below apply after the Filebase adapter is wired into the worker, dashboard media route and cleanup process. The current adapter still requires Cloudflare R2 configuration.
+The pilot runs one generation supervisor on one host. Run the generation supervisor and the independent cleanup process from the repository root with the same MongoDB and Filebase settings.
 
 ~~~sh
 npm run worker
@@ -131,8 +131,8 @@ The worker loads generation keys from the root .env and dashboard infrastructure
 
 After a supervisor crash, stop and verify the entire old worker/render process tree on its original host. Only then run npm run worker:recover -- --confirm-process-tree-stopped. This deliberately requires an operator to confirm that orphaned browser processes have ended. Recovery refuses a live recorded PID or another host. Interrupted jobs become failed drafts instead of being automatically rerun with more provider calls.
 
-For Filebase, use the existing server-only root `.env` settings `endpoint` (https://s3.filebase.io), `region`, `accessKeyId`, `secretAccessKey` and Signature V4. The verified bucket name is `chitrabodh-ai`. The integration should read the bucket from `FILEBASE_BUCKET` and share the configured S3 client across all three processes. Keep MongoDB and authentication settings in `dashboard/.env.local`. Store opaque object keys in MongoDB and serve playback and download through the authenticated media route. Verify owner access, range reads and expiry before enabling uploads of creator content. [Filebase documentation](https://filebase.com/docs/)
+Configure Filebase in the server-only root `.env` with `FILEBASE_ENDPOINT=https://s3.filebase.io`, `FILEBASE_ACCESS_KEY_ID`, `FILEBASE_SECRET_ACCESS_KEY`, `REGION` and `FILEBASE_BUCKET=chitrabodh-ai`. Use the region from your working Filebase configuration. The worker streams completed MP4s to that bucket and records the provider and object key in MongoDB. Owner-authorized playback, downloads and cleanup use the recorded provider. Pre-migration records without a provider use the legacy R2 settings until expiry and cleanup. Render intermediates use temporary local storage. Restart the dashboard, worker and cleanup process after configuration changes. [Filebase documentation](https://filebase.com/docs/)
 
 The first successful ready commit starts a two-hour availability window. Future outputs retain that original deadline. Run the independent cleanup process continuously, even when rendering stops. It polls every fifteen seconds and retries failed deletions. Metadata survives deletion, and the API rejects expired media regardless of cleanup availability. Failed uploads are registered before transfer and become eligible for cleanup after twenty minutes once their job stops. Scratch runs are removed after upload and periodically purged by the worker. Use npm run media:cleanup -- --once for one cleanup sweep.
 
-The pilot requires a MongoDB replica set for job/artifact/project transactions. Validate a real run, cancellation during narration/upload, and expiry against the configured database and bucket before deployment. Worker progress is available at /jobs/{jobId}; playback UI follows in F09.
+The pilot requires a MongoDB replica set for job/artifact/project transactions. Validate a real run, cancellation during narration/upload, and expiry against the configured database and bucket before deployment. The job page shows progress during generation and provides playback and download when ready.

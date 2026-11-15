@@ -10,18 +10,18 @@ export function canReadMedia(artifact,ownerId,now=new Date()){
 export async function uploadMedia(store,storage,job,file,signal){
   const id=randomUUID();
   const artifact={_id:id,jobId:job._id,ownerId:job.ownerId,projectId:job.projectId,versionId:job.versionId,
-    objectKey:'chitrabodh/'+id+'/video.mp4',state:'uploading',expiresAt:new Date(Date.now()+20*60*1000)};
+    storageProvider:'filebase',objectKey:'chitrabodh/'+id+'/video.mp4',state:'uploading',expiresAt:new Date(Date.now()+20*60*1000)};
   await store.artifacts.insertOne(artifact);
   await storage.put(artifact.objectKey,file,signal);
   return artifact;
 }
-export async function cleanupMedia(store,storage,now=new Date()){
+export async function cleanupMedia(store,storageFor,now=new Date()){
   const candidates=store.artifacts.find({state:{$ne:'deleted'},expiresAt:{$lte:now}});
   for await(const artifact of candidates){
     // An in-flight upload must stop before its object can be removed.
     if(await store.jobs.findOne({_id:artifact.jobId,active:true}))continue;
     try{
-      await storage.remove(artifact.objectKey);
+      await storageFor(artifact).remove(artifact.objectKey);
       await store.artifacts.updateOne({_id:artifact._id},{$set:{state:'deleted',deletedAt:now}});
     }catch{console.error('Media cleanup will retry an object');}
   }

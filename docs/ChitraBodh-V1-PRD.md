@@ -19,7 +19,7 @@
 
 **Revision 1.3:** Opens V1 registration to creators using email and password. It replaces the prior invite-only, emailed magic-link admission flow. Generated-media retention, one outstanding generation request per user, and no V1 brand customization remain unchanged.
 
-**Revision 1.4 (14 November 2026):** Filebase replaces Cloudflare R2 as the selected media store. Direct S3 access was verified with a sample MP4. The application adapter and generated-video walkthrough are pending.
+**Revision 1.4 (14 November 2026):** Filebase replaces Cloudflare R2 as the selected media store. Direct S3 access was verified with a sample MP4. The application uses Filebase for new MP4s. See the project tracker for live verification.
 
 > Turn an idea into a clear, 60–90-second educational explainer with motion graphics and synchronized AI narration. Enter an idea, create the video, then preview and share.
 

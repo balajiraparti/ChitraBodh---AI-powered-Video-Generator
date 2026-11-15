@@ -9,7 +9,7 @@ const {ownSlot,claimJob,finishJob,pipelineStages}=await import('../dashboard/ser
 const {executePipeline}=await import('./worker-process.mjs');
 const {runPath,purgeRun,cleanup}=await import('../src/storage.ts');
 const {narratorChoices}=await import('../dashboard/server/narrators.mjs');
-const {objectStorage}=await import('../dashboard/server/r2.mjs');
+const {objectStorage,artifactStorage}=await import('../dashboard/server/filebase.mjs');
 const {uploadMedia,cleanupMedia}=await import('../dashboard/server/media.mjs');
 const storage=objectStorage();
 const store=await database();
@@ -21,7 +21,7 @@ process.on('SIGINT',()=>{stopping=true;current?.abort();});
 process.on('SIGTERM',()=>{stopping=true;current?.abort();});
 try{
   while(!stopping){
-    await cleanupMedia(store,storage);
+    await cleanupMedia(store,artifactStorage);
     const job=await claimJob(store,token);
     if(!job){await cleanup();await new Promise(r=>setTimeout(r,1000));continue;}
     const controller=new AbortController();

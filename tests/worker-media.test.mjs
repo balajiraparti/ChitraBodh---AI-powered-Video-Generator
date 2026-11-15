@@ -91,12 +91,13 @@ test('failed ready transaction rolls back and orphan cleanup retries deletions',
   await assert.rejects(uploadMedia(store,storage,job,'fake.mp4'));
   assert.equal(store.artifacts.rows.length,2);
   const orphan=store.artifacts.rows[1];
+  assert.equal(orphan.storageProvider,'filebase');
   store.jobs.rows[0].active=false;
   const now=new Date(+orphan.expiresAt+1);
-  await cleanupMedia(store,storage,now);
+  await cleanupMedia(store,()=>storage,now);
   assert.equal(orphan.state,'uploading');
   storage.remove=async()=>{};
-  await cleanupMedia(store,storage,now);
+  await cleanupMedia(store,()=>storage,now);
   assert.equal(orphan.state,'deleted');
 });
 test('expiry is exactly two hours after first ready',()=>{
