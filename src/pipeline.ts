@@ -23,7 +23,7 @@ export function configuration(voice?:string):ProviderConfig{
  if(!config.elevenKey||!config.voiceId)throw new Error('Set ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID in .env.');
  return config;
 }
-export async function generate(options:{demo:boolean;topic?:string;voice?:string;captions:boolean;revisionContext?:string;reviewedPlanFile?:string;signal?:AbortSignal;onProgress?:(state:string)=>void|Promise<void>}){
+export async function generate(options:{demo:boolean;topic?:string;voice?:string;captions:boolean;revisionContext?:string;reviewedPlanFile?:string;onRenderPercent?:(percent:number)=>void;signal?:AbortSignal;onProgress?:(state:string)=>void|Promise<void>}){
  options.signal?.throwIfAborted();
  const config=options.demo?undefined:configuration(options.voice);
  if(!options.demo&&(!options.topic?.trim()||[...options.topic].length>2000))throw new Error('Provide a topic between 1 and 2,000 characters.');
@@ -60,7 +60,7 @@ export async function generate(options:{demo:boolean;topic?:string;voice?:string
   }
   await writeFile(path.join(dir,'plan.json'),JSON.stringify(props.plan,null,2));
   await writeFile(path.join(dir,'timeline.json'),JSON.stringify(props.timeline,null,2));
-  await state('Rendering video');await render(props,dir,signal);
+  await state('Rendering video');await render(props,dir,signal,options.onRenderPercent);
   await state('Checking export');const result=await validateMedia(path.join(dir,'video.mp4'),options.demo,signal);
   m.state='ready';m.duration=result.duration;m.readyAt=Date.now();m.expiresAt=m.readyAt+RETENTION_MS;await saveManifest(m);
   console.log(`Ready: ${path.join(dir,'video.mp4')}\nExpires: ${new Date(m.expiresAt).toLocaleString()}\nRun npm run preview to view and keep automatic cleanup running.`);

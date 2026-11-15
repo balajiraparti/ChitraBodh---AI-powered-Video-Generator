@@ -10,7 +10,7 @@ export async function getServerSideProps({req,res}){
   const initial=await projectPage(await services(),owner);
   return {props:{initial}};
 }
-const stages={planning:'Planning',narration:'Creating narration',animating:'Animating',finishing:'Finishing'};
+const stages={planning:'Planning',narration:'Creating narration',animating:'Animating',finishing:'Checking export',uploading:'Uploading video'};
 const labels={draft:'Draft',queued:'Queued',ready:'Ready',expired:'Expired',failed:'Generation failed',cancelled:'Cancelled'};
 export default function Library({initial}){
   return <LibraryView key={initial.serverNow} initial={initial}/>;

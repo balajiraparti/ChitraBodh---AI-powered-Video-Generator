@@ -22,7 +22,7 @@ export function executePipeline(options,onStage,onChild,signal,childModule=new U
     }
     signal.addEventListener('abort',stop,{once:true});
     child.on('message',message=>{
-      if(message.type==='stage')progress=progress.then(()=>onStage(message.stage)).catch(()=>{failed=true;stop();});
+      if(message.type==='stage')progress=progress.then(()=>onStage(message.stage,message.percent)).catch(()=>{failed=true;stop();});
       if(message.type==='result')result=message.manifest;
     });
     child.on('error',()=>{failed=true;});

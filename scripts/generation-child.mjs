@@ -5,6 +5,7 @@ process.once('message',async message=>{
   if(message?.type!=='start')return;
   try{
     const manifest=await generate({...message.options,signal:controller.signal,
+      onRenderPercent:percent=>process.send?.({type:'stage',stage:'Rendering video',percent}),
       onProgress:stage=>{process.send?.({type:'stage',stage});}});
     process.send?.({type:'result',manifest});
     process.disconnect();

@@ -12,7 +12,7 @@ export async function getServerSideProps({req,res,params}){
   const job=await store.jobs.findOne({_id:params.id,ownerId});
   return job?{props:{initial:await jobStatus(store,job)}}:{notFound:true};
 }
-const stages={queued:'Queued',planning:'Planning',narration:'Creating narration',animating:'Animating',finishing:'Finishing'};
+const stages={queued:'Queued',planning:'Planning',narration:'Creating narration',animating:'Animating',finishing:'Checking export',uploading:'Uploading video'};
 export default function Job({initial}){
   return <Progress key={initial.jobId} initial={initial}/>;
 }
@@ -49,6 +49,7 @@ function Progress({initial}){
     window.addEventListener('focus',expire);
     return ()=>{clearTimeout(timer);window.removeEventListener('focus',expire);};
   },[job.expiresAt,job.mediaAvailable]);
+  const renderingPercent = job.stage === 'animating' && Number.isInteger(job.renderPercent) ? job.renderPercent : null;
   const expired=job.state==='succeeded' && !job.mediaAvailable;
   async function cancel(){
     setBusy(true);
@@ -62,7 +63,7 @@ function Progress({initial}){
   return <><h1>{active?'Creating your video':expired?'Your video has expired':job.state==='succeeded'?'Your video is ready':job.state==='cancelled'?'Creation cancelled':'Generation failed'}</h1>
     <div className={active?"job-grid":"job-review"}><section>
       <p role="status">{job.cancelRequested&&active?'Stopping creation…':active?stages[job.stage]||'Queued':job.safeError||''}</p>
-      {active && <><h2 className="form-subtitle">Progress</h2><ol className="stage-list">{Object.entries(stages).map(([key,label],index)=><li key={key} data-complete={index<Object.keys(stages).indexOf(job.stage)} aria-current={job.stage===key?'step':undefined}><span className="stage-marker" aria-hidden="true">{index<Object.keys(stages).indexOf(job.stage)?'✓':index+1}</span><div><strong>{label}</strong><small>{index<Object.keys(stages).indexOf(job.stage)?'Completed':job.stage===key?'In progress':'Waiting'}</small></div></li>)}</ol><p>You can leave this page. We’ll keep working.</p></>}
+      {active && <><h2 className="form-subtitle">Progress</h2><ol className="stage-list">{Object.entries(stages).map(([key,label],index)=><li key={key} data-complete={index<Object.keys(stages).indexOf(job.stage)} aria-current={job.stage===key?'step':undefined}><span className="stage-marker" aria-hidden="true">{index<Object.keys(stages).indexOf(job.stage)?'✓':index+1}</span><div><strong>{label}</strong><small>{index<Object.keys(stages).indexOf(job.stage)?'Completed':job.stage===key?(renderingPercent === null ? 'In progress' : renderingPercent+'% rendered'):'Waiting'}</small></div></li>)}</ol><p>You can leave this page. We’ll keep working.</p></>}
       {job.mediaAvailable && job.mediaUrl && <div className="ready-media">
         <video key={attempt} controls playsInline preload="metadata" aria-label="Generated explainer" src={job.mediaUrl} onError={()=>setPlaybackError(true)}/>
         {playbackError && <p role="alert">The preview could not load. <button onClick={()=>{setPlaybackError(false);setAttempt(attempt+1)}}>Retry preview</button></p>}

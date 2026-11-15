@@ -5,9 +5,9 @@ const child=new URL('./fixtures/worker-child.mjs',import.meta.url);
 test('supervisor forwards progress and waits for child exit',async()=>{
   let pid;
   const stages=[];
-  const result=await executePipeline({},async stage=>stages.push(stage),value=>{pid=value},new AbortController().signal,child);
+  const result=await executePipeline({},async (stage,percent)=>stages.push([stage,percent]),value=>{pid=value},new AbortController().signal,child);
   assert.equal(result.id,'test-result');
-  assert.deepEqual(stages,['Rendering video']);
+  assert.deepEqual(stages,[['Rendering video',undefined],['Rendering video',40]]);
   assert.throws(()=>process.kill(pid,0));
 });
 test('cancellation stops child before rejecting execution',async()=>{

@@ -80,7 +80,9 @@ Filters: projects `filter=all|scheduled`; publications `state=<PublicationState>
 
 This is stable keyset traversal, not snapshot isolation: deletion/expiry and mutable status filters can change membership while paging. Newly created records appear after refresh, not inserted halfway into the first-page boundary. Never promise a frozen result set. Auth and expiry are evaluated on each page.
 
-Poll active jobs every three seconds, back off to 15 seconds on transient network failures, refresh on focus. Use returned `stateRevision` to discard older responses. Return serverNow for countdowns; do not send invented progress percentages or guaranteed queue ETAs. `GET /jobs/active` returns `{job:null}` when none exists.
+The current dashboard polls the MongoDB job receipt. During animation, optional `renderPercent` reports renderer progress in ten-point increments from 0 through 100. Checking export and uploading are separate stages after rendering. Reloading the job page reads the last persisted stage and percentage.
+
+Target polling policy: Poll active jobs every three seconds, back off to 15 seconds on transient network failures, refresh on focus. Use returned `stateRevision` to discard older responses. Return serverNow for countdowns; do not send invented progress percentages or guaranteed queue ETAs. `GET /jobs/active` returns `{job:null}` when none exists.
 
 ## 5. Endpoint catalog and command semantics
 

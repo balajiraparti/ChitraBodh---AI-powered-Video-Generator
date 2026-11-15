@@ -50,10 +50,13 @@ try{
       const voice=settings.voiceCatalogId==='adam'?(process.env.ELEVENLABS_MALE_VOICE_ID||'pNInz6obpgDQGcFmaJgB'):(process.env.ELEVENLABS_FEMALE_VOICE_ID||'C3aqZfd4M0h7Ys5tWGIS');
       const revisionContext = job.kind === 'revision' ? await loadRevisionContext(store,job) : undefined;
       manifest=await executePipeline({demo:false,topic:version.topic,voice,captions:settings.captions,revisionContext},
-        async stage=>{
-          await store.jobs.updateOne({_id:job._id,active:true,workerToken:token},{$set:{stage:pipelineStages[stage]||'planning'}});
+        async (stage,renderPercent)=>{
+          const progress = {stage:pipelineStages[stage] || 'planning'};
+          if (Number.isInteger(renderPercent)) progress.renderPercent = renderPercent;
+          await store.jobs.updateOne({_id:job._id,active:true,workerToken:token},{$set:progress});
         },pid=>store.workerSlots.updateOne({_id:'generation',token},{$set:{childPid:pid}}),controller.signal);
       controller.signal.throwIfAborted();
+      await store.jobs.updateOne({_id:job._id,active:true,workerToken:token},{$set:{stage:'uploading'}});
       const artifact=await uploadMedia(store,storage,job,runPath(manifest.id)+'/video.mp4',controller.signal);
       controller.signal.throwIfAborted();
       const plan=JSON.parse(await readFile(runPath(manifest.id)+'/plan.json','utf8'));

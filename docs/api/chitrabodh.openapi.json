@@ -5578,9 +5578,18 @@
               "narrating",
               "aligning",
               "rendering",
+              "animating",
+              "narration",
+              "finishing",
               "validating",
               "uploading"
             ]
+          },
+          "renderPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Measured renderer progress while animating."
           },
           "stateRevision": {
             "type": "integer",

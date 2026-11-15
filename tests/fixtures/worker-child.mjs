@@ -3,6 +3,7 @@ process.on('message',message=>{
   if(message.type==='start'){
     process.send({type:'stage',stage:'Rendering video'});
     if(!message.options.hang){
+      process.send({type:'stage',stage:'Rendering video',percent:40});
       process.send({type:'result',manifest:{id:'test-result'}});
       process.disconnect();
     }
