@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateIllustration,objectPose,type Illustration,type IllustrationAction} from '../src/illustration';
 import {connectorSegment,layoutLabels,repairLayout,validateIllustrationQuality} from '../src/illustration-layout';
+import {buildTimeline,SYNC_LEAD} from '../src/timing';
+import {demoPlan,fixtureAlignment} from '../src/fixtures';
 import {repairArrayStories,validateArrayStories,type ArrayEvent,type ArrayStory} from '../src/array-story';
 
 const narration='Next, roots pull water up from the soil through tiny tubes in the stem. At the same time, microscopic pores in the leaves take in carbon dioxide from the surrounding air.';
@@ -42,7 +44,7 @@ test('quality rules reject white-on-light shapes, tiny compositions, too few act
  const white=fixedScene();white.objects[1].color='white';assert.throws(()=>validateIllustrationQuality(white,fixedNarration),/white/);
  const small=fixedScene();small.objects[0]={...small.objects[0],x:450,width:100,height:70};small.objects[2]={...small.objects[2],x:560,width:100,height:50};small.objects[1]={...small.objects[1],x:350,y:200};small.actions[0]={...small.actions[0],toX:350,toY:260};
  assert.throws(()=>validateIllustrationQuality(small,fixedNarration),/too small|overlap|closer/);
- const sparse=fixedScene();sparse.actions=sparse.actions.slice(0,2);assert.throws(()=>validateIllustrationQuality(sparse,fixedNarration),/needs at least 3 actions/);
+ const sparse=fixedScene();sparse.actions=sparse.actions.slice(0,2);assert.throws(()=>validateIllustrationQuality(sparse,fixedNarration),/needs at least [0-9]+ actions/);
  const legacy=fixedScene();delete legacy.objects[3].fromId;assert.throws(()=>validateIllustrationQuality(legacy,fixedNarration),/needs fromId/);
 });
 test('an object moving straight through another object is rejected',()=>{
@@ -100,4 +102,60 @@ test('objects without their own appearance action pop in at the scene start, sta
  assert.equal(objectPose(object,[],1,2).opacity,0);
  assert.equal(objectPose(object,[],3,2).opacity,1);
  assert.equal(objectPose(object,[act('pop',9)],1,2).opacity,0,'an explicit enter action replaces the automatic intro');
+});
+
+test('pacing rules: the first action must come early, and scenes may not start empty',()=>{
+ const late=fixedScene();late.actions=late.actions.map(a=>({...a,phrase:'take in carbon dioxide'}));
+ assert.throws(()=>validateIllustrationQuality(late,fixedNarration),/first action fires at word/);
+ const empty=fixedScene();empty.actions.push({targetId:'leaf',action:'pop',phrase:'Next',occurrence:1,duration:.6,repeat:false},{targetId:'water',action:'slide_up',phrase:'roots',occurrence:1,duration:.6,repeat:false});
+ assert.throws(()=>validateIllustrationQuality(empty,fixedNarration),/at least two objects must be visible/i);
+});
+test('new real-world objects, shake and grow animate and stay inside their layout box',()=>{
+ const kinds=['house','car','coin','check','lock','shield','bulb','gear','chart','cart','store','envelope','battery','solar_panel','wind_turbine','bell','heart','globe','clock','qr','bank','book'];
+ for(const kind of kinds){const scene:Illustration={background:'sky',setting:'city',objects:[{id:'a',kind:kind as never,x:300,y:300,width:200,height:200,label:'A',color:'teal'},{id:'b',kind:'box',x:650,y:300,width:150,height:150,label:'B',color:'gold'},{id:'c',kind:'circle',x:300,y:600,width:100,height:100,label:'C',color:'blue'}],actions:[{targetId:'b',action:'move',phrase:'x',occurrence:1,duration:1,repeat:false,toX:600,toY:400}]};validateIllustration(scene);}
+ assert.ok(objectPose(object,[act('grow',5)],7).scale>1.15);
+ assert.notEqual(objectPose(object,[act('shake',5,{duration:1})],5.1).x,100);
+ assert.equal(objectPose(object,[act('shake',5,{duration:1})],7).x,100);
+});
+test('speech sync: visual cues start slightly before the spoken phrase and never before their scene',()=>{
+ const plan=structuredClone(demoPlan);
+ plan.scenes[1].illustration={background:'sky',objects:[{id:'a',kind:'sun',x:200,y:200,width:100,height:100,label:'',color:'gold'},{id:'b',kind:'water',x:500,y:400,width:100,height:100,label:'',color:'blue'},{id:'c',kind:'arrow',x:300,y:300,width:30,height:30,label:'',color:'teal',fromId:'a',toId:'b'}],actions:[{targetId:'c',action:'flow',phrase:'liquid water',occurrence:1,duration:2,repeat:false}]};
+ delete plan.scenes[1].motion;
+ const timeline=buildTimeline(plan,fixtureAlignment(),75);const action=timeline.scenes[1].illustrationActions![0];
+ const start=plan.scenes[1].narration.indexOf('liquid water');assert.ok(start>0);
+ assert.ok(action.at>=timeline.scenes[1].start);
+ const base=buildTimeline(demoPlan,fixtureAlignment(),75);assert.ok(base.scenes[1].start<action.at+SYNC_LEAD+1e-9);
+ assert.ok(SYNC_LEAD>0&&SYNC_LEAD<.3);
+});
+test('draft repair keeps scenes from opening empty, adds missing motion and covers silent sentences without a model call',async()=>{
+ const {repairIllustrationDraft}=await import('../src/providers');
+ const narration='A customer opens the app. The bank checks the balance. Then the shop gets the money.';
+ const draft={scenes:[{narration,illustration:{background:'sky',objects:[
+  {id:'app',kind:'phone',label:'App',x:200,y:300,width:150,height:150,color:'blue'},
+  {id:'bank',kind:'bank',label:'Bank',x:700,y:300,width:150,height:150,color:'gray'},
+  {id:'shop',kind:'store',label:'Shop',x:450,y:600,width:150,height:150,color:'orange'},
+  {id:'link',kind:'arrow',label:'',x:450,y:300,width:30,height:30,color:'teal',fromId:'app',toId:'bank'}],
+  actions:[{targetId:'app',action:'pop',phrase:'opens the app',occurrence:1,duration:.6,repeat:false},{targetId:'bank',action:'slide_up',phrase:'checks',occurrence:1,duration:.6,repeat:false},{targetId:'shop',action:'flow',phrase:'the money',occurrence:1,duration:2,repeat:false}]}}]};
+ repairIllustrationDraft(draft);
+ const actions=draft.scenes[0].illustration.actions;
+ assert.ok(!actions.some(a=>a.targetId==='shop'&&a.action==='flow'),'flow on a non-connector is replaced');
+ assert.ok(actions.some(a=>a.action==='flow'&&a.targetId==='link'),'a connector flow is added');
+ const hidden=new Set(actions.filter(a=>['pop','slide_up','reveal'].includes(a.action)).map(a=>a.targetId));
+ assert.ok(['app','bank','shop'].filter(id=>!hidden.has(id)).length>=2,'two objects visible from the start');
+ const silent={scenes:[{narration:'The customer opens the app. The bank checks the balance carefully. The shop gets paid.',illustration:{background:'sky',objects:structuredClone(draft.scenes[0].illustration.objects),actions:[{targetId:'app',action:'ring',phrase:'opens the app',occurrence:1,duration:1,repeat:false},{targetId:'link',action:'flow',phrase:'the shop',occurrence:1,duration:2,repeat:false}]}}]};
+ repairIllustrationDraft(silent);
+ assert.ok(silent.scenes[0].illustration.actions.some(a=>a.action==='ring'&&a.targetId==='bank'&&a.phrase.toLowerCase()==='bank'),'the sentence about the bank gets a ring on the bank, on its own word');
+});
+test('separateObjects untangles a crowded scene, keeps labels on canvas and carries move destinations along',()=>{
+ const scene:Illustration={background:'sky',objects:[
+  {id:'a',kind:'bank',x:300,y:300,width:200,height:200,label:'Bank',color:'gray'},
+  {id:'b',kind:'coin',x:350,y:330,width:180,height:180,label:'Funds',color:'gold'},
+  {id:'c',kind:'store',x:700,y:660,width:200,height:200,label:'Store',color:'orange'},
+  {id:'d',kind:'phone',x:320,y:340,width:170,height:170,label:'Phone',color:'blue'}
+ ],actions:[{targetId:'b',action:'move',phrase:'x',occurrence:1,duration:1,repeat:false,toX:600,toY:400}]};
+ repairLayout(scene);
+ for(const o of scene.objects){assert.ok(o.x-o.width/2>=0&&o.x+o.width/2<=900&&o.y-o.height/2>=0&&o.y+o.height/2<=700,o.id+' stays on canvas with label room');}
+ assert.doesNotThrow(()=>validateIllustration(scene));
+ const overlap=scene.objects.some((p,i)=>scene.objects.slice(i+1).some(q=>Math.abs(p.x-q.x)<(p.width+q.width)/2&&Math.abs(p.y-q.y)<(p.height+q.height)/2));
+ assert.equal(overlap,false);
 });

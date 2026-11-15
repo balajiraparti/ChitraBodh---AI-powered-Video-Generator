@@ -541,9 +541,12 @@ Goal: remove the worst defects from the current engine.
 | Item | Status |
 | --- | --- |
 | Live run evidence and defect list (section 1) | **[Verified]** 3 Nov 2026 |
-| Overlap validation (Phase 0) | Not started |
-| Edge-anchored arrows (Phase 0) | Not started |
-| Enlarged stage / better space use (Phase 0) | Not started |
+| Overlap validation (Phase 0) | **[Implemented]** 15 Nov 2026 with automatic spreading, separation and connector clearing. Verified by tests and inspected frames. |
+| Edge-anchored arrows (Phase 0) | **[Implemented]** and verified in rendered frames. |
+| Enlarged stage / better space use (Phase 0) | **[Implemented]** partly: stage enlarged and objects spread. Live videos still leave empty areas. |
+| Real-world objects (Phase 3, partial) | **[Implemented]** 22 icon objects, 6 backdrops, grow and shake. Not yet: molecule composites beyond CO2/O2/H2O, flowchart nodes, templates. |
+| Transitions (Phase 2, partial) | **[Implemented]** 0.2 s scene fade only. No slide, wipe or shared-element continuity. |
+| Speech sync (Phase 2) | **[Implemented]** 0.12 s visual lead. Playback sync is **[Unverified]**. |
 | Primitives, connectors, templates (Phase 1) | Not started |
 | Animation catalog and transitions (Phase 2) | Not started |
 | Real-world object library (Phase 3) | Not started |

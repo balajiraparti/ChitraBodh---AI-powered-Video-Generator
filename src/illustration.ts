@@ -1,13 +1,18 @@
 import {z} from 'zod';
-export const SHAPES=['sun','moon','hill','water','cloud','tree','animal','person','factory','soil','atom','leaf','box','circle','arrow','text','rect','triangle','diamond','line','drop','roots','co2','o2','h2o','laptop','phone','server','bottle','truck'] as const;
+export const SHAPES=['sun','moon','hill','water','cloud','tree','animal','person','factory','soil','atom','leaf','box','circle','arrow','text','rect','triangle','diamond','line','drop','roots','co2','o2','h2o','laptop','phone','server','bottle','truck','house','car','coin','check','lock','shield','bulb','gear','chart','cart','store','envelope','battery','solar_panel','wind_turbine','bell','heart','globe','clock','qr','bank','book'] as const;
+// Newer icon-style kinds keep their proportions (drawn at the smaller of width and height); older kinds stretch.
+export const UNIFORM_KINDS=new Set<string>(['house','car','coin','check','lock','shield','bulb','gear','chart','cart','store','envelope','battery','solar_panel','wind_turbine','bell','heart','globe','clock','qr','bank','book']);
+export const isUniformKind=(kind:string)=>UNIFORM_KINDS.has(kind);
+export const SETTINGS=['outdoor','room','city','lab','digital','plain'] as const;
 export const COLORS=['teal','blue','green','gold','brown','gray','white','red','orange','purple','ink'] as const;
-export const ACTIONS=['reveal','move','pulse','rotate','flow','pop','slide_up','draw','ring','fade_out'] as const;
+export const ACTIONS=['reveal','move','pulse','rotate','flow','pop','slide_up','draw','ring','fade_out','grow','shake'] as const;
 // Actions that make an object appear; before they fire, the object is hidden.
 export const ENTER_ACTIONS:readonly string[]=['reveal','pop','slide_up','draw'];
 export const isConnectorKind=(kind:string)=>kind==='arrow'||kind==='line';
 const id=z.string().regex(/^[a-z][a-z0-9_]{0,39}$/);
 export const IllustrationSchema=z.object({
  background:z.enum(['sky','night','paper']),
+ setting:z.enum(SETTINGS).optional(),
  objects:z.array(z.object({id,kind:z.enum(SHAPES),x:z.number().min(30).max(870),y:z.number().min(50).max(690),width:z.number().min(30).max(840),height:z.number().min(30).max(600),label:z.string().max(30),color:z.enum(COLORS),toId:z.string().optional(),fromId:z.string().optional(),style:z.enum(['solid','dashed','dotted']).optional()})).min(3).max(16),
  actions:z.array(z.object({targetId:id,action:z.enum(ACTIONS),phrase:z.string().min(1).max(140),occurrence:z.number().int().min(1),duration:z.number().min(.5).max(12),repeat:z.boolean(),toX:z.number().min(30).max(870).optional(),toY:z.number().min(50).max(690).optional()})).min(1).max(12)
 });
@@ -47,7 +52,7 @@ const backOut=(p:number)=>1+2.70158*Math.pow(p-1,3)+1.70158*Math.pow(p-1,2);
  * explicit appearance action pop in at that time instead of being visible from frame zero.
  */
 export function objectPose(object:Illustration['objects'][number],actions:IllustrationAction[],time:number,introAt?:number){
- let x=object.x,y=object.y,opacity=1,scale=1,rotation=0,offsetY=0,draw=1,ring=-1;
+ let x=object.x,y=object.y,opacity=1,scale=1,rotation=0,offsetY=0,draw=1,ring=-1,shakeX=0;
  const mine=actions.filter(a=>a.targetId===object.id);
  if(introAt!==undefined&&!mine.some(a=>ENTER_ACTIONS.includes(a.action))){const p=clamp((time-introAt)/.45);opacity=p;scale=Math.max(.01,.85+.15*backOut(p));}
  for(const a of mine){
@@ -65,6 +70,8 @@ export function objectPose(object:Illustration['objects'][number],actions:Illust
   if(a.action==='pulse')scale=1+.07*Math.sin(progress*Math.PI*2);
   if(a.action==='rotate')rotation=progress*360;
   if(a.action==='ring')ring=a.repeat?progress:raw<=1?raw:-1;
+  if(a.action==='grow')scale*=1+.2*easeOut(clamp(raw));
+  if(a.action==='shake'&&raw<1)shakeX=Math.sin(raw*Math.PI*8)*10*(1-raw);
  }
- return {x,y:y+offsetY,opacity,scale,rotation,draw,ring};
+ return {x:x+shakeX,y:y+offsetY,opacity,scale,rotation,draw,ring};
 }

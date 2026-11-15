@@ -1,5 +1,6 @@
 import React from 'react';
-import {objectPose,isConnectorKind,type Illustration,type IllustrationAction} from '../illustration';
+import {objectPose,isConnectorKind,isUniformKind,type Illustration,type IllustrationAction} from '../illustration';
+import {IconDrawing,Backdrop} from './objects';
 import {connectorSegment,isBackdrop,labelCenter,layoutLabels,rectOf} from '../illustration-layout';
 const palette:Record<string,string>={teal:'#168e94',blue:'#489dc6',green:'#5e9c6e',gold:'#efbc55',brown:'#a28160',gray:'#7e979e',white:'#fff',red:'#d1585a',orange:'#ec8a3f',purple:'#8a6fc4',ink:'#1f3a45'};
 const LINE='#437c88';
@@ -34,7 +35,7 @@ function Drawing({kind,color,time}:{kind:string;color:string;time:number}){
   case 'server':return <>{[-46,-14,18].map(y=><g key={y}><rect x="-40" y={y} width="80" height="28" rx="5" fill={color}/><circle cx="-28" cy={y+14} r="3.5" fill="#f1f7f8"/><circle cx="-17" cy={y+14} r="3.5" fill="#f1f7f8"/><path d={`M2 ${y+14}H30`} stroke="#f1f7f8" strokeWidth="3"/></g>)}</>;
   case 'bottle':return <><rect x="-11" y="-50" width="22" height="14" rx="3" fill="#4d5b63"/><path d="M-9 -36H9V-26Q30 -18 30 0V44Q30 50 24 50H-24Q-30 50 -30 44V0Q-30 -18 -9 -26Z" fill={color}/><rect x="-30" y="4" width="60" height="22" fill="#fff" opacity=".6"/></>;
   case 'truck':return <><rect x="-50" y="-32" width="60" height="46" rx="4" fill={color}/><path d="M14 -20H34L50 0V14H14Z" fill={color}/><path d="M20 -14H32L42 -2H20Z" fill="#f1f7f8"/>{[-28,32].map(x=><circle key={x} cx={x} cy="20" r="10" fill="#2c3e45" stroke="#fff" strokeWidth="2.5"/>)}</>;
-  default:return null;
+  default:return <IconDrawing kind={kind} color={color} time={time}/>;
  }
 }
 export function IllustratedScene({scene,actions,time,start}:{scene:Illustration;actions:IllustrationAction[];time:number;start?:number}){
@@ -54,15 +55,19 @@ export function IllustratedScene({scene,actions,time,start}:{scene:Illustration;
   <defs><clipPath id="illustration-canvas"><rect width="900" height="740" rx="32"/></clipPath><marker id="scene-arrow" markerUnits="userSpaceOnUse" markerWidth="24" markerHeight="24" refX="20" refY="12" orient="auto"><path d="M3 3L20 12L3 21" fill="none" stroke={LINE} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></marker></defs>
   <g clipPath="url(#illustration-canvas)">
    <rect width="900" height="740" fill={night?'#182f47':scene.background==='sky'?'#e1f0f2':'#eaf0e7'}/>
+   <Backdrop setting={scene.setting} time={time}/>
    {scene.objects.filter(o=>!isConnectorKind(o.kind)).map(object=>{
     const p=poseOf(object.id);if(p.opacity<=0)return null;
     const rect=rectOf(object,p.x,p.y,p.scale);
     const molecule=MOLECULE_WIDTH[object.kind];
-    const sx=molecule?object.width/molecule*p.scale:object.width/100*p.scale,sy=molecule?sx:object.height/100*p.scale;
+    const uniform=isUniformKind(object.kind),box=Math.min(object.width,object.height);
+    const sx=molecule?object.width/molecule*p.scale:uniform?box/100*p.scale:object.width/100*p.scale,sy=molecule?sx:uniform?sx:object.height/100*p.scale;
+    // Gentle idle motion keeps the whole scene alive between narrated actions (scenery stays still).
+    const idle=isBackdrop(object.kind)||object.kind==='text'?0:Math.sin(time*1.6+object.x*.013)*4;
     const side=layout.sides.get(object.id)??'below',at=labelCenter(side,rect,object.label);
     return <g key={object.id} opacity={p.opacity}>
      {p.ring>=0&&<ellipse cx={p.x} cy={p.y} rx={object.width/2*(.7+.6*p.ring)} ry={object.height/2*(.7+.6*p.ring)} fill="none" stroke="#e39a1c" strokeWidth="5" opacity={1-p.ring}/>}
-     <g transform={`translate(${p.x} ${p.y}) scale(${sx} ${sy}) rotate(${p.rotation})`}><Drawing kind={object.kind} color={palette[object.color]} time={time}/></g>
+     <g transform={`translate(${p.x} ${p.y+idle}) scale(${sx} ${sy}) rotate(${p.rotation})`}><Drawing kind={object.kind} color={palette[object.color]} time={time}/></g>
      {object.label&&(object.kind==='text'
       ?<text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="central" fontSize="32" fontWeight="600" fill={ink}>{object.label}</text>
       :<text x={at.x} y={at.y} textAnchor="middle" dominantBaseline="central" fontSize="24" fontWeight="600" fill={ink}>{object.label}</text>)}
