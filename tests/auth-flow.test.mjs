@@ -34,3 +34,17 @@ test('credential route preserves Better Auth failures instead of redirecting',()
   const {res}=response(200);
   assert.deepEqual(respondToCredentialResult(res,{ok:true,status:200,headers:{getSetCookie:()=>['session=value']}},'sign-in'),{code:200,body:{redirect:'/dashboard'}});
 });
+
+test('the maximum-length password works for registration and later sign-in', async () => {
+  const origin = 'http://localhost:3000';
+  const auth = makeAuth({
+    database:memoryAdapter({user:[], account:[], session:[], verification:[]}),
+    baseURL:origin, secret:'local-test-only-secret-with-more-than-32-characters'
+  });
+  const headers = new Headers({origin});
+  const credentials = {email:'long-password@example.test', password:'a'.repeat(128)};
+  await auth.api.signUpEmail({headers, body:{...credentials, name:'Creator'}});
+  const signedIn = await auth.api.signInEmail({headers, body:credentials, asResponse:true});
+  assert.equal(signedIn.status, 200);
+  assert.ok(signedIn.headers.getSetCookie().length > 0);
+});
