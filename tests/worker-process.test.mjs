@@ -16,3 +16,16 @@ test('cancellation stops child before rejecting execution',async()=>{
   await assert.rejects(executePipeline({hang:true},async()=>controller.abort(),value=>{pid=value},controller.signal,child));
   assert.throws(()=>process.kill(pid,0));
 });
+
+test('a real generation child exits when its supervisor disconnects before dispatch',async()=>{
+  const {fork}=await import('node:child_process');
+  const processChild=fork(new URL('../scripts/generation-child.mjs',import.meta.url),[],
+    {execArgv:['--import','tsx'],stdio:['ignore','ignore','ignore','ipc']});
+  const ended=new Promise((resolve,reject)=>{
+    const timeout=setTimeout(()=>{processChild.kill();reject(Error('Orphan child stayed alive'));},10000);
+    processChild.once('exit',()=>{clearTimeout(timeout);resolve();});
+    processChild.once('error',reject);
+  });
+  processChild.disconnect();
+  await ended;
+});

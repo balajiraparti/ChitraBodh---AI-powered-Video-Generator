@@ -5,7 +5,7 @@ import {config} from 'dotenv';
 config({path:'.env',quiet:true});
 config({path:'dashboard/.env.local',override:true,quiet:true});
 const {database}=await import('../dashboard/server/database.mjs');
-const {ownSlot,claimJob,finishJob,pipelineStages}=await import('../dashboard/server/jobs.mjs');
+const {ownSlot,renewSlot,updateJobProgress,claimJob,finishJob,pipelineStages}=await import('../dashboard/server/jobs.mjs');
 const {executePipeline}=await import('./worker-process.mjs');
 const {runPath,purgeRun,cleanup}=await import('../src/storage.ts');
 const {narratorChoices}=await import('../dashboard/server/narrators.mjs');
@@ -13,12 +13,35 @@ const {objectStorage,artifactStorage}=await import('../dashboard/server/filebase
 const {uploadMedia,cleanupMedia}=await import('../dashboard/server/media.mjs');
 const storage=objectStorage();
 const store=await database();
-const token=await ownSlot(store).catch(()=>{throw Error('Generation slot is occupied. Verify the previous worker and child have stopped before recovery.');});
+let token;
+while (!token) {
+  try { token = await ownSlot(store); }
+  catch (error) {
+    if (error.code !== 'WORKER_BUSY') throw error;
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+}
 let stopping=false;
 let unsafeToRelease=false;
 let current;
 process.on('SIGINT',()=>{stopping=true;current?.abort();});
 process.on('SIGTERM',()=>{stopping=true;current?.abort();});
+let leasePulse = Promise.resolve();
+let lastRenewed = Date.now();
+const leaseHeartbeat = setInterval(() => {
+  if (Date.now() - lastRenewed >= 25000) {
+    stopping = true;
+    current?.abort();
+  }
+  leasePulse = leasePulse.then(async () => {
+    if (stopping) return;
+    await renewSlot(store, token);
+    lastRenewed = Date.now();
+  }).catch(() => {
+    stopping = true;
+    current?.abort();
+  });
+}, 1000);
 try{
   while(!stopping){
     await cleanupMedia(store,artifactStorage);
@@ -29,8 +52,6 @@ try{
     let pulse=Promise.resolve();
     const heartbeat=setInterval(()=>{
       pulse=pulse.then(async()=>{
-        const updated=await store.workerSlots.updateOne({_id:'generation',token},{$set:{heartbeatAt:new Date()}});
-        if(!updated.matchedCount)throw Error('Slot lost');
         const state=await store.jobs.findOne({_id:job._id,active:true});
         if(!state||state.cancelRequested||stopping)controller.abort();
       }).catch(()=>{stopping=true;controller.abort();});
@@ -53,10 +74,10 @@ try{
         async (stage,renderPercent)=>{
           const progress = {stage:pipelineStages[stage] || 'planning'};
           if (Number.isInteger(renderPercent)) progress.renderPercent = renderPercent;
-          await store.jobs.updateOne({_id:job._id,active:true,workerToken:token},{$set:progress});
-        },pid=>store.workerSlots.updateOne({_id:'generation',token},{$set:{childPid:pid}}),controller.signal);
+          await updateJobProgress(store,job,progress);
+        },pid=>renewSlot(store,token,{childPid:pid}),controller.signal);
       controller.signal.throwIfAborted();
-      await store.jobs.updateOne({_id:job._id,active:true,workerToken:token},{$set:{stage:'uploading'}});
+      await updateJobProgress(store,job,{stage:'uploading'});
       const artifact=await uploadMedia(store,storage,job,runPath(manifest.id)+'/video.mp4',controller.signal);
       controller.signal.throwIfAborted();
       const plan=JSON.parse(await readFile(runPath(manifest.id)+'/plan.json','utf8'));
@@ -76,7 +97,9 @@ try{
     }
   }
 }finally{
-  // A terminal-state write failure must leave the slot for explicit recovery.
+  clearInterval(leaseHeartbeat);
+  await leasePulse;
+  // An unfinished job keeps its slot until expiry and takeover.
   if(!unsafeToRelease && !await store.jobs.findOne({active:true,workerToken:token}))await store.workerSlots.deleteOne({_id:'generation',token});
   await store.client.close();
 }

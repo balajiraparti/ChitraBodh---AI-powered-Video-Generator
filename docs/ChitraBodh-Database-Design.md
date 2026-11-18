@@ -16,7 +16,7 @@ Global invariants:
 
 1. Every owned reference resolves to the same owner and a live authorized parent at admission/commit.
 2. At most one `generationJobs.active=true` per owner, counting queued jobs, variants, retries and cancellation pending termination.
-3. One global generation slot; fence equality and unexpired lease required for commits; old process must actually stop before another executes.
+3. One global generation slot; fence equality and unexpired lease required for commits; takeover terminalizes interrupted jobs and rejects all old-token writes.
 4. Ready content is immutable; publication references one exact artifact/account/payload revision.
 5. No generated content is accessible at/after its expiry, regardless of cleanup lag.
 6. Copying/reusing/variant rendering never extends a dependency's deadline.
@@ -88,7 +88,7 @@ Proposed auth defaults: a 12–128 character password and seven-day absolute ses
 - `requestCounters!` {planning:Int 0..4, narration:Int 0..3}, `renderAttempts!` Int 0..2, `uploadAttempts!` Int 0..3, `safeError?` {code,message,retryable,stage?}, `commandId!`, `inputPayloadId!` referencing the temporary input snapshot.
 - Active is true until termination is confirmed, not just when cancel is requested. Queued/retry_wait remains active. No percentage field. Snapshot required input in an ephemeral request payload; store retained original idea in project for fresh regeneration.
 
-`generationSlot`: singleton `_id="global"`, `fence!` monotonically increasing, `jobId?`, `workerId?`, `leaseUntil?`, `childIdentity?` {hostId,bootId,pid,startTime}, `status!` idle/held/recovery_required. Never delete/recreate the singleton to reset fencing. PID alone is insufficient to identify an old render process.
+Implemented collection `workerSlots` uses singleton `_id="generation"`, a random unique `token`, `leaseUntil`, `heartbeatAt`, diagnostic `host` and `pid`, and optional `jobId` and `childPid`. Takeover replaces the token and terminalizes interrupted attempts in one transaction. Progress, claiming and completion write the slot in their transaction to serialize against takeover. An expired legacy slot derives its deadline from its last heartbeat. No TTL index deletes the slot.
 
 `providerAttempts`: jobId!, ownerId!, provider!, operation! plan/narrate, ordinal! Int, state! reserved/sent/succeeded/failed/unknown, requestHash!, startedAt!, endedAt?, providerRequestId?, safeStatusCode?, errorCategory?, purgeAt?. Increment durable budget and insert reserved attempt atomically before network send. Crashes after reservation may consume budget conservatively even if no request went out. No prompts, raw responses or API keys. Keep attempts while job is unresolved, then seven days.
 
@@ -268,7 +268,7 @@ Database acceptance checks:
 - Cross-owner and mismatched-parent references are denied at every mutation/read.
 - Parallel generation creates one active user job, separate users queue, and one global process executes.
 - Replay/collision tests cover command hashes, expiration, tombstoned results and nonterminal retention.
-- Fenced old worker cannot commit; actual old process termination required before new claim.
+- Expired and replaced workers cannot commit. Test simultaneous claim, heartbeat loss and cross-host recovery.
 - Shared-guard transaction tests race user/project deletion and disconnect against admission, ready and publish dispatch.
 - Expiry boundaries, reused dependency deletion, late uploads, Filebase failure, crash after upload, and missing registry reconciliation are tested.
 - Unknown publication blocks duplicates across reconnect; confirmed outcomes can be recorded after expiry.

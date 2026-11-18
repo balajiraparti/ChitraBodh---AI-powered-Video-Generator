@@ -8,6 +8,7 @@ function fixture(){
     return Object.entries(filter).every(([key,value])=>{
       if(value && typeof value==='object' && !(value instanceof Date)){
         if('$ne' in value)return row[key]!==value.$ne;
+        if('$gt' in value)return row[key]>value.$gt;
         if('$lte' in value)return row[key]<=value.$lte;
       }
       return row[key]===value;
@@ -52,13 +53,14 @@ function seed(store,id='one'){
 test('one supervisor slot, FIFO claim, private cancellation and terminal release',async()=>{
   const store=fixture();
   const token=await ownSlot(store);
-  await assert.rejects(ownSlot(store),{code:11000});
+  await assert.rejects(ownSlot(store),{code:'WORKER_BUSY'});
   const later=seed(store,'later');later.createdAt=new Date(200);
   const first=seed(store,'first');
-  assert.equal((await claimJob(store,token))._id,'first');
+  const claimed=await claimJob(store,token);
+  assert.equal(claimed._id,'first');
   assert.equal(await cancelJob(store,'bob',first._id),null);
   await cancelJob(store,'alice',first._id);
-  assert.equal(await finishJob(store,first,'succeeded'),'cancelled');
+  assert.equal(await finishJob(store,claimed,'succeeded'),'cancelled');
   assert.equal(store.jobs.rows.find(x=>x._id==='first').active,false);
   assert.equal(store.projects.rows.find(x=>x._id===first.projectId).status,'draft');
   assert.equal((await claimJob(store,token))._id,'later');

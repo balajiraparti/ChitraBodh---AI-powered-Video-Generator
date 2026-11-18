@@ -5,6 +5,10 @@ export function executePipeline(options,onStage,onChild,signal,childModule=new U
     const child=fork(childModule,[],{
       execArgv:['--import','tsx'],stdio:['ignore','ignore','ignore','ipc'],detached:process.platform!=='win32'
     });
+    let started = false;
+    const heartbeat = setInterval(() => {
+      if (started && child.connected && !signal.aborted) child.send({type:'heartbeat'}, () => {});
+    }, 1000);
     let result;
     let failed=false;
     let killTimer;
@@ -27,6 +31,7 @@ export function executePipeline(options,onStage,onChild,signal,childModule=new U
     });
     child.on('error',()=>{failed=true;});
     child.on('exit',async code=>{
+      clearInterval(heartbeat);
       clearTimeout(killTimer);
       signal.removeEventListener('abort',stop);
       await progress;
@@ -37,6 +42,7 @@ export function executePipeline(options,onStage,onChild,signal,childModule=new U
     Promise.resolve(onChild(child.pid)).then(()=>{
       if(signal.aborted){stop();return;}
       child.send({type:'start',options});
+      started = true;
     }).catch(()=>{failed=true;stop();});
   });
 }
