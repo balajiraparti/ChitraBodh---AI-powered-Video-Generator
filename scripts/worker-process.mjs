@@ -1,4 +1,5 @@
 import {fork,spawn} from 'node:child_process';
+import {safeDiagnostic,failureMessages} from './generation-diagnostics.mjs';
 
 export function executePipeline(options,onStage,onChild,signal,childModule=new URL('./generation-child.mjs',import.meta.url)){
   return new Promise((resolve,reject)=>{
@@ -11,6 +12,8 @@ export function executePipeline(options,onStage,onChild,signal,childModule=new U
     }, 1000);
     let result;
     let failed=false;
+    let diagnostic;
+    const validations=[];
     let killTimer;
     let termination=Promise.resolve(true);
     let progress=Promise.resolve();
@@ -27,6 +30,8 @@ export function executePipeline(options,onStage,onChild,signal,childModule=new U
     signal.addEventListener('abort',stop,{once:true});
     child.on('message',message=>{
       if(message.type==='stage')progress=progress.then(()=>onStage(message.stage,message.percent)).catch(()=>{failed=true;stop();});
+      if(message.type==='diagnostic' && ['repeated_scene_objects','object_layout','missing_motion','scene_opening','narration_cue','script_length','request_budget','scene_schema','planning_validation'].includes(message.category) && validations.length<4)validations.push(message.category);
+      if(message.type==='failed')diagnostic=safeDiagnostic(message.diagnostic,message.diagnostic?.stage);
       if(message.type==='result')result=message.manifest;
     });
     child.on('error',()=>{failed=true;});
@@ -36,7 +41,7 @@ export function executePipeline(options,onStage,onChild,signal,childModule=new U
       signal.removeEventListener('abort',stop);
       await progress;
       if(!await termination){reject(Object.assign(Error('Process tree termination unconfirmed'),{unsafeToRelease:true}));return;}
-      if(failed||signal.aborted||code!==0||!result)reject(Error('Generation stopped'));
+      if(failed||signal.aborted||code!==0||!result)reject(Object.assign(Error(failureMessages[diagnostic?.code] || 'Generation stopped'), {diagnostic:diagnostic ? {...diagnostic,validations} : undefined}));
       else resolve(result);
     });
     Promise.resolve(onChild(child.pid)).then(()=>{

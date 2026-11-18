@@ -84,10 +84,11 @@ try{
       await finishJob(store,job,'succeeded',{},artifact,plan);
     }catch(error){
       if(error.unsafeToRelease){unsafeToRelease=true;throw error;}
+      if(error.diagnostic)console.error(JSON.stringify({event:'generation_failed',jobId:job._id,...error.diagnostic}));
       const safeError = error.code === 'SOURCE_STORYBOARD_UNAVAILABLE'
         ? 'The source storyboard is unavailable. Create a new video using the original topic.'
-        : 'We could not finish this video. Your idea is saved.';
-      await finishJob(store,job,'failed',{safeError});
+        : error.diagnostic ? error.message : 'We could not finish this video. Your idea is saved.';
+      await finishJob(store,job,'failed',{safeError,...(error.diagnostic ? {diagnostic:error.diagnostic} : {})});
     }finally{
       clearInterval(heartbeat);clearTimeout(timeout);await pulse;
       current=undefined;

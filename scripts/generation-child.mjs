@@ -1,4 +1,6 @@
 import {generate} from '../src/pipeline.ts';
+import {safeDiagnostic} from './generation-diagnostics.mjs';
+let lastStage='Starting generation';
 const controller=new AbortController();
 let lastHeartbeat = Date.now();
 let completed = false;
@@ -15,12 +17,13 @@ process.once('message',async message=>{
   if(message?.type!=='start')return;
   try{
     const manifest=await generate({...message.options,signal:controller.signal,
+      onDiagnostic:category=>send({type:'diagnostic',category}),
       onRenderPercent:percent=>send({type:'stage',stage:'Rendering video',percent}),
-      onProgress:stage=>{send({type:'stage',stage});}});
+      onProgress:stage=>{lastStage=stage;send({type:'stage',stage});}});
     send({type:'result',manifest});
 
-  }catch{
-    send({type:'failed'});
+  }catch(error){
+    send({type:'failed',diagnostic:safeDiagnostic(error,lastStage)});
 
     process.exitCode=1;
   } finally {
