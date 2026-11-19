@@ -12,7 +12,7 @@ export async function createPage({projects,jobs,versions,preferences:collection}
     const source=await jobs.findOne({_id:query.fromJob,ownerId:owner,state:'succeeded'});
     const version=source && await versions.findOne({_id:source.versionId,ownerId:owner});
     if(!version)return {notFound:true};
-    const seed={sourceJobId:source._id,topic:version.topic,voiceCatalogId:version.settingsSnapshot.voiceCatalogId,captions:version.settingsSnapshot.captions};
+    const seed={sourceJobId:source._id,topic:version.topic,voiceCatalogId:version.settingsSnapshot.voiceCatalogId,captions:source.kind==='caption'?source.captions:version.settingsSnapshot.captions};
     return {props:{initial:null,seed,activeJobId,voices:narratorChoices()}};
   }
   const initial=query.new==='1' && query.draft===undefined ? null : await readDraft(projects,owner,query.draft);

@@ -67,10 +67,23 @@ try{
       if(!version)throw Error('Missing version');
       if(job.cancelRequested)controller.abort();
       const settings=version.settingsSnapshot;
-      if(!narratorChoices().some(v=>v.id===settings.voiceCatalogId&&v.available))throw Error('Voice unavailable');
+      if(job.kind!=='caption' && !narratorChoices().some(v=>v.id===settings.voiceCatalogId&&v.available))throw Error('Voice unavailable');
       const voice=settings.voiceCatalogId==='adam'?(process.env.ELEVENLABS_MALE_VOICE_ID||'pNInz6obpgDQGcFmaJgB'):(process.env.ELEVENLABS_FEMALE_VOICE_ID||'C3aqZfd4M0h7Ys5tWGIS');
       const revisionContext = job.kind === 'revision' ? await loadRevisionContext(store,job) : undefined;
-      manifest=await executePipeline({demo:false,topic:version.topic,voice,captions:settings.captions,revisionContext},
+      let renderProps;
+      if(job.kind==='caption'){
+        const source=await store.artifacts.findOne({_id:job.sourceArtifactId,ownerId:job.ownerId,state:'ready',expiresAt:{$gt:new Date()}});
+        if(!source?.renderKey)throw Error('Caption source expired or unavailable');
+        const response=await artifactStorage(source).get(source.renderKey,undefined,controller.signal);
+        const chunks=[];let bytes=0;
+        for await(const chunk of response.Body){
+          bytes+=chunk.length;
+          if(bytes>32000000){response.Body.destroy();throw Error('Render source too large');}
+          chunks.push(chunk);
+        }
+        renderProps=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      }
+      manifest=await executePipeline({demo:false,topic:version.topic,voice,captions:job.kind==='caption'?job.captions:settings.captions,revisionContext,renderProps},
         async (stage,renderPercent)=>{
           const progress = {stage:pipelineStages[stage] || 'planning'};
           if (Number.isInteger(renderPercent)) progress.renderPercent = renderPercent;
@@ -78,7 +91,7 @@ try{
         },pid=>renewSlot(store,token,{childPid:pid}),controller.signal);
       controller.signal.throwIfAborted();
       await updateJobProgress(store,job,{stage:'uploading'});
-      const artifact=await uploadMedia(store,storage,job,runPath(manifest.id)+'/video.mp4',controller.signal);
+      const artifact=await uploadMedia(store,storage,job,runPath(manifest.id)+'/video.mp4',controller.signal,job.kind==='caption'?undefined:runPath(manifest.id)+'/render.json');
       controller.signal.throwIfAborted();
       const plan=JSON.parse(await readFile(runPath(manifest.id)+'/plan.json','utf8'));
       await finishJob(store,job,'succeeded',{},artifact,plan);

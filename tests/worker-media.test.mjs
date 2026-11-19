@@ -116,3 +116,22 @@ test('queued cancellation releases admission without waiting for a worker',async
   const token=await ownSlot(store);
   assert.equal(await claimJob(store,token),null);
 });
+
+
+test('cleanup retries until both the MP4 and retained render input are deleted',async()=>{
+  const store=fixture();
+  store.artifacts.rows.push({_id:'render-source',ownerId:'alice',jobId:'finished',
+    state:'ready',expiresAt:new Date(0),objectKey:'video.mp4',renderKey:'render.json'});
+  const deleted=[];
+  let unavailable=true;
+  const storage={remove:async key=>{
+    if(key==='render.json'&&unavailable)throw Error('Storage temporarily unavailable');
+    deleted.push(key);
+  }};
+  await cleanupMedia(store,()=>storage);
+  assert.equal(store.artifacts.rows[0].state,'ready');
+  unavailable=false;
+  await cleanupMedia(store,()=>storage);
+  assert.equal(store.artifacts.rows[0].state,'deleted');
+  assert.deepEqual(deleted,['video.mp4','video.mp4','render.json']);
+});

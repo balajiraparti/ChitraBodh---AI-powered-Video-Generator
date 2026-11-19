@@ -1644,6 +1644,143 @@
         }
       }
     },
+    "/api/v1/projects/{projectId}/caption-variants": {
+      "post": {
+        "operationId": "createCaptionVariant",
+        "tags": [
+          "Generation"
+        ],
+        "summary": "Create or reuse a caption export for a ready content version",
+        "description": "Requires a signed-in owner, matching Origin, an idempotency key and the current project revision. A ready matching export returns its existing job receipt. New work preserves source content and the original expiry. Older videos without retained render input return 409 RENDER_SOURCE_UNAVAILABLE.",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "sourceVersionId",
+                  "captions",
+                  "expectedRevision"
+                ],
+                "properties": {
+                  "sourceVersionId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "captions": {
+                    "type": "boolean"
+                  },
+                  "expectedRevision": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Selected ready job or newly queued caption job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "projectId",
+                    "versionId",
+                    "jobId",
+                    "state",
+                    "statusUrl"
+                  ],
+                  "properties": {
+                    "projectId": {
+                      "type": "string"
+                    },
+                    "versionId": {
+                      "type": "string"
+                    },
+                    "jobId": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string"
+                    },
+                    "stage": {
+                      "type": "string"
+                    },
+                    "statusUrl": {
+                      "type": "string"
+                    },
+                    "cancelRequested": {
+                      "type": "boolean"
+                    },
+                    "safeError": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "mediaUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or idempotency key"
+          },
+          "401": {
+            "description": "Sign-in required"
+          },
+          "403": {
+            "description": "Origin rejected"
+          },
+          "404": {
+            "description": "Source unavailable to this owner"
+          },
+          "409": {
+            "description": "KEY_REUSED, ACTIVE_JOB_EXISTS, PROJECT_CHANGED or RENDER_SOURCE_UNAVAILABLE"
+          },
+          "410": {
+            "description": "SOURCE_EXPIRED"
+          },
+          "503": {
+            "description": "Service unavailable"
+          }
+        }
+      }
+    },
     "/api/v1/projects/{projectId}/revisions": {
       "post": {
         "operationId": "reviseVideo",
@@ -5532,6 +5669,44 @@
       "Job": {
         "type": "object",
         "properties": {
+          "isCaptionVariant": {
+            "type": "boolean"
+          },
+          "captions": {
+            "type": "boolean"
+          },
+          "sourceJobId": {
+            "type": "string"
+          },
+          "captionVariants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "jobId",
+                "state",
+                "captions"
+              ],
+              "properties": {
+                "jobId": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "queued",
+                    "running",
+                    "succeeded",
+                    "failed",
+                    "cancelled"
+                  ]
+                },
+                "captions": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
           "id": {
             "type": "string",
             "format": "uuid"

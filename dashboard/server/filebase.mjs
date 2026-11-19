@@ -25,12 +25,12 @@ export function objectStorage() {
   const client = new S3Client({endpoint, region, credentials:{accessKeyId, secretAccessKey},
     forcePathStyle:true, maxAttempts:3, requestHandler:{requestTimeout:120000, connectionTimeout:10000}});
   cached = {
-    async put(Key, file, signal) {
+    async put(Key, file, signal, contentType = 'video/mp4') {
       const {size} = await stat(file);
       const body = createReadStream(file);
       try {
         await client.send(new PutObjectCommand({Bucket, Key, Body:body, ContentLength:size,
-          ContentType:'video/mp4', CacheControl:'private, no-store'}), {abortSignal:signal});
+          ContentType:contentType, CacheControl:'private, no-store'}), {abortSignal:signal});
       } finally {
         body.destroy();
       }

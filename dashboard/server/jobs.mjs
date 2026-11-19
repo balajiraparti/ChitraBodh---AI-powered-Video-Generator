@@ -69,16 +69,16 @@ async function completeJob(store, current, state, fields, artifact, plan, sessio
       const project=await store.projects.findOne({_id:job.projectId,ownerId:job.ownerId},{session});
       const times=expiryFor(project.firstReadyAt);
       if(+times.expiresAt<=Date.now())throw Error('Media availability window ended');
-      if(plan)await store.revisionPlans.insertOne({_id:job.versionId,ownerId:job.ownerId,plan,expiresAt:times.expiresAt},{session});
+      if(job.kind!=='caption' && plan)await store.revisionPlans.insertOne({_id:job.versionId,ownerId:job.ownerId,plan,expiresAt:times.expiresAt},{session});
       await store.artifacts.updateOne({_id:artifact._id,state:'uploading'},{$set:{state:'ready',...times}},{session});
-      await store.projects.updateOne({_id:job.projectId},{$set:{firstReadyAt:times.readyAt,expiresAt:times.expiresAt,artifactId:artifact._id}},{session});
-      await store.versions.updateOne({_id:job.versionId},{$set:{artifactId:artifact._id,...times}},{session});
+      if(job.kind!=='caption')await store.projects.updateOne({_id:job.projectId},{$set:{firstReadyAt:times.readyAt,expiresAt:times.expiresAt,artifactId:artifact._id}},{session});
+      if(job.kind!=='caption')await store.versions.updateOne({_id:job.versionId},{$set:{artifactId:artifact._id,...times}},{session});
       fields={...fields,artifactId:artifact._id};
     }
     if(outcome==='cancelled')fields={...fields,safeError:null};
     await store.jobs.updateOne({_id:job._id,active:true},{$set:{state:outcome,active:false,finishedAt:new Date(),...fields}},{session});
-    await store.versions.updateOne({_id:job.versionId},{$set:{state:outcome==='succeeded'?'ready':outcome}},{session});
-    await store.projects.updateOne({_id:job.projectId,activeJobId:job._id},{$set:{status:outcome==='succeeded'||job.kind==='revision'?'ready':'draft',updatedAt:new Date()},$unset:{activeJobId:''}},{session});
+    if(job.kind!=='caption')await store.versions.updateOne({_id:job.versionId},{$set:{state:outcome==='succeeded'?'ready':outcome}},{session});
+    await store.projects.updateOne({_id:job.projectId,activeJobId:job._id},{$set:{status:outcome==='succeeded'||['revision','caption'].includes(job.kind)?'ready':'draft',updatedAt:new Date()},$unset:{activeJobId:''}},{session});
     if(job.kind==='revision')await store.revisionInputs.deleteOne({_id:job.versionId},{session});
     return outcome;
 }
@@ -100,8 +100,8 @@ export async function cancelJob(store,ownerId,id){
     if(job.state==='queued'){
       const stopped={state:'cancelled',active:false,cancelRequested:true,finishedAt:new Date()};
       await store.jobs.updateOne({_id:id,ownerId,active:true},{$set:stopped},{session});
-      await store.versions.updateOne({_id:job.versionId},{$set:{state:'cancelled'}},{session});
-      await store.projects.updateOne({_id:job.projectId,activeJobId:id},{$set:{status:job.kind==='revision'?'ready':'draft'},$unset:{activeJobId:''}},{session});
+      if(job.kind!=='caption')await store.versions.updateOne({_id:job.versionId},{$set:{state:'cancelled'}},{session});
+      await store.projects.updateOne({_id:job.projectId,activeJobId:id},{$set:{status:['revision','caption'].includes(job.kind)?'ready':'draft'},$unset:{activeJobId:''}},{session});
       if(job.kind==='revision')await store.revisionInputs.deleteOne({_id:job.versionId},{session});
       return {...job,...stopped};
     }

@@ -1,4 +1,5 @@
 import React,{useEffect,useState} from 'react';
+import CaptionVariants from '../../components/CaptionVariants';
 import Versions from '../../components/Versions';
 import Link from 'next/link';
 import {currentOwner,services} from '../../server/auth.mjs';
@@ -17,6 +18,9 @@ export default function Job({initial}){
   return <Progress key={initial.jobId} initial={initial}/>;
 }
 function Progress({initial}){
+  const visibleStages = initial.isCaptionVariant
+    ? {queued:'Queued',planning:'Loading video',animating:'Animating',finishing:'Checking export',uploading:'Uploading video'}
+    : stages;
   const [job,setJob]=useState(initial);
   const [error,setError]=useState('');
   const [playbackError,setPlaybackError]=useState(false);
@@ -62,8 +66,8 @@ function Progress({initial}){
   }
   return <><h1>{active?'Creating your video':expired?'Your video has expired':job.state==='succeeded'?'Your video is ready':job.state==='cancelled'?'Creation cancelled':'Generation failed'}</h1>
     <div className={active?"job-grid":"job-review"}><section>
-      <p role="status">{job.cancelRequested&&active?'Stopping creation…':active?stages[job.stage]||'Queued':job.safeError||''}</p>
-      {active && <><h2 className="form-subtitle">Progress</h2><ol className="stage-list">{Object.entries(stages).map(([key,label],index)=><li key={key} data-complete={index<Object.keys(stages).indexOf(job.stage)} aria-current={job.stage===key?'step':undefined}><span className="stage-marker" aria-hidden="true">{index<Object.keys(stages).indexOf(job.stage)?'✓':index+1}</span><div><strong>{label}</strong><small>{index<Object.keys(stages).indexOf(job.stage)?'Completed':job.stage===key?(renderingPercent === null ? 'In progress' : renderingPercent+'% rendered'):'Waiting'}</small></div></li>)}</ol><p>You can leave this page. We’ll keep working.</p></>}
+      <p role="status">{job.cancelRequested&&active?'Stopping creation…':active?visibleStages[job.stage]||'Queued':job.safeError||''}</p>
+      {active && <><h2 className="form-subtitle">Progress</h2><ol className="stage-list">{Object.entries(visibleStages).map(([key,label],index)=><li key={key} data-complete={index<Object.keys(visibleStages).indexOf(job.stage)} aria-current={job.stage===key?'step':undefined}><span className="stage-marker" aria-hidden="true">{index<Object.keys(visibleStages).indexOf(job.stage)?'✓':index+1}</span><div><strong>{label}</strong><small>{index<Object.keys(visibleStages).indexOf(job.stage)?'Completed':job.stage===key?(renderingPercent === null ? 'In progress' : renderingPercent+'% rendered'):'Waiting'}</small></div></li>)}</ol><p>You can leave this page. We’ll keep working.</p></>}
       {job.mediaAvailable && job.mediaUrl && <div className="ready-media">
         <video key={attempt} controls playsInline preload="metadata" aria-label="Generated explainer" src={job.mediaUrl} onError={()=>setPlaybackError(true)}/>
         {playbackError && <p role="alert">The preview could not load. <button onClick={()=>{setPlaybackError(false);setAttempt(attempt+1)}}>Retry preview</button></p>}
@@ -75,5 +79,5 @@ function Progress({initial}){
       {active&&!job.cancelRequested && (confirm?<div><p>Stop creating this video? Your idea will be saved.</p><button disabled={busy} onClick={cancel}>Stop creation</button><button disabled={busy} onClick={()=>setConfirm(false)}>Keep creating</button></div>:<button onClick={()=>setConfirm(true)}>Cancel creation</button>)}
       {!active&&!job.isRevision&&job.state!=='succeeded'&&<Link href={'/create?draft='+job.projectId}>Open saved idea</Link>}
       <p><Link href="/dashboard">My videos</Link></p>
-    </section>{active && <aside className="studio-note"><h2>{job.stage==='queued'?'Waiting in queue':'Current stage'}</h2><p>{stages[job.stage]||'Queued'}</p><Link href="/dashboard">Back to My videos</Link></aside>}</div>{job.versions?.length>0 && <Versions job={job}/>}</>;
+    </section>{active && <aside className="studio-note"><h2>{job.stage==='queued'?'Waiting in queue':'Current stage'}</h2><p>{visibleStages[job.stage]||'Queued'}</p><Link href="/dashboard">Back to My videos</Link></aside>}</div>{job.versions?.length>0 && <><Versions job={job}/><CaptionVariants key={job.jobId} job={job}/></>}</>;
 }

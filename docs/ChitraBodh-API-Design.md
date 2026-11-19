@@ -116,7 +116,7 @@ Brainstorm returns short reply, one to three suggestions, and history expiry. It
 | `POST /jobs/{jobId}/cancel` I C | `{expectedRevision}` → 200 Job | Queued cancellation immediate; running becomes cancel_requested; completed state conflict |
 | `POST /jobs/{jobId}/retry` I C | `{expectedRevision}` → 202 receipt | Only failed/cancelled jobs; new job, fresh budget; no still-active original; validate dependencies |
 | `GET /versions/{versionId}` | → 200 Version | Version metadata and artifact variants; expired version still inspectable |
-| `POST /versions/{versionId}/variants` I C | `{captions}` → 200 Artifact or 202 receipt | Same variant ready returns 200; same variant job returns 202; otherwise enforce active-owner constraint |
+| `POST /projects/{projectId}/caption-variants` I C | `{sourceVersionId,captions,expectedRevision}` → 202 receipt | Return the existing ready job for a matching output; otherwise enqueue a caption render under the owner job limit. Missing retained render input returns 409 RENDER_SOURCE_UNAVAILABLE. |
 | `GET/HEAD /artifacts/{artifactId}/media` | `download?`, Range → 200/206 | Ready/unexpired owned artifact; exact chosen variant; 410 expired, 409 not ready |
 | `GET/HEAD /artifacts/{artifactId}/thumbnail` | → 200 image | Same ownership/retention checks; thumbnail may be unavailable independently |
 
@@ -153,7 +153,7 @@ Use a client-generated UUID Idempotency-Key for every `I` endpoint. Scope unique
 
 Replay valid committed intent before testing a now-stale expectedRevision, but after identity/ownership/tombstone checks. Never replay secret URLs or revoked access. Keep commands at least 24 hours and longer while their linked work is nonterminal; TTL must not erase an in-flight/uncertain intent. After retention, clients must reconcile resources before retrying an old key. Tombstoned result returns 410 rather than recreating work. Non-idempotent external requests are not assumed safe simply because local commands deduplicate.
 
-Mutable DTOs expose `revision` (jobs use `stateRevision`); mutations require expectedRevision except create/variant/independent commands explicitly listed. CAS mismatch is 409 REVISION_CONFLICT with currentRevision, no silent last-write-wins. Every authorization-sensitive transition touches shared guard documents in the DB transaction, not just snapshot-reads them, to serialize against deletion/revocation.
+Mutable DTOs expose `revision` (jobs use `stateRevision`); mutations require expectedRevision except create/independent commands explicitly listed. CAS mismatch is 409 REVISION_CONFLICT with currentRevision, no silent last-write-wins. Every authorization-sensitive transition touches shared guard documents in the DB transaction, not just snapshot-reads them, to serialize against deletion/revocation.
 
 ## 7. Errors, limits, and examples
 
@@ -220,3 +220,5 @@ Contract acceptance checks before implementation release:
 The machine-readable contract can drive UI fixtures and mock responses for Stitch-derived screens. It does not publish an API or make the current local portal comply automatically.
 
 Brainstorm inference requires a verified email or an administrator-approved pilot account. To approve a teammate, verify their identity and set `brainstormApproved: true` on their existing MongoDB `user` record by its exact account ID. Registration never sets this field. Each owner has six admissions per minute and the whole installation has 60 per rolling 24 hours, including recovery attempts. Each admission permits at most two configured Gemini model requests. Cached replies consume no budget. Set `AI_PROVIDER=gemini` for normal operation. NVIDIA is a manual backup. A retry can reclaim an expired running command under its original key. Only the current attempt may publish its reply.
+
+F14 uses the existing `/api/v1/jobs/{id}` and `/api/v1/media/{id}` routes. The job receipt includes `captions`, `isCaptionVariant`, `sourceJobId` and a list of caption attempts. The download always resolves the selected job artifact. A failed or cancelled caption attempt preserves its source version and ready artifact. Every variant inherits the project first-ready deadline. A caption change uses retained render inputs and makes no storyboard or narration provider calls.

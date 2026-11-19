@@ -24,9 +24,9 @@ export function configuration(voice?:string):ProviderConfig{
  if(!config.elevenKey||!config.voiceId)throw new Error('Set ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID in .env.');
  return config;
 }
-export async function generate(options:{demo:boolean;topic?:string;voice?:string;captions:boolean;revisionContext?:string;reviewedPlanFile?:string;onDiagnostic?:(category:string)=>void;onRenderPercent?:(percent:number)=>void;signal?:AbortSignal;onProgress?:(state:string)=>void|Promise<void>}){
+export async function generate(options:{demo:boolean;topic?:string;voice?:string;captions:boolean;revisionContext?:string;renderProps?:VideoProps;reviewedPlanFile?:string;onDiagnostic?:(category:string)=>void;onRenderPercent?:(percent:number)=>void;signal?:AbortSignal;onProgress?:(state:string)=>void|Promise<void>}){
  options.signal?.throwIfAborted();
- const config=options.demo?undefined:configuration(options.voice);
+ const config=options.demo||options.renderProps?undefined:configuration(options.voice);
  if(!options.demo&&(!options.topic?.trim()||[...options.topic].length>2000))throw new Error('Provide a topic between 1 and 2,000 characters.');
  const release=await acquireLock();
  const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),JOB_LIMIT_MS);
@@ -39,7 +39,8 @@ export async function generate(options:{demo:boolean;topic?:string;voice?:string
   const state=async(value:string)=>{lastStage=value;m.state=value;await saveManifest(m);console.log(value);await options.onProgress?.(value);signal.throwIfAborted();};
   const budget=new Budget(async calls=>{m.calls=calls;await saveManifest(m);});
   let props:VideoProps;
-  if(options.demo){props={plan:demoPlan,timeline:buildTimeline(demoPlan,fixtureAlignment(),75),captions:options.captions,demo:true};}
+  if(options.renderProps){props={...options.renderProps,captions:options.captions};validatePlan(props.plan);}
+  else if(options.demo){props={plan:demoPlan,timeline:buildTimeline(demoPlan,fixtureAlignment(),75),captions:options.captions,demo:true};}
   else {
    let feedback='';let accepted:VideoProps|undefined;
    for(let attempt=0;attempt<4&&!accepted;attempt++){
@@ -59,6 +60,7 @@ export async function generate(options:{demo:boolean;topic?:string;voice?:string
    }
    if(!accepted)throw new Error('Could not produce valid narration within the duration and request budgets.');props=accepted;
   }
+  await writeFile(path.join(dir,'render.json'),JSON.stringify(props));
   await writeFile(path.join(dir,'plan.json'),JSON.stringify(props.plan,null,2));
   await writeFile(path.join(dir,'timeline.json'),JSON.stringify(props.timeline,null,2));
   await state('Rendering video');await render(props,dir,signal,options.onRenderPercent);

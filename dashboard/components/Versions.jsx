@@ -16,7 +16,7 @@ export default function Versions({job}){
     event.preventDefault();
     if (!canSubmit) return;
     setPending(true);setError('');
-    const body=JSON.stringify({sourceVersionId:job.versionId,expectedRevision:job.projectRevision,instruction:instruction.trim()});
+    const body=JSON.stringify({sourceVersionId:job.versionId,expectedRevision:job.projectRevision,instruction:instruction.trim(),...(typeof job.captions==='boolean'?{captions:job.captions}:{})});
     if(intent.current?.body!==body)intent.current={body,key:crypto.randomUUID()};
     try{
       const response=await fetch('/api/v1/projects/'+job.projectId+'/revisions',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':intent.current.key},body});

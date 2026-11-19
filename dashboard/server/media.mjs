@@ -7,11 +7,13 @@ export function expiryFor(firstReadyAt,now=new Date()){
 export function canReadMedia(artifact,ownerId,now=new Date()){
   return artifact?.ownerId===ownerId && artifact.state==='ready' && +new Date(artifact.expiresAt)>+now;
 }
-export async function uploadMedia(store,storage,job,file,signal){
+export async function uploadMedia(store,storage,job,file,signal,renderFile){
   const id=randomUUID();
   const artifact={_id:id,jobId:job._id,ownerId:job.ownerId,projectId:job.projectId,versionId:job.versionId,
     storageProvider:'filebase',objectKey:'chitrabodh/'+id+'/video.mp4',state:'uploading',expiresAt:new Date(Date.now()+20*60*1000)};
+  if (renderFile) artifact.renderKey='chitrabodh/'+id+'/render.json';
   await store.artifacts.insertOne(artifact);
+  if (renderFile) await storage.put(artifact.renderKey,renderFile,signal,'application/json');
   await storage.put(artifact.objectKey,file,signal);
   return artifact;
 }
@@ -22,6 +24,7 @@ export async function cleanupMedia(store,storageFor,now=new Date()){
     if(await store.jobs.findOne({_id:artifact.jobId,active:true}))continue;
     try{
       await storageFor(artifact).remove(artifact.objectKey);
+      if(artifact.renderKey)await storageFor(artifact).remove(artifact.renderKey);
       await store.artifacts.updateOne({_id:artifact._id},{$set:{state:'deleted',deletedAt:now}});
     }catch{console.error('Media cleanup will retry an object');}
   }
