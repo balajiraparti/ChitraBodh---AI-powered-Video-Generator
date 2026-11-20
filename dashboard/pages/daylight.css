@@ -46,3 +46,5 @@ section,.project-list li,.studio-note{border-color:var(--stroke)}
 .stage-list li[data-complete=true] .stage-marker{background:#d5e3d9;color:#005142}.stage-list li[aria-current=step] .stage-marker{background:#126b58;color:white;border-color:#126b58}.stage-list small{display:block;color:#546159}
 .frame-status{padding:12px;display:grid;gap:10px;text-align:center}.frame-status>.material-symbols-outlined{font-size:28px}.frame-status small{font-weight:400;color:#546159}
 @media(max-width:760px){.frame-status{padding:4px}.frame-status strong,.frame-status small{display:none}}
+
+.instagram-card{margin-top:2rem;padding:2rem;background:#f5f3ed;border:1px solid #bec9c4;border-radius:12px}.instagram-card h2{font-size:1.9rem;margin-top:.7rem}.instagram-identity{display:flex;gap:1rem;align-items:center;padding:1.2rem 0}.instagram-identity>.material-symbols-outlined{font-size:32px;color:#005142}.instagram-identity p{margin:.2rem 0}.instagram-actions{display:flex;gap:1rem;flex-wrap:wrap}.instagram-confirm{margin-top:1rem;padding:1rem;background:#fff;border-radius:8px}@media(max-width:600px){.instagram-card{padding:1.2rem}}

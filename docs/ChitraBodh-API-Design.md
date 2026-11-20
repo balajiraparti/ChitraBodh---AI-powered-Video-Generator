@@ -222,3 +222,16 @@ The machine-readable contract can drive UI fixtures and mock responses for Stitc
 Brainstorm inference requires a verified email or an administrator-approved pilot account. To approve a teammate, verify their identity and set `brainstormApproved: true` on their existing MongoDB `user` record by its exact account ID. Registration never sets this field. Each owner has six admissions per minute and the whole installation has 60 per rolling 24 hours, including recovery attempts. Each admission permits at most two configured Gemini model requests. Cached replies consume no budget. Set `AI_PROVIDER=gemini` for normal operation. NVIDIA is a manual backup. A retry can reclaim an expired running command under its original key. Only the current attempt may publish its reply.
 
 F14 uses the existing `/api/v1/jobs/{id}` and `/api/v1/media/{id}` routes. The job receipt includes `captions`, `isCaptionVariant`, `sourceJobId` and a list of caption attempts. The download always resolves the selected job artifact. A failed or cancelled caption attempt preserves its source version and ready artifact. Every variant inherits the project first-ready deadline. A caption change uses retained render inputs and makes no storyboard or narration provider calls.
+
+## F15 implemented contract — 20 November 2026
+
+The Instagram Login implementation supersedes the proposed connection routes above for this slice. All routes use private no-store responses. Mutations require same-origin requests and a valid cookie session. Callback also requires the initiating live session, not only an owner identifier.
+
+| Endpoint | Request | Response and checks |
+|---|---|---|
+| POST /api/v1/instagram/connect | `{returnPath:"/settings"}` or `{}` | 200 `{authorizationUrl,expiresAt}`. Fixed return destination, six starts/minute/account; 400 invalid input, 401 signed out, 403 origin, 429 limit, 503 configuration/service unavailable. |
+| GET /api/v1/instagram/callback | `state` and `code` or `error` | 303 fixed Settings redirect with allowlisted outcome; signed-out callback redirects to sign-in. Consume session-bound unexpired state once before exchange; no replay or automatic exchange retry. |
+| GET /api/v1/instagram/connection | none | 200 `{configured,connection}`. Connection is null or `{id,accountId,username,revision,status,tokenExpiresAt,scopes}`; no token fields. Expiry derives needs_reconnection. |
+| DELETE /api/v1/instagram/connection | `{expectedRevision}` | 200 `{connection:null}` after token removal and epoch increment; 409 stale/invalid revision. This slice has no publications to cancel. F17 must add cancellation before scheduling ships. |
+
+Reconnect permits only the same account; changing account requires disconnect, then fresh authorization. Failed/denied/expired authorization preserves any prior connection. Concurrent starts supersede older flows; disconnect fences in-flight callbacks. See [setup and limitations](Instagram-Setup.md).

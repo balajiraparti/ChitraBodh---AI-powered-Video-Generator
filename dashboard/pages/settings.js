@@ -1,4 +1,5 @@
 import NarratorCards from '../components/NarratorCards';
+import InstagramConnection from '../components/InstagramConnection';
 import {useState} from 'react';
 import {currentOwner,services} from '../server/auth.mjs';
 import {preferences} from '../server/preferences.mjs';
@@ -29,5 +30,5 @@ export default function Settings({initial,voices,zones}){
     <label><input type="checkbox" checked={values.captions} disabled={busy} onChange={e=>change('captions',e.target.checked)}/> Include synchronized captions</label>
     <h2>3. Timezone &amp; retention display</h2><label htmlFor="zone">Workspace time zone</label><select id="zone" value={values.timezone} disabled={busy} onChange={e=>change('timezone',e.target.value)}>{zones.map(zone=><option key={zone}>{zone}</option>)}</select>
     <button className="action" disabled={busy}>{busy?'Saving…':'Save preferences'}</button><span role="status">{message}</span>
-  </form></section><aside className="studio-note"><h2>Account</h2><form method="post" action="/api/auth/sign-out"><button type="submit">Sign out</button></form></aside></div></>;
+  </form><InstagramConnection/></section><aside className="studio-note"><h2>Account</h2><form method="post" action="/api/auth/sign-out"><button type="submit">Sign out</button></form></aside></div></>;
 }

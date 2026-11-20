@@ -2435,6 +2435,32 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "description": "Correlation identifier; not a session secret."
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "private, no-store"
+                },
+                "description": "No shared caching."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Artifact"
+                }
+              }
+            }
+          },
           "202": {
             "description": "Successful response",
             "headers": {
@@ -2520,32 +2546,6 @@
           },
           "503": {
             "$ref": "#/components/responses/503"
-          },
-          "200": {
-            "description": "Successful response",
-            "headers": {
-              "X-Request-ID": {
-                "schema": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 100
-                },
-                "description": "Correlation identifier; not a session secret."
-              },
-              "Cache-Control": {
-                "schema": {
-                  "const": "private, no-store"
-                },
-                "description": "No shared caching."
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Artifact"
-                }
-              }
-            }
           }
         },
         "requestBody": {
@@ -2566,91 +2566,76 @@
         "tags": [
           "Instagram"
         ],
-        "summary": "Start Instagram authorization",
-        "description": "Start Instagram authorization. See API guide for ownership and state checks.",
+        "summary": "Start session-bound Instagram authorization",
         "parameters": [
-          {
-            "$ref": "#/components/parameters/Csrf"
-          },
           {
             "name": "Origin",
             "in": "header",
             "required": true,
             "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 2048,
-              "format": "uri"
+              "type": "string"
             },
-            "description": "Must exactly match configured application origin; no wildcard credentialed CORS."
+            "description": "Must match configured application origin."
           }
         ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "headers": {
-              "X-Request-ID": {
-                "schema": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 100
-                },
-                "description": "Correlation identifier; not a session secret."
-              },
-              "Cache-Control": {
-                "schema": {
-                  "const": "private, no-store"
-                },
-                "description": "No shared caching."
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Authorization"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/400"
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "409": {
-            "$ref": "#/components/responses/409"
-          },
-          "413": {
-            "$ref": "#/components/responses/413"
-          },
-          "415": {
-            "$ref": "#/components/responses/415"
-          },
-          "422": {
-            "$ref": "#/components/responses/422"
-          },
-          "429": {
-            "$ref": "#/components/responses/429"
-          },
-          "500": {
-            "$ref": "#/components/responses/500"
-          },
-          "503": {
-            "$ref": "#/components/responses/503"
-          }
-        },
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ConnectRequest"
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "returnPath": {
+                    "const": "/settings"
+                  }
+                }
               }
             }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "One-use authorization URL; valid for ten minutes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "authorizationUrl",
+                    "expiresAt"
+                  ],
+                  "properties": {
+                    "authorizationUrl": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Rejected safely; no provider secrets in response"
+          },
+          "401": {
+            "description": "Rejected safely; no provider secrets in response"
+          },
+          "403": {
+            "description": "Rejected safely; no provider secrets in response"
+          },
+          "409": {
+            "description": "Rejected safely; no provider secrets in response"
+          },
+          "429": {
+            "description": "Rejected safely; no provider secrets in response"
+          },
+          "503": {
+            "description": "Rejected safely; no provider secrets in response"
           }
         }
       }
@@ -2661,86 +2646,45 @@
         "tags": [
           "Instagram"
         ],
-        "summary": "Finish Instagram authorization",
-        "description": "Require exactly one of code or error. One-use state bound to initiating user/session and allowed return path; recheck invite/live user. Exchange token server-side. Query XOR is a runtime check.",
+        "summary": "Consume authorization in the initiating live session",
         "parameters": [
           {
             "name": "state",
             "in": "query",
             "required": true,
             "schema": {
-              "type": "string",
-              "minLength": 32,
-              "maxLength": 512
-            },
-            "description": "state"
+              "type": "string"
+            }
           },
           {
             "name": "code",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 4096
-            },
-            "description": "code"
+              "type": "string"
+            }
           },
           {
             "name": "error",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 200
-            },
-            "description": "error"
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "303": {
-            "description": "Return to saved project/settings with safe result code",
+            "description": "Fixed Settings outcome redirect, or sign-in if session absent",
             "headers": {
-              "X-Request-ID": {
-                "schema": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 100
-                },
-                "description": "Correlation identifier; not a session secret."
-              },
-              "Cache-Control": {
-                "schema": {
-                  "const": "private, no-store"
-                },
-                "description": "No shared caching."
-              },
               "Location": {
                 "schema": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 2048,
-                  "pattern": "^/(?!/)",
-                  "description": "Same-origin allowlisted relative path only; reject encoded redirect bypasses."
+                  "type": "string"
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/400"
-          },
-          "429": {
-            "$ref": "#/components/responses/429"
-          },
-          "500": {
-            "$ref": "#/components/responses/500"
-          },
-          "503": {
-            "$ref": "#/components/responses/503"
           }
-        },
-        "security": []
+        }
       }
     },
     "/api/v1/instagram/connection": {
@@ -2749,47 +2693,84 @@
         "tags": [
           "Instagram"
         ],
-        "summary": "Read safe connected-account status",
-        "description": "Read safe connected-account status. See API guide for ownership and state checks.",
-        "parameters": [],
+        "summary": "Read safe connection status and configuration readiness",
         "responses": {
           "200": {
-            "description": "Successful response",
-            "headers": {
-              "X-Request-ID": {
-                "schema": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 100
-                },
-                "description": "Correlation identifier; not a session secret."
-              },
-              "Cache-Control": {
-                "schema": {
-                  "const": "private, no-store"
-                },
-                "description": "No shared caching."
-              }
-            },
+            "description": "Safe connection",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConnectionResult"
+                  "type": "object",
+                  "required": [
+                    "configured",
+                    "connection"
+                  ],
+                  "properties": {
+                    "configured": {
+                      "type": "boolean"
+                    },
+                    "connection": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "id",
+                            "accountId",
+                            "username",
+                            "revision",
+                            "status",
+                            "tokenExpiresAt",
+                            "scopes"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "accountId": {
+                              "type": "string"
+                            },
+                            "username": {
+                              "type": "string"
+                            },
+                            "revision": {
+                              "type": "integer",
+                              "minimum": 1
+                            },
+                            "status": {
+                              "enum": [
+                                "connected",
+                                "needs_reconnection"
+                              ]
+                            },
+                            "tokenExpiresAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "scopes": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
           },
           "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "500": {
-            "$ref": "#/components/responses/500"
+            "description": "Rejected safely; no provider secrets in response"
           },
           "503": {
-            "$ref": "#/components/responses/503"
+            "description": "Rejected safely; no provider secrets in response"
           }
         }
       },
@@ -2798,113 +2779,75 @@
         "tags": [
           "Instagram"
         ],
-        "summary": "Disconnect and cancel pending publications",
-        "description": "Disconnect and cancel pending publications. See API guide for ownership and state checks.",
+        "summary": "Remove local credentials with revision protection",
+        "description": "Does not delete Instagram posts. Publication cancellation is future F17 work; publishing is not yet enabled.",
         "parameters": [
-          {
-            "$ref": "#/components/parameters/Idempotency"
-          },
-          {
-            "$ref": "#/components/parameters/Csrf"
-          },
           {
             "name": "Origin",
             "in": "header",
             "required": true,
             "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 2048,
-              "format": "uri"
+              "type": "string"
             },
-            "description": "Must exactly match configured application origin; no wildcard credentialed CORS."
+            "description": "Must match configured application origin."
           }
         ],
-        "responses": {
-          "202": {
-            "description": "Successful response",
-            "headers": {
-              "X-Request-ID": {
-                "schema": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 100
-                },
-                "description": "Correlation identifier; not a session secret."
-              },
-              "Cache-Control": {
-                "schema": {
-                  "const": "private, no-store"
-                },
-                "description": "No shared caching."
-              },
-              "Idempotency-Replayed": {
-                "schema": {
-                  "type": "boolean"
-                },
-                "description": "True when returning an accepted earlier intent."
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DeletionReceipt"
-                },
-                "example": {
-                  "deletionId": "70000000-0000-4000-8000-000000000001",
-                  "state": "accepted",
-                  "accessRevoked": true,
-                  "publicationMayBeInFlight": false,
-                  "serverNow": "2026-10-31T10:00:00Z"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/400"
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          },
-          "409": {
-            "$ref": "#/components/responses/409"
-          },
-          "410": {
-            "$ref": "#/components/responses/410"
-          },
-          "413": {
-            "$ref": "#/components/responses/413"
-          },
-          "415": {
-            "$ref": "#/components/responses/415"
-          },
-          "422": {
-            "$ref": "#/components/responses/422"
-          },
-          "429": {
-            "$ref": "#/components/responses/429"
-          },
-          "500": {
-            "$ref": "#/components/responses/500"
-          },
-          "503": {
-            "$ref": "#/components/responses/503"
-          }
-        },
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RevisionCommand"
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "expectedRevision"
+                ],
+                "properties": {
+                  "expectedRevision": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
               }
             }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Disconnected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "connection"
+                  ],
+                  "properties": {
+                    "connection": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Rejected safely; no provider secrets in response"
+          },
+          "401": {
+            "description": "Rejected safely; no provider secrets in response"
+          },
+          "403": {
+            "description": "Rejected safely; no provider secrets in response"
+          },
+          "409": {
+            "description": "Rejected safely; no provider secrets in response"
+          },
+          "429": {
+            "description": "Rejected safely; no provider secrets in response"
+          },
+          "503": {
+            "description": "Rejected safely; no provider secrets in response"
           }
         }
       }
@@ -3880,43 +3823,6 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          },
-          "409": {
-            "$ref": "#/components/responses/409"
-          },
-          "410": {
-            "$ref": "#/components/responses/410"
-          },
-          "416": {
-            "description": "Invalid/unsatisfiable range",
-            "headers": {
-              "Content-Range": {
-                "schema": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 100
-                },
-                "description": "bytes */<size>"
-              }
-            }
-          },
-          "429": {
-            "$ref": "#/components/responses/429"
-          },
-          "500": {
-            "$ref": "#/components/responses/500"
-          },
-          "503": {
-            "$ref": "#/components/responses/503"
-          },
           "206": {
             "description": "Authorized binary media",
             "headers": {
@@ -3974,6 +3880,43 @@
                 }
               }
             }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "409": {
+            "$ref": "#/components/responses/409"
+          },
+          "410": {
+            "$ref": "#/components/responses/410"
+          },
+          "416": {
+            "description": "Invalid/unsatisfiable range",
+            "headers": {
+              "Content-Range": {
+                "schema": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "description": "bytes */<size>"
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/429"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          },
+          "503": {
+            "$ref": "#/components/responses/503"
           }
         }
       },
@@ -4041,6 +3984,56 @@
               "Accept-Ranges": {
                 "schema": {
                   "const": "bytes"
+                }
+              },
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 300
+                },
+                "description": "Safe filename; attachment when download=true."
+              }
+            }
+          },
+          "206": {
+            "description": "Media headers only",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "description": "Correlation identifier; not a session secret."
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "private, no-store"
+                },
+                "description": "No shared caching."
+              },
+              "Content-Type": {
+                "schema": {
+                  "const": "video/mp4"
+                }
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "Accept-Ranges": {
+                "schema": {
+                  "const": "bytes"
+                }
+              },
+              "Content-Range": {
+                "schema": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
                 }
               },
               "Content-Disposition": {
@@ -4215,56 +4208,6 @@
                   "const": "private, no-store"
                 },
                 "description": "No shared caching."
-              }
-            }
-          },
-          "206": {
-            "description": "Media headers only",
-            "headers": {
-              "X-Request-ID": {
-                "schema": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 100
-                },
-                "description": "Correlation identifier; not a session secret."
-              },
-              "Cache-Control": {
-                "schema": {
-                  "const": "private, no-store"
-                },
-                "description": "No shared caching."
-              },
-              "Content-Type": {
-                "schema": {
-                  "const": "video/mp4"
-                }
-              },
-              "Content-Length": {
-                "schema": {
-                  "type": "integer",
-                  "minimum": 0
-                }
-              },
-              "Accept-Ranges": {
-                "schema": {
-                  "const": "bytes"
-                }
-              },
-              "Content-Range": {
-                "schema": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 100
-                }
-              },
-              "Content-Disposition": {
-                "schema": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 300
-                },
-                "description": "Safe filename; attachment when download=true."
               }
             }
           }
@@ -4629,34 +4572,6 @@
               }
             }
           },
-          "404": {
-            "$ref": "#/components/responses/404"
-          },
-          "410": {
-            "$ref": "#/components/responses/410"
-          },
-          "416": {
-            "description": "Invalid/unsatisfiable range",
-            "headers": {
-              "Content-Range": {
-                "schema": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 100
-                },
-                "description": "bytes */<size>"
-              }
-            }
-          },
-          "429": {
-            "$ref": "#/components/responses/429"
-          },
-          "500": {
-            "$ref": "#/components/responses/500"
-          },
-          "503": {
-            "$ref": "#/components/responses/503"
-          },
           "206": {
             "description": "Authorized binary media",
             "headers": {
@@ -4706,6 +4621,34 @@
                 }
               }
             }
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "410": {
+            "$ref": "#/components/responses/410"
+          },
+          "416": {
+            "description": "Invalid/unsatisfiable range",
+            "headers": {
+              "Content-Range": {
+                "schema": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "description": "bytes */<size>"
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/429"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          },
+          "503": {
+            "$ref": "#/components/responses/503"
           }
         },
         "security": []
@@ -4765,6 +4708,48 @@
               "Accept-Ranges": {
                 "schema": {
                   "const": "bytes"
+                }
+              }
+            }
+          },
+          "206": {
+            "description": "Media headers only",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "description": "Correlation identifier; not a session secret."
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "private, no-store"
+                },
+                "description": "No shared caching."
+              },
+              "Content-Type": {
+                "schema": {
+                  "const": "video/mp4"
+                }
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "Accept-Ranges": {
+                "schema": {
+                  "const": "bytes"
+                }
+              },
+              "Content-Range": {
+                "schema": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
                 }
               }
             }
@@ -4874,48 +4859,6 @@
                   "const": "private, no-store"
                 },
                 "description": "No shared caching."
-              }
-            }
-          },
-          "206": {
-            "description": "Media headers only",
-            "headers": {
-              "X-Request-ID": {
-                "schema": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 100
-                },
-                "description": "Correlation identifier; not a session secret."
-              },
-              "Cache-Control": {
-                "schema": {
-                  "const": "private, no-store"
-                },
-                "description": "No shared caching."
-              },
-              "Content-Type": {
-                "schema": {
-                  "const": "video/mp4"
-                }
-              },
-              "Content-Length": {
-                "schema": {
-                  "type": "integer",
-                  "minimum": 0
-                }
-              },
-              "Accept-Ranges": {
-                "schema": {
-                  "const": "bytes"
-                }
-              },
-              "Content-Range": {
-                "schema": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 100
-                }
               }
             }
           }
