@@ -35,3 +35,13 @@ The adapter uses graph.facebook.com and validates app identity, scopes, expiry a
 No HTTPS callback, private app secret, live token or real authorization has been verified yet. A temporary Cloudflare Quick Tunnel can provide a test HTTPS origin without a domain. Use the production dashboard, register the exact callback, set the same HTTPS origin for BETTER_AUTH_URL, restart and sign in through HTTPS. The tunnel hostname changes on restart and stops when its process stops. This does not change Filebase storage.
 
 References: [authentication](https://developers.facebook.com/documentation/instagram-platform/instagram-api-with-unified-login/authentication), [token validation](https://developers.facebook.com/docs/graph-api/reference/debug_token/).
+
+## Protected HTTPS pilot checkpoint — 22 November 2026
+
+The designated Instagram tester invitation was accepted. The Meta app secret, configuration ID, Graph version and stable token-encryption key are configured in ignored local environment settings. Configuration validation passes without displaying secrets. Meta confirmed that the exact HTTPS callback was saved.
+
+The production dashboard runs on loopback port 3000 behind an email-restricted Cloudflare Quick Tunnel (`--allowed-mail`). Cloudflare Access requires an emailed one-time code before the browser can reach the dashboard. After that, sign in to Chitrabodh and start the connection from Settings so the OAuth callback retains its initiating session. Do not start from Meta's standalone generated login URL.
+
+This tunnel is for browser OAuth testing only. It does not provide an anonymous media URL for Meta ingestion or a publicly accessible webhook receiver. F16/F17 need their own reviewed delivery setup. The hostname is temporary: after restarting the tunnel, update `BETTER_AUTH_URL`, `INSTAGRAM_REDIRECT_URI` and Meta's registered callback together, then restart the dashboard. Keep local addresses, process logs and credentials out of Git.
+
+Live token exchange and connect/disconnect/reconnect are still pending the protected-site login and Meta authorization walkthrough. Tester acceptance and callback registration alone do not establish a connected account. The separate business-portfolio access request was last observed pending.
