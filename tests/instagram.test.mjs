@@ -4,8 +4,8 @@ import {randomUUID} from 'node:crypto';
 import {createServer} from 'node:http';
 import {once} from 'node:events';
 import {instagramConfig,instagramScopes,beginInstagram,finishInstagram,disconnectInstagram,safeConnection,sealToken,openToken,exchangeInstagram} from '../dashboard/server/instagram.mjs';
-const config={appId:'123',secret:'test-secret',redirectUri:'https://app.example/api/v1/instagram/callback',key:Buffer.alloc(32,7),version:'v24.0'};
-const identity={accountId:'123456',username:'creator',scopes:instagramScopes,token:'private-test-token',expiresIn:3600};
+const config={appId:'123',secret:'test-secret',configId:'456',redirectUri:'https://app.example/api/v1/instagram/callback',key:Buffer.alloc(32,7),version:'v24.0'};
+const identity={accountId:'123456',username:'creator',scopes:instagramScopes,token:'private-test-token',clientBusinessId:'789',expiresAt:new Date(Date.now()+3600000)};
 function memory(){
   const rows=new Map();
   const matches=(row,filter)=>row&&Object.entries(filter).every(([key,value])=>{const actual=key.split('.').reduce((v,k)=>v?.[k],row);return value&&typeof value==='object'?('$gt' in value?actual>value.$gt:('$exists' in value?(actual!==undefined)===value.$exists:false)):actual===value;});
@@ -63,13 +63,22 @@ test('Instagram provider adapter exchanges real HTTP requests and fails closed o
   const server=createServer(async(req,res)=>{
     let body='';for await(const chunk of req)body+=chunk;requests.push({url:req.url,method:req.method,body,authorization:req.headers.authorization});res.setHeader('Content-Type','application/json');
     if(mode==='unavailable'){res.writeHead(503);res.end('{}');return;}
-    const payload=req.url.startsWith('/oauth/')?{data:[{access_token:'short',user_id:'123456',permissions:mode==='missing'?'instagram_business_basic':instagramScopes.join(',')}]}:req.url.startsWith('/access_token')?{access_token:'long',expires_in:3600}:{user_id:'123456',username:'creator'};
+    const path=new URL(req.url,'http://test').pathname;
+    let payload;
+    if(path.endsWith('/oauth/access_token'))payload={access_token:'system-token'};
+    else if(path.endsWith('/debug_token'))payload={data:{is_valid:mode!=='invalid',app_id:mode==='wrong-app'?'999':'123',expires_at:mode==='expired'?1:mode==='never'?0:Math.floor(Date.now()/1000)+3600,scopes:mode==='missing'?['instagram_basic']:instagramScopes,granular_scopes:mode==='wrong-target'?[{scope:'instagram_content_publish',target_ids:['999']}]:[]}};
+    else if(path.endsWith('/assigned_instagram_accounts'))payload={data:mode==='empty'?[]:mode==='multiple'?[{id:'123456',username:'creator'},{id:'987',username:'other'}]:[{id:'123456',username:'creator'}],...(mode==='paging'?{paging:{next:'https://untrusted.example'}}:{})};
+    else payload={client_business_id:'789'};
     res.end(JSON.stringify(payload));
   });server.listen(0,'127.0.0.1');await once(server,'listening');
   const fetcher=(url,options)=>{const u=new URL(url);return fetch(`http://127.0.0.1:${server.address().port}${u.pathname}${u.search}`,options);};
   try{
-    assert.equal((await exchangeInstagram('code',config,fetcher)).username,'creator');assert.equal(requests.length,3);assert.match(requests[0].body,/authorization_code/);assert.equal(requests[2].authorization,'Bearer long');
-    mode='missing';requests=[];await assert.rejects(exchangeInstagram('c',config,fetcher),/PERMISSIONS/);assert.equal(requests.length,1);
+    const value=await exchangeInstagram('code',config,fetcher);
+    assert.equal(value.username,'creator');assert.equal(value.clientBusinessId,'789');assert.ok(value.expiresAt>Date.now());
+    assert.equal(requests.length,4);assert.match(requests[0].url,/redirect_uri=/);assert.equal(requests[2].authorization,'Bearer system-token');
+    for(const failure of ['missing','wrong-app','invalid','wrong-target']){mode=failure;await assert.rejects(exchangeInstagram('c',config,fetcher),/PERMISSIONS/);}
+    for(const failure of ['never','expired']){mode=failure;await assert.rejects(exchangeInstagram('c',config,fetcher),/INVALID_RESPONSE/);}
+    for(const failure of ['empty','multiple','paging']){mode=failure;await assert.rejects(exchangeInstagram('c',config,fetcher),/SELECT_ONE_ACCOUNT/);}
     mode='unavailable';requests=[];await assert.rejects(exchangeInstagram('c',config,fetcher),/UNAVAILABLE/);assert.equal(requests.length,1);
   }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
 });
@@ -77,4 +86,15 @@ test('Instagram lifecycle on isolated Atlas collection',{skip:process.env.TEST_I
   const {config:env}=await import('dotenv');env({path:'dashboard/.env.local',quiet:true});const {MongoClient}=await import('mongodb');
   const client=new MongoClient(process.env.MONGODB_URI,{serverSelectionTimeoutMS:5000});const collection=client.db().collection(`qa_instagram_${randomUUID().replaceAll('-','')}`);
   try{await lifecycle(collection,randomUUID());}finally{await collection.drop().catch(()=>{});await client.close();}
+});
+
+test('Unified Login uses configuration ID and never exposes app secret',async()=>{
+  const result=await beginInstagram(memory(),'owner','session',config);
+  const url=new URL(result.authorizationUrl);
+  assert.equal(url.origin,'https://www.facebook.com');assert.equal(url.searchParams.get('config_id'),'456');
+  assert.equal(url.searchParams.get('prompt'),'login');assert.equal(url.searchParams.has('client_secret'),false);
+  const env={INSTAGRAM_APP_ID:'123',INSTAGRAM_CONFIG_ID:'456',INSTAGRAM_APP_SECRET:'s',INSTAGRAM_REDIRECT_URI:config.redirectUri,INSTAGRAM_TOKEN_KEY:'a'.repeat(64),INSTAGRAM_API_VERSION:'v27.0',BETTER_AUTH_URL:'https://app.example'};
+  assert.equal(instagramConfig(env).configId,'456');assert.throws(()=>instagramConfig({...env,INSTAGRAM_CONFIG_ID:''}));
+  const c=memory(),state=await start(c);
+  assert.equal(await finishInstagram(c,'owner','session',{state,code:'c'},config,async()=>{throw Error('INSTAGRAM_SELECT_ONE_ACCOUNT');}),'select_one_account');
 });

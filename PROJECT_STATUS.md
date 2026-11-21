@@ -1,6 +1,6 @@
 # ChitraBodh project status
 
-Updated 20 November 2026. Use this file to choose the next feature and record what ships. The first dashboard milestone ends when a newly registered creator can sign in, enter a topic, and download their narrated vertical video without using a terminal.
+Updated 21 November 2026. Use this file to choose the next feature and record what ships. The first dashboard milestone ends when a newly registered creator can sign in, enter a topic, and download their narrated vertical video without using a terminal.
 
 ## Current baseline
 
@@ -39,7 +39,7 @@ Baseline established from repository inspection and recorded prototype results. 
 | F12 | Saved preferences | F05 | Done | Voice, captions and timezone persist. New drafts inherit defaults and existing videos retain their settings. |
 | F13 | Revisions | F06–F09 | Live revision render and download verified | A revision preserves the previous ready version and original expiry, including when revision fails. |
 | F14 | Caption variants | F13 | Done; controlled render and Filebase verified | A caption change renders a separate variant under the same job limit. Only ready variants can be exported. |
-| F15 | Instagram connection | F03 | Implemented; live Meta verification pending | Connect, disconnect and reconnect an eligible account. Existing posts retain their intended account. |
+| F15 | Instagram connection | F03 | Unified Login migration; live Meta verification pending | Connect, disconnect and reconnect an eligible account. Existing posts retain their intended account. |
 | F16 | Publish now | F09, F15 | Planned | User confirms account and ready artifact. Eligibility is rechecked. An uncertain result offers a status check and prevents duplicate submission. |
 | F17 | Schedule and manage a post | F16 | Planned | Pin the account, version and captions. Enforce server time bounds, edit or cancel before dispatch, and require explicit resume after reconnection. |
 | F18 | Project and account deletion | F03, F08, F17 | Planned | Confirm deletion, require fresh sign-in for account deletion, handle pending work and preserve the published Instagram copy. |
@@ -111,3 +111,5 @@ Apply the [screen QA findings](docs/design/Stitch-Screens-QA.md) to each affecte
 | 20 Nov 2026 | F14 manual QA passed tested flows with one minor UX finding; [full report](docs/F14-Manual-QA-2026-11-20.md). | Fresh controlled-source browser requests verified captions-off rendering, reopening at measured progress, reuse both ways, active-job rejection, running cancellation, safe failure and legacy fallback. Filebase originals and exact expiry remained unchanged; variant audio SHA-256 matched and sampled frames differed in captions. Active-job errors unnecessarily offer recreation. Fresh captions-on rendering, browser download completion, mobile and expiry cleanup were not retested. No implementation changes; F07 remains open. |
 
 | 20 Nov 2026 | F15 Instagram connection implemented in Settings using the Daylight connected-account direction. Server-only OAuth, session-bound one-use state, encrypted credentials, identity-preserving reconnect and revision-fenced disconnect added. API/database contracts and [setup guide](docs/Instagram-Setup.md) updated. | Local lifecycle and real-HTTP simulated provider tests passed; isolated Atlas lifecycle passed and temporary records removed. Chrome desktop/mobile controls, configuration gating and confirmed disconnect passed with a disposable creator; records removed. Full suite: 73 passed, seven opt-in checks skipped; the Instagram Atlas check passed separately. Type checking and production build passed. No Instagram credentials configured, so real Meta authorization remains unverified. F16 publishing and F17 scheduling are not enabled. Next: configure HTTPS Meta callback/credentials and verify connect, disconnect and reconnect. |
+
+| 21 Nov 2026 | F15: created an Instagram Login Compatible configuration with three approved permissions and a 60-day token. Migrated the adapter to Unified Login with configuration ID, token validation, client business identity and single-account resolution. | 74 tests passed, seven opt-in integration tests skipped; type checking, production build and diff checks passed. Portfolio has no Instagram account attached. Account terms/login, HTTPS callback, private Meta credentials and real connect/disconnect/reconnect remain pending. No live token obtained. F16/F17 remain planned. |

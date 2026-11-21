@@ -1,14 +1,14 @@
 # Instagram connection setup (F15)
 
-The dashboard uses **Instagram API with Instagram Login**, for Business and Creator accounts. Connecting does not publish anything. F16 and F17 will add publishing and scheduling.
+The dashboard uses **Instagram API with Unified Login**, for Business and Creator accounts. Connecting does not publish anything. F16 and F17 will add publishing and scheduling.
 
 ## Configure the pilot
 
-1. Add the Instagram product in Meta's developer dashboard and configure Instagram business login. Use the **Instagram App ID and Instagram App Secret**.
+1. Add the Instagram product in Meta's developer dashboard and create an Instagram Login Compatible configuration with Instagram accounts only and a 60-day system-user token. Use the **Meta App ID and Meta App Secret**.
 2. Use an HTTPS application origin for `BETTER_AUTH_URL`. Register the exact callback `https://YOUR-HOST/api/v1/instagram/callback` in Meta. Both origins must match.
-3. Set these server-only values in `dashboard/.env.local`: `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET`, `INSTAGRAM_REDIRECT_URI`, `INSTAGRAM_API_VERSION` (the supported Graph version selected for your app), and `INSTAGRAM_TOKEN_KEY` (32 random bytes encoded as 64 hex characters). See `dashboard/.env.example`. Keep the encryption key stable and backed up privately; replacing it makes stored credentials unreadable. Never commit credentials.
-4. For the internal pilot, add the professional accounts you own/manage to the app as required by Meta's Standard Access setup. External accounts require appropriate Advanced Access/app review. Request `instagram_business_basic` and `instagram_business_content_publish`.
-5. Restart the dashboard. Open Settings → Instagram, connect, approve permissions and verify the displayed username. Reconnect retains the same account. Disconnect before choosing a different one.
+3. Set these server-only values in `dashboard/.env.local`: `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET`, `INSTAGRAM_CONFIG_ID`, `INSTAGRAM_REDIRECT_URI`, `INSTAGRAM_API_VERSION` (the supported Graph version selected for your app), and `INSTAGRAM_TOKEN_KEY` (32 random bytes encoded as 64 hex characters). See `dashboard/.env.example`. Keep the encryption key stable and backed up privately; replacing it makes stored credentials unreadable. Never commit credentials.
+4. For the internal pilot, add the professional accounts you own/manage to the app as required by Meta's Standard Access setup. External accounts require appropriate Advanced Access/app review. Request `instagram_basic`, `instagram_content_publish` and `instagram_manage_messages` (required by Unified Login; unused by Chitrabodh).
+5. Restart the dashboard. Open Settings → Instagram, connect, approve permissions and select exactly one Instagram account and verify the displayed username. Reconnect retains the same account. Disconnect before choosing a different one.
 
 ## Guarantees and boundaries
 
@@ -24,4 +24,14 @@ The dashboard uses **Instagram API with Instagram Login**, for Business and Crea
 
 20 November 2026: local lifecycle/encryption and real-HTTP simulated provider checks passed. Isolated Atlas lifecycle passed; its temporary collection was removed. These establish local handling, not Meta app permissions or a successful real connection. No Instagram credentials were present at implementation start; live connect/disconnect/reconnect remains pending.
 
-Reference: [Meta Business Login for Instagram](https://developers.facebook.com/documentation/instagram-platform/instagram-api-with-instagram-login/business-login). Orbit discovery was unavailable, so the implementation used Meta's official reference. The installed Postman executable is the desktop app; tests use the repository's Node HTTP harness rather than claiming Postman simulation evidence.
+Reference: [Meta Unified Login](https://developers.facebook.com/documentation/instagram-platform/instagram-api-with-unified-login/get-started). Orbit discovery was unavailable, so the implementation used Meta's official reference. The installed Postman executable is the desktop app; tests use the repository's Node HTTP harness rather than claiming Postman simulation evidence.
+
+## Unified Login setup checkpoint — 21 November 2026
+
+The Meta app belongs to the Chitrabodh portfolio. Its new `Chitrabodh Instagram` configuration has the three approved scopes, Instagram assets only, and 60-day tokens. Meta displays **Instagram Login Compatible**. Set its ID in `INSTAGRAM_CONFIG_ID`. The portfolio currently has no Instagram account; account terms and account login remain pending.
+
+The adapter uses graph.facebook.com and validates app identity, scopes, expiry and applicable account targets through debug_token. It stores the client business ID and configuration ID privately. It rejects zero/multiple accounts and paging rather than silently choosing an account. Non-expiring tokens are not supported. Legacy connections require reauthorization; never reuse their credentials on the new host.
+
+No HTTPS callback, private app secret, live token or real authorization has been verified yet. A temporary Cloudflare Quick Tunnel can provide a test HTTPS origin without a domain. Use the production dashboard, register the exact callback, set the same HTTPS origin for BETTER_AUTH_URL, restart and sign in through HTTPS. The tunnel hostname changes on restart and stops when its process stops. This does not change Filebase storage.
+
+References: [authentication](https://developers.facebook.com/documentation/instagram-platform/instagram-api-with-unified-login/authentication), [token validation](https://developers.facebook.com/docs/graph-api/reference/debug_token/).

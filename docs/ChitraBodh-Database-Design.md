@@ -301,3 +301,7 @@ For this slice `instagramConnections` uses `_id = ownerId` (the built-in unique 
 Pending authorization is embedded as `pending: {stateHash,sessionHash,expiresAt}` plus `oauthAttempt`. A new start replaces pending and attempt. Callback atomically unsets pending only for the initiating owner/session and unexpired state; completion compares revision and oauthAttempt and requires pending absent. Disconnect increments revision/dispatchEpoch and removes pending and all token material. These single-document compare-and-set writes need no multi-document transaction. No TTL index is placed on the connection row: authorization expiry is enforced in the query, so it cannot delete a valid connected account. Embedded expired hashes are bounded to one per owner and overwritten on a new attempt.
 
 This replaces the separately planned oauthStates collection for F15. F16/F17 must add transactional publication cancellation/dispatch fencing before scheduling is enabled. The existing planned publication schemas remain future requirements.
+
+### F15 Unified Login additions — 21 November 2026
+
+instagramConnections adds server-only clientBusinessId, configId and loginFlow (unified) after successful authorization. tokenExpiresAt uses the earliest positive provider token/data-access deadline, requiring a finite token expiry. Legacy records without loginFlow require reconnection. Owner primary key, revision fence, encrypted tokens and pending session-bound state remain unchanged; no new index or transaction is required.

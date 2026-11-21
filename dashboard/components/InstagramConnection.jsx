@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react';
-const outcomes={connected:'Instagram connected.',cancelled:'Connection cancelled. Your previous connection is unchanged.',failed:'Could not connect Instagram. Try a fresh connection.',invalid:'This connection link expired or was already used. Please try again.',different_account:'Reconnect the same account, or disconnect it first to choose another account.',superseded:'Your connection changed in another tab. Check the current account below.'};
+const outcomes={select_one_account:'Please reconnect and select exactly one Instagram account in Meta.',connected:'Instagram connected.',cancelled:'Connection cancelled. Your previous connection is unchanged.',failed:'Could not connect Instagram. Try a fresh connection.',invalid:'This connection link expired or was already used. Please try again.',different_account:'Reconnect the same account, or disconnect it first to choose another account.',superseded:'Your connection changed in another tab. Check the current account below.'};
 export default function InstagramConnection(){
   const [data,setData]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[confirm,setConfirm]=useState(false);
   async function load(){const r=await fetch('/api/v1/instagram/connection');if(!r.ok)throw Error();setData(await r.json());}
@@ -16,7 +16,7 @@ export default function InstagramConnection(){
     finally{setBusy(false);}
   }
   const connection=data?.connection;
-  return <section className="instagram-card" aria-labelledby="instagram-title"><span className="eyebrow">CONNECTED ACCOUNTS</span><h2 id="instagram-title">Your Instagram, connected.</h2><p>Bring your explainers to your audience. Connect a Business or Creator account.</p>
+  return <section className="instagram-card" aria-labelledby="instagram-title"><span className="eyebrow">CONNECTED ACCOUNTS</span><h2 id="instagram-title">Your Instagram, connected.</h2><p>Bring your explainers to your audience. Connect a Business or Creator account. Select one Instagram account during login. Meta requests profile, publishing and messaging access; Chitrabodh does not read or send messages.</p>
     {!data?<p>Loading connection…</p>:<>
       <div className="instagram-identity"><span className="material-symbols-outlined" aria-hidden="true">photo_camera</span><div><strong>{connection?`@${connection.username}`:'Instagram'}</strong><p>{connection?(connection.status==='connected'?'Connected':'Connection expired — reconnect to continue'):'Not connected yet'}</p></div></div>
       {!data.configured&&<p role="status">Instagram setup is not complete. Your administrator needs to configure the app credentials and callback URL.</p>}

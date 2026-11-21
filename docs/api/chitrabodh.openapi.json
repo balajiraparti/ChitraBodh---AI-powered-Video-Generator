@@ -2567,6 +2567,7 @@
           "Instagram"
         ],
         "summary": "Start session-bound Instagram authorization",
+        "description": "Uses Unified Login with a configured Meta config_id. Select exactly one Instagram account. Requires a 60-day system-user token configuration.",
         "parameters": [
           {
             "name": "Origin",
@@ -2647,6 +2648,7 @@
           "Instagram"
         ],
         "summary": "Consume authorization in the initiating live session",
+        "description": "Validates grant, business and account identity. Redirects with select_one_account when zero or multiple Instagram accounts are shared. Does not select an arbitrary account.",
         "parameters": [
           {
             "name": "state",

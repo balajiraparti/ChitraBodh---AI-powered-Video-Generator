@@ -225,7 +225,7 @@ F14 uses the existing `/api/v1/jobs/{id}` and `/api/v1/media/{id}` routes. The j
 
 ## F15 implemented contract — 20 November 2026
 
-The Instagram Login implementation supersedes the proposed connection routes above for this slice. All routes use private no-store responses. Mutations require same-origin requests and a valid cookie session. Callback also requires the initiating live session, not only an owner identifier.
+The Unified Login implementation supersedes the proposed connection routes above for this slice. All routes use private no-store responses. Mutations require same-origin requests and a valid cookie session. Callback also requires the initiating live session, not only an owner identifier.
 
 | Endpoint | Request | Response and checks |
 |---|---|---|
@@ -235,3 +235,7 @@ The Instagram Login implementation supersedes the proposed connection routes abo
 | DELETE /api/v1/instagram/connection | `{expectedRevision}` | 200 `{connection:null}` after token removal and epoch increment; 409 stale/invalid revision. This slice has no publications to cancel. F17 must add cancellation before scheduling ships. |
 
 Reconnect permits only the same account; changing account requires disconnect, then fresh authorization. Failed/denied/expired authorization preserves any prior connection. Concurrent starts supersede older flows; disconnect fences in-flight callbacks. See [setup and limitations](Instagram-Setup.md).
+
+### F15 Unified Login migration — 21 November 2026
+
+Existing routes now use Facebook OAuth with config_id and server-only Meta credentials. The callback adds the allowlisted select_one_account outcome for zero or multiple accounts; it never selects the first asset. Provider metadata validates app, scopes, expiry and account targets. A 60-day system-user configuration is required. Legacy records display needs_reconnection.
