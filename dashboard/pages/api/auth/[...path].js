@@ -3,6 +3,7 @@ import { services,reserve } from '../../../server/auth.mjs';
 import { fromNodeHeaders } from 'better-auth/node';
 
 export function respondToCredentialResult(res,result,path) {
+  if(!result.ok)console.warn('[auth] Credential request rejected', {operation:path,status:result.status});
   const cookies=result.headers?.getSetCookie?.() || [];
   if(cookies.length)res.setHeader('Set-Cookie',cookies);
   if(!result.ok)return res.status(result.status).json({message:path==='sign-up'?'We could not create that account. Check your details and try again.':'We could not sign you in. Check your details and try again.'});

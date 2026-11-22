@@ -26,12 +26,14 @@ export default function SignIn({initialMode='sign-in'}){
       const response=await fetch('/api/auth/'+(mode==='sign-up'?'sign-up':'sign-in'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
       if(response.ok)return router.push('/dashboard');
       const messages={
+        401:'The email or password did not match. If this is a new account, choose Create an account.',
+        422:'Account creation failed. If you already registered, choose Sign in.',
         400:'Enter a valid email and a password between 12 and 128 characters.',
         403:'Your sign-in page is on a different address from the server. Reopen the dashboard sign-in link.',
         429:'Too many attempts. Please wait before trying again.',
         503:'The sign-in service is temporarily unavailable. Try again shortly.'
       };
-      setError(messages[response.status] || (mode==='sign-up'?'Account creation failed. If you already registered, choose Sign in.':'The email or password did not match. If this is a new account, choose Create an account.'));
+      setError(messages[response.status] || `The sign-in service returned HTTP ${response.status}. Please retry shortly.`);
       setState('error');
     }catch{setError('Could not reach the dashboard. Check the connection and try again.');setState('error')}
   }
