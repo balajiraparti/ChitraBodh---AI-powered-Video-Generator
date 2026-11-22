@@ -1,6 +1,9 @@
-import {useState} from 'react';
+import React,{useEffect,useState} from 'react';
 import {useRouter} from 'next/router';
-export function getServerSideProps({req,query}){
+export function getServerSideProps({req,res,query}){
+  res?.setHeader('Cache-Control','no-store');
+  res?.setHeader('Referrer-Policy','no-referrer');
+  if(query.email!==undefined || query.password!==undefined)return {redirect:{destination:'/sign-in',permanent:false}};
   const origin=new URL(process.env.BETTER_AUTH_URL);
   if(['localhost','127.0.0.1'].includes(origin.hostname) && req.headers.host!==origin.host){
     return {redirect:{destination:origin.origin+'/sign-in'+(query.mode==='sign-up'?'?mode=sign-up':''),permanent:false}};
@@ -8,6 +11,8 @@ export function getServerSideProps({req,query}){
   return {props:{initialMode:query.mode==='sign-up'?'sign-up':'sign-in'}};
 }
 export default function SignIn({initialMode='sign-in'}){
+  const [ready,setReady]=useState(false);
+  useEffect(()=>setReady(true),[]);
   const [state,setState]=useState('idle');
   const [mode,setMode]=useState(initialMode);
   const [error,setError]=useState('');
@@ -31,10 +36,10 @@ export default function SignIn({initialMode='sign-in'}){
     }catch{setError('Could not reach the dashboard. Check the connection and try again.');setState('error')}
   }
   return <div className="auth-layout"><section className="signin"><h1>{mode==='sign-up'?'Create your Chitrabodh account':'Sign in to Chitrabodh'}</h1>
-    <form onSubmit={submit}><p>{mode==='sign-up'?'Create an account to start making explainers.':'Use your email and password to continue.'}</p><label htmlFor="email">Email address</label>
+    <form method="post" action="/api/auth/sign-in" onSubmit={submit}><p>{mode==='sign-up'?'Create an account to start making explainers.':'Use your email and password to continue.'}</p><label htmlFor="email">Email address</label>
       <input id="email" name="email" type="email" autoComplete="email" required/>
       <label htmlFor="password">Password</label><input id="password" name="password" type="password" autoComplete={mode==='sign-up'?'new-password':'current-password'} minLength="12" maxLength="128" required/>
       {state==='error' && <p role="alert">{error}</p>}
-      <button className="action" disabled={state==='sending'}>{state==='sending'?'Please wait…':mode==='sign-up'?'Create account':'Sign in'}</button>
-    </form><p>{mode==='sign-up'?'Already have an account? ':'New to Chitrabodh? '}<button type="button" disabled={state==='sending'} onClick={()=>{setMode(mode==='sign-up'?'sign-in':'sign-up');setState('idle')}}>{mode==='sign-up'?'Sign in':'Create an account'}</button></p></section></div>;
+      <button className="action" disabled={!ready || state==='sending'}>{state==='sending'?'Please wait…':mode==='sign-up'?'Create account':'Sign in'}</button>
+    </form><p>{mode==='sign-up'?'Already have an account? ':'New to Chitrabodh? '}<button type="button" disabled={!ready || state==='sending'} onClick={()=>{setMode(mode==='sign-up'?'sign-in':'sign-up');setState('idle')}}>{mode==='sign-up'?'Sign in':'Create an account'}</button></p></section></div>;
 }

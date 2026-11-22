@@ -45,3 +45,18 @@ test('successful jobs show expiry at the deadline and after cleanup',async()=>{
     assert.match(html,/href="\/create\?fromJob=j"/);
   }
 });
+
+// @ts-ignore Next page is plain JavaScript.
+import SignIn, {getServerSideProps as signInProps} from '../dashboard/pages/sign-in';
+test('sign-in cannot GET credentials before hydration and strips credential queries',()=>{
+  const router:any={pathname:'/sign-in',route:'/sign-in',query:{},asPath:'/sign-in',isFallback:false};
+  const html=renderToStaticMarkup(<RouterContext.Provider value={router}><SignIn/></RouterContext.Provider>);
+  assert.match(html,/<form[^>]*method="post"/);
+  assert.match(html,/<form[^>]*action="\/api\/auth\/sign-in"/);
+  assert.match(html,/<button[^>]*disabled[^>]*>Sign in/);
+  const headers:Record<string,string>={};
+  const result=signInProps({req:{headers:{}},res:{setHeader:(k:string,v:string)=>headers[k]=v},query:{password:'test-only'}});
+  assert.deepEqual(result,{redirect:{destination:'/sign-in',permanent:false}});
+  assert.equal(headers['Cache-Control'],'no-store');
+  assert.equal(headers['Referrer-Policy'],'no-referrer');
+});
