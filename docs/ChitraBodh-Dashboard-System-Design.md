@@ -1,5 +1,7 @@
 # ChitraBodh — Dashboard and Application System Design
 
+> **24 November 2026 — F19 planned extension:** [AI storyboard review and editing](ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Documentation only; implementation status is tracked separately.
+
 **Version:** 1.0  
 **Date:** 31 October 2026  
 **Status:** Proposed implementation design for the internal team pilot; not a claim that these services are deployed.  
@@ -624,3 +626,9 @@ Roll out with self-service registration protected by credential rate limits. Sto
 Before deployment, settle: host/domain and spend cap; MongoDB hosting/backups; email sender/vendor; authentication library version; actual accessible Indian male/female voices and usage rights; English-only launch confirmation; selected Meta flow, API version, permissions and authorized team profiles; Remotion/license eligibility; acceptance of proposed queue/timeouts, metadata retention, and scheduling buffers. These choices do not change the architecture or require additional creator steps.
 
 **Next implementation slice:** Phase A/B, then one authenticated user creates a video through a durable MongoDB job, streams it from Filebase, and sees it expire correctly. That vertical slice proves the application foundation before expanding revisions and Instagram publishing.
+
+## F19 — Architecture extension
+
+Add a durable MongoDB planning-command queue, fenced planning worker, immutable storyboard revisions and candidate application. Preview uses the same allowlisted scene renderer with estimated timings, without ElevenLabs or MP4 generation. Final generation atomically pins an approved snapshot and skips fresh planning. Existing generation leases, ownership, private storage and publication pinning remain in force. Keep legacy jobs compatible during rollout.
+
+See the [complete F19 contract](ChitraBodh-Storyboard-Editor-Specification.md) for user flows, edge cases, integration requirements, retention and verification gates.

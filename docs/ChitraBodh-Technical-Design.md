@@ -1,5 +1,7 @@
 # ChitraBodh — Prototype and Internal Pilot Technical Design
 
+> **24 November 2026 — F19 planned extension:** [AI storyboard review and editing](ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Documentation only; implementation status is tracked separately.
+
 **31 October companion:** Use [Dashboard and application system design](ChitraBodh-Dashboard-System-Design.md) for the updated application architecture, API/data contracts, recovery and publishing rules, and reconciled 40–90-second duration policy. This earlier document preserves the initial prototype design context.
 
 **Version:** 1.0  
@@ -261,3 +263,9 @@ Remaining decisions: exact model/voice IDs after smoke tests, Hindi/Hinglish sco
 ## 13. Implementation boundaries
 
 This document creates no infrastructure, credentials, live API requests, deployed application, or generated video. Follow the [prototype plan](ChitraBodh-Prototype-Plan.md) next. After real sample evaluation, record measured latency/cost and revise this design before internal deployment.
+
+## F19 — Storyboard editor technical extension
+
+Use existing Next.js authentication, MongoDB transactions, shared scene components, Gemini adapter and Filebase private-media access. Add bounded planning operations with heartbeat leases and fences, server-validated candidates, immutable approved snapshots and shared provider budgets. No arbitrary generated code executes. The full feature specification defines data flow, API, retention, rollout compatibility and required tests; this is a planned extension, not an implementation claim.
+
+See the [complete F19 contract](ChitraBodh-Storyboard-Editor-Specification.md) for user flows, edge cases, integration requirements, retention and verification gates.

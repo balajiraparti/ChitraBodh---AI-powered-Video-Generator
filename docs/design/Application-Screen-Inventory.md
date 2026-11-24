@@ -1,5 +1,7 @@
 # ChitraBodh V1 application screen inventory
 
+> **24 November 2026 — F19 planned extension:** [AI storyboard review and editing](../ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Documentation only; implementation status is tracked separately.
+
 Updated 4 November 2026. Design review phase; not implemented product functionality.
 
 Source of truth: [system design](../ChitraBodh-Dashboard-System-Design.md), [API design](../ChitraBodh-API-Design.md), [PRD](../ChitraBodh-V1-PRD.md). Later application/API contracts supersede older PRD details where noted. Visual system: [DESIGN.md](DESIGN.md).
@@ -113,3 +115,9 @@ Design examples may show timestamps and sample accounts, but those are static re
 5. Review 19–24 at phone size for readable captions, reachable actions, state messages and consistent navigation.
 
 Keep visual review separate from production verification. The coding phase must supply the real media, auth/session handling, API state, scheduling eligibility and error recovery behind these designs.
+
+## F19 — Proposed F19 boards
+
+Add SB01 planning, SB02 desktop overview, SB03 scene detail/motion preview, SB04 candidate comparison, SB05 recovery/conflict states and SB06 mobile views. Existing 24 board IDs remain unchanged. Reuse the approved Daylight system. These boards have not yet been created or reviewed in Stitch. Section 8 of the feature specification contains the design and accessibility acceptance criteria.
+
+See the [complete F19 contract](../ChitraBodh-Storyboard-Editor-Specification.md) for user flows, edge cases, integration requirements, retention and verification gates.

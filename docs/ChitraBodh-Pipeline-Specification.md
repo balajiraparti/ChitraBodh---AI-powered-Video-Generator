@@ -1,5 +1,7 @@
 # ChitraBodh — Video Generation Pipeline Specification
 
+> **24 November 2026 — F19 planned extension:** [AI storyboard review and editing](ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Documentation only; implementation status is tracked separately.
+
 **Version:** 1.0  
 **Date:** 26 October 2026  
 **Status:** Proposed implementation specification; no pipeline code or generated video delivered by this document  
@@ -286,3 +288,9 @@ At expiry, block access and explicitly delete generated objects. Keep only the p
 Keep a text-only run report: model/voice IDs, prompt/template version, stage durations, provider attempts and usage totals, final media properties, review scores, error codes, and cleanup result. Do not permanently retain generated scripts, timing JSON, screenshots, or media under an “evaluation” folder. Review live outputs during the media window; keep authored test topics and non-content metrics afterward.
 
 The [prototype plan](ChitraBodh-Prototype-Plan.md) defines the topic set and pass/fail gates. The pipeline is proven only after real API calls and rendered media pass those checks.
+
+## F19 — Approved-plan pipeline branch
+
+F19 separates topic-to-plan from plan-to-video. Preview validates schema, scene semantics and renderability, then uses estimated timing. The full pipeline must accept an immutable approved snapshot and verify its hash/schema/renderer compatibility. It must not regenerate the script or visuals. ElevenLabs provides actual alignment; unsupported duration fitting returns an actionable error instead of silently rewriting the approved lesson. Existing legacy jobs may still invoke the original planner.
+
+See the [complete F19 contract](ChitraBodh-Storyboard-Editor-Specification.md) for user flows, edge cases, integration requirements, retention and verification gates.

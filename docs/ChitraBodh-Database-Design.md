@@ -1,5 +1,7 @@
 # ChitraBodh — V1 Database Design
 
+> **24 November 2026 — F19 planned extension:** [AI storyboard review and editing](ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Documentation only; implementation status is tracked separately.
+
 Version 1.0 · 31 October 2026 · **Proposed implementation specification. No database migration has been applied.**
 
 References: [PRD](ChitraBodh-V1-PRD.md), [system design](ChitraBodh-Dashboard-System-Design.md), [API design](ChitraBodh-API-Design.md), [OpenAPI](api/chitrabodh.openapi.json). MongoDB is the metadata/queue database; private Filebase holds generated payloads. Better Auth manages identity/session mechanics. There is no billing schema or behavioral tracking collection.
@@ -319,3 +321,9 @@ Admission transaction inserts job and caption atomically and writes guards to th
 Transitions: queued → preparing → processing → publishing → published; queued/preparing/processing → failed for definite pre-dispatch failure; publishing → outcome_unknown on ambiguous response; outcome_unknown → published/failed_confirmed from container evidence or needs_attention when unresolved. A creator Check status action moves needs_attention to outcome_unknown for read-only reconciliation. Unknown work can be reconciled after media expiry, and expiry never releases its duplicate block. Lease recovery never resets publishing to queued.
 
 Dispatch intent transaction checks lease/fence/state, time deadline, live owned artifact/project and exact connectionId/accountId/dispatchEpoch. It writes connection/artifact/project guards and publishing intent. Disconnect's existing atomic epoch change fences this transaction; grant reads also require that epoch. A post whose intent already committed may finish after disconnect. Published media IDs and safe links remain metadata after local content expires. Future F18 deletion must serialize with these same guards and retain unresolved delivery evidence. F17 scheduling is not implemented by these collections yet.
+
+## F19 — Planned storyboard persistence
+
+Add storyboardHeads, storyboardSnapshots, storyboardOperations, storyboardCandidates and approvedStoryboards as specified in section 6. Unique command keys, partial active-owner indexes, revision CAS, fencing and atomic generation admission protect edits and approvals. Preview retention is distinct from job-owned snapshot retention and the original ready-video deadline. No database migration has run; migration/index validation and cleanup tests are required before rollout.
+
+See the [complete F19 contract](ChitraBodh-Storyboard-Editor-Specification.md) for user flows, edge cases, integration requirements, retention and verification gates.

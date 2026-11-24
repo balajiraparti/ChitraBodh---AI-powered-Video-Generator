@@ -1,5 +1,7 @@
 # ChitraBodh — Stitch exploration prompts
 
+> **24 November 2026 — F19 planned extension:** [AI storyboard review and editing](../ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Documentation only; implementation status is tracked separately.
+
 Prepared 1 November 2026. A consolidated version of these prompts was submitted on 2 November 2026 and all three boards were generated in [ChitraBodh Brand Direction Studies](https://stitch.withgoogle.com/u/1/projects/16810763223132817674?pli=1). These contain brand/product context only, never credentials or private project data. No direction is selected yet.
 
 ## Shared brief — paste first
@@ -31,3 +33,9 @@ Use a small visual sequence of keyframes connected by a motion path, with one em
 ## After choosing a direction — next homepage pass
 
 Use only the selected direction's tokens and type. Design one desktop and one mobile product-introduction homepage, preserving the brand board. Include restrained navigation, hero with meaningful teaching visual, three-stage idea/generate/preview flow, honest sample topics and one closing action. Do not invent features, publication readiness, customer numbers, pricing or public signup. Keep working behavior separate from illustration. Do not generate all application screens yet. Show a neutral loading/error/expiry component specimen alongside the page for later dashboard reuse.
+
+## F19 — F19 design handoff, not generated
+
+Design a novice-friendly storyboard review portal using the existing Daylight brand. Show scene cards with actual illustrative preview areas, narration, estimated timing and a silent motion-preview control. Include a scoped plain-language feedback box and before/after candidate review with Apply/Discard. Use one Generate video action for the saved whole storyboard. Never show code, JSON or model controls. Cover SB01–SB06, keyboard/mobile/reduced-motion and error states from section 8 of the F19 specification. Do not imply these screens already exist.
+
+See the [complete F19 contract](../ChitraBodh-Storyboard-Editor-Specification.md) for user flows, edge cases, integration requirements, retention and verification gates.

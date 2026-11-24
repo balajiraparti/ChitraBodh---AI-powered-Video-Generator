@@ -1,5 +1,7 @@
 # Stitch implementation comparison
 
+> **24 November 2026 — F19 planned extension:** [AI storyboard review and editing](../ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Documentation only; implementation status is tracked separately.
+
 Updated 12 November 2026.
 
 The reference is the owner's downloaded `stitch_chitrabodh_brand_direction_studies` folder, including each `code.html` and `screen.png`. Stitch MCP lists 31 items in project 16810763223132817674. The download contains all 24 numbered boards, three brand studies, three demo boards, and the Daylight design-system file.
@@ -34,3 +36,9 @@ The Daylight reference takes precedence over the Cobalt Lab and Afterlight alter
 Production build passed. The suite passed 59 tests with three opt-in checks skipped. Browser checks at 1280 × 844 and 390 × 844 covered homepage tab switching and expanded preview, sign-in, private library, settings, create, idea-panel opening, public preview, generation progress and expired recovery. All eight routes at both sizes had no horizontal overflow. Synthetic account and project records were cleaned up. Browser screenshots are retained locally in .cache/design-*.png. This is an implementation comparison, not a pixel-difference score. Future feature boards are not claimed as delivered.
 
 To rebuild the exported utility CSS after editing a template, run Tailwind 3.4.17 with scripts/stitch-tailwind.config.cjs and an input file containing @tailwind utilities. The generated output is dashboard/pages/stitch-utilities.css. The application serves that stylesheet locally.
+
+## F19 — F19 coverage gap
+
+The storyboard editing portal is a newly documented scope addition. It is absent from the implemented-screen audit and has no Stitch comparison evidence yet. Design SB01–SB06, obtain review, then verify the built preview/edit/generate flow against those screens. Existing audit results remain historical evidence for existing screens only.
+
+See the [complete F19 contract](../ChitraBodh-Storyboard-Editor-Specification.md) for user flows, edge cases, integration requirements, retention and verification gates.

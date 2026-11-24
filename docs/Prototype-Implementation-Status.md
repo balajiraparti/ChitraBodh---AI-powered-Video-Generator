@@ -1,5 +1,7 @@
 # Local prototype implementation status
 
+> **24 November 2026 — F19 planned extension:** [AI storyboard review and editing](ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Documentation only; implementation status is tracked separately.
+
 ## Build 2 — explanatory motion (28 October 2026)
 
 User review changed the next-build priority from dashboard expansion to animated explanations. The water-cycle template now shows a persistent landscape, rippling lake, animated sun and heat indicators, schematic rising vapor, developing cloud droplets, rainfall, river flow and infiltration. Gemini chooses the phase and a spoken trigger phrase; the timing layer maps it to actual ElevenLabs alignment. Generic diagrams also have directed moving flow and animated semantic icons.
@@ -54,3 +56,9 @@ Configure the provider credentials locally and audition one Indian-accented Engl
 ## Intentionally deferred
 
 Team sign-in, dashboard idea submission, AI idea brainstorming, dashboard voice selection, MongoDB, Filebase, deployed workers and Instagram publishing/scheduling are not implemented. They remain in the product plan. The two-hour local deletion policy requires the preview process to remain running; after downtime, cleanup resumes on startup.
+
+## F19 — Planned extension; no implementation evidence
+
+F19 AI storyboard preview/editing is documented only. Existing automatic storyboard generation does not constitute an interactive editor. No new API, UI, migration, live-provider run or renderer change is delivered by this documentation checkpoint. Current F07 and F16 verification gaps remain as recorded in PROJECT_STATUS.
+
+See the [complete F19 contract](ChitraBodh-Storyboard-Editor-Specification.md) for user flows, edge cases, integration requirements, retention and verification gates.

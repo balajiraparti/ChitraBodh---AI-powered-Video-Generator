@@ -1,5 +1,7 @@
 # ChitraBodh — V1 Product Requirements Document
 
+> **24 November 2026 — F19 planned extension:** [AI storyboard review and editing](ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Documentation only; implementation status is tracked separately.
+
 **API/database companions:** [API design](ChitraBodh-API-Design.md) · [OpenAPI contract](api/chitrabodh.openapi.json) · [database design](ChitraBodh-Database-Design.md). These specify the planned application contracts, not current localhost behavior.
 
 **31 October application design:** [Dashboard and application system design](ChitraBodh-Dashboard-System-Design.md) provides the detailed implementation contracts and reconciles subsequent product changes. In particular, videos still target 60–90 seconds, but complete lessons from 40 seconds are now accepted; older strict minimum-duration statements below are historical baseline requirements.
@@ -8,7 +10,7 @@
 
 **Product:** ChitraBodh (चित्रबोध)  
 **Tagline:** Ideas in motion. Made clear.  
-**Document version:** 1.4\
+**Document version:** 1.5\
 **Prepared:** 26 October 2026  
 **Status:** Detailed V1 baseline for product review and implementation planning  
 **Audience:** Founder, product designer, engineers, and QA
@@ -67,7 +69,7 @@ The creator is the account holder. Viewers of the exported video are not ChitraB
 ### 2.3 Product principles
 
 1. **Three creator stages:** idea, generation, preview/share.
-2. **Automation by default:** writing and storyboarding happen behind the scenes.
+2. **Automation by default:** AI creates the writing and storyboard; F19 lets creators preview and optionally edit it before generation.
 3. **Clarity before decoration:** movement should help explain the concept.
 4. **Speech determines timing:** use generated audio and alignment, not guessed timings.
 5. **Good defaults:** voice, style, and captions have usable defaults; configuration is optional.
@@ -90,7 +92,7 @@ The creator is the account holder. Viewers of the exported video are not ChitraB
 
 - Subscriptions, payments, billing, credit wallets, and customer usage dashboards.
 - User behavior tracking, marketing analytics, session replay, or audience profiling.
-- A required script editor or storyboard approval stage.
+- Mandatory manual script editing or individual approval of every scene. F19 adds one whole-plan review/Generate action.
 - A complex timeline editor or manual animation authoring.
 - Direct YouTube publishing or YouTube scheduling.
 - Landscape and square output.
@@ -171,7 +173,7 @@ All features in this section are P0 for the complete V1, except choices explicit
 | FR-02 | Dashboard | Show drafts, processing work, unexpired videos, expiry countdown, and publication states. | Expired media has an explicit label and no playback/download/post action; failed revisions preserve prior output only until its own expiry. |
 | FR-03 | Own idea | Accept a topic or explanation brief in a single text box. | A valid idea can start generation with defaults and no mandatory extra forms. Empty or oversized input receives an inline explanation. |
 | FR-04 | Brainstorming | Offer a short AI conversation and selectable topic suggestions. | Selecting a suggestion fills the idea; user can refine it or generate immediately; chat failure preserves existing text. |
-| FR-05 | Automatic production | Generate script, scene plan, speech, timings, motion graphics, and video. | No manual script/storyboard approval is required. Only validated output becomes ready. |
+| FR-05 | Automatic production | Generate script, scene plan, speech, timings, motion graphics, and video. | F19 confirms the saved plan through Generate; editing is optional. Only validated output becomes ready. |
 | FR-06 | Educational animation | Use short text, simple diagrams, consistent icons, and restrained motion in a minimal explainer layout. | Every explanatory scene contains a visual tied to its teaching point; labels remain readable; no complex character narrative is needed. |
 | FR-07 | Narration synchronization | Use ElevenLabs audio and timings to schedule visual events. | Tested cues follow their intended spoken phrase; missing timings never silently fall back to invented word timestamps. |
 | FR-08 | Duration | Select an appropriate length within 60–90 seconds automatically. | The final encoded artifact passes a duration check, including intro/outro and pauses. |
@@ -206,7 +208,7 @@ Keep navigation limited to **Dashboard**, **Create video**, and **Settings**. Sc
 
 “Captions” means on-video subtitles. “Post description” means text accompanying the Instagram post. Use distinct labels throughout the UI and data model.
 
-Do not expose AI model names, JSON, provider credits, storyboard steps, or rendering configuration in the creator flow. Settings must not be an onboarding prerequisite.
+Do not expose AI model names, JSON, provider credits, technical storyboard instructions, or rendering configuration in the creator flow. Settings must not be an onboarding prerequisite.
 
 ### 6.3 Voice selection experience
 
@@ -928,6 +930,12 @@ The requirements and architecture in this document are original product specific
 
 ## 24. Definition of done
 
-ChitraBodh V1 is complete when a creator can register or sign in with email and password, enter or discover an idea, click Create video, receive a clear synchronized 60–90-second vertical explainer, optionally request a plain-language change, and download or directly publish/schedule the selected version to an authorized Instagram profile within its two-hour media window. One outstanding generation per user is enforced. Generated media expires and is cleaned up automatically. The implementation must preserve the three-stage experience while passing the quality, recovery, privacy, and publication-integrity criteria in this document.
+ChitraBodh V1 is complete when a creator can register or sign in with email and password, enter or discover an idea, click Create video, receive a clear synchronized 60–90-second vertical explainer, optionally request a plain-language change, and download or directly publish/schedule the selected version to an authorized Instagram profile within its two-hour media window. One outstanding generation per user is enforced. Generated media expires and is cleaned up automatically. The F19 implementation must preserve the four-step idea, storyboard review, generation and watch/share experience while passing the quality, recovery, privacy, and publication-integrity criteria in this document.
 
-No subscriptions, billing, user behavior tracking, public signup, brand customization, mandatory script/storyboard editing, or direct YouTube publication are part of that definition.
+No subscriptions, billing, user behavior tracking, brand customization, mandatory script/storyboard editing, or direct YouTube publication are part of that definition.
+
+## F19 — Product scope
+
+F19 adds a review stage between idea entry and video generation. AI writes the complete storyboard; creators may preview each scene, edit narration or request visual changes in plain language, review the candidate, and generate without making any edits. One Generate action confirms the complete saved plan. No code editor or per-scene approval is required. The four-step flow is Idea → Review storyboard → Generate → Watch/share. This replaces the earlier automatic-only creator flow for F19; it does not claim the editor exists today.
+
+See the [complete F19 contract](ChitraBodh-Storyboard-Editor-Specification.md) for user flows, edge cases, integration requirements, retention and verification gates.

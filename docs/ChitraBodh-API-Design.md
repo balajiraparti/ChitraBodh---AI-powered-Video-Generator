@@ -1,5 +1,7 @@
 # ChitraBodh — V1 API Design
 
+> **24 November 2026 — F19 planned extension:** [AI storyboard review and editing](ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Documentation only; implementation status is tracked separately.
+
 Version 1.0 · 31 October 2026 · **Proposed contract; not implemented endpoints.**
 
 This specification refines the [PRD](ChitraBodh-V1-PRD.md) and [dashboard system design](ChitraBodh-Dashboard-System-Design.md). Read it with the [database design](ChitraBodh-Database-Design.md) and authoritative wire contract, [OpenAPI JSON](api/chitrabodh.openapi.json). Existing localhost prototype endpoints remain described separately in [Local Portal API](Local-Portal-API.md). No live infrastructure or credentials are changed by these documents.
@@ -255,3 +257,9 @@ Worker: `npm run publishing:worker`. Metadata and queue progress survive restart
 For F16, published artifacts remain duplicate-blocked for the same owner/account, as do uncertain ones, even across disconnect/fresh connection. This is stricter than the future general repost contract. A confirmed pre-dispatch failure permits a NEW explicitly confirmed request if still eligible. A confirmed PUBLISHED container without a media ID is shown as published without inventing a permalink. An optional permalink failure never changes successful publication to failure. Meta content warnings are shown separately. F16 does not offer automatic resume after reconnection.
 
 Provider references checked: [Meta content publishing](https://developers.facebook.com/documentation/instagram-platform/content-publishing), [container status](https://developers.facebook.com/documentation/instagram-platform/instagram-graph-api/reference/ig-container), [publishing quota](https://developers.facebook.com/documentation/instagram-platform/instagram-graph-api/reference/ig-user/content_publishing_limit). Unified Login uses graph.facebook.com and the configured Graph version. Orbit/Postman MCP is unavailable here; the installed Postman command is the desktop app, so the regression harness uses real loopback HTTP with simulated Meta responses. These simulations do not establish live Meta acceptance.
+
+## F19 — Planned storyboard API
+
+The F19 specification defines proposed project storyboard creation, storyboard reads, scene/whole-board edits, operation polling/cancellation, candidate reads/apply/discard and approved-plan generation endpoints. Mutations require session/origin checks, ownership, idempotency and optimistic revisions. Error semantics, limits and response examples are in section 5. These are design-only endpoints; add machine-readable OpenAPI schemas with F19-A before server implementation. Existing generation endpoints must not silently change their request contract.
+
+See the [complete F19 contract](ChitraBodh-Storyboard-Editor-Specification.md) for user flows, edge cases, integration requirements, retention and verification gates.
