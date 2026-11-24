@@ -1,4 +1,4 @@
-import {S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand} from '@aws-sdk/client-s3';
+import {S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadObjectCommand} from '@aws-sdk/client-s3';
 import {createReadStream, readFileSync} from 'node:fs';
 import {stat} from 'node:fs/promises';
 import path from 'node:path';
@@ -37,6 +37,7 @@ export function objectStorage() {
       return size;
     },
     get:(Key, Range, signal)=>client.send(new GetObjectCommand({Bucket, Key, Range}), {abortSignal:signal}),
+    head:(Key,signal)=>client.send(new HeadObjectCommand({Bucket,Key}),{abortSignal:signal}),
     remove:Key=>client.send(new DeleteObjectCommand({Bucket, Key}))
   };
   return cached;

@@ -78,6 +78,7 @@ function Progress({initial}){
       <p role="alert">{error}</p>
       {active&&!job.cancelRequested && (confirm?<div><p>Stop creating this video? Your idea will be saved.</p><button disabled={busy} onClick={cancel}>Stop creation</button><button disabled={busy} onClick={()=>setConfirm(false)}>Keep creating</button></div>:<button onClick={()=>setConfirm(true)}>Cancel creation</button>)}
       {!active&&!job.isRevision&&job.state!=='succeeded'&&<Link href={'/create?draft='+job.projectId}>Open saved idea</Link>}
+      {job.state==='succeeded'&&<p><Link className="action" href={'/publish/'+job.jobId}>Share to Instagram</Link></p>}
       <p><Link href="/dashboard">My videos</Link></p>
     </section>{active && <aside className="studio-note"><h2>{job.stage==='queued'?'Waiting in queue':'Current stage'}</h2><p>{visibleStages[job.stage]||'Queued'}</p><Link href="/dashboard">Back to My videos</Link></aside>}</div>{job.versions?.length>0 && <><Versions job={job}/><CaptionVariants key={job.jobId} job={job}/></>}</>;
 }

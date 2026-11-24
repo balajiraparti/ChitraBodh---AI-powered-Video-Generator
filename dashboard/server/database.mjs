@@ -9,10 +9,16 @@ async function connect(){
   const client=new MongoClient(process.env.MONGODB_URI,{serverSelectionTimeoutMS:5000});
   const db=client.db();
   const store={client};
-  for(const name of ['jobs','versions','projects','artifacts','workerSlots','preferences','instagramConnections'])store[name]=db.collection(name);
+  for(const name of ['jobs','versions','projects','artifacts','workerSlots','preferences','instagramConnections','publishJobs','publishPayloads','mediaGrants'])store[name]=db.collection(name);
   for(const name of ['ideaCommands','ideaLocks','ideaPayloads','revisionInputs','revisionPlans'])store[name]=db.collection(name);
   try{
     await Promise.all([
+      store.publishJobs.createIndex({ownerId:1,key:1},{unique:true}),
+      store.publishJobs.createIndex({ownerId:1,artifactId:1,accountIdSnapshot:1},{unique:true,partialFilterExpression:{duplicateBlocked:true}}),
+      store.publishJobs.createIndex({state:1,nextRunAt:1,leaseUntil:1}),
+      store.publishJobs.createIndex({ownerId:1,artifactId:1,createdAt:-1,_id:-1}),
+      store.publishPayloads.createIndex({expiresAt:1},{expireAfterSeconds:0}),
+      store.mediaGrants.createIndex({expiresAt:1},{expireAfterSeconds:0}),
       ...['ideaCommands','ideaLocks','ideaPayloads','revisionInputs','revisionPlans'].map(name=>store[name].createIndex({expiresAt:1},{expireAfterSeconds:0})),
       store.jobs.createIndex({ownerId:1,key:1},{unique:true}),
       store.jobs.createIndex({ownerId:1},{unique:true,partialFilterExpression:{active:true}}),

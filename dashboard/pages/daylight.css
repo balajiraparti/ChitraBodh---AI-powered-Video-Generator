@@ -48,3 +48,13 @@ section,.project-list li,.studio-note{border-color:var(--stroke)}
 @media(max-width:760px){.frame-status{padding:4px}.frame-status strong,.frame-status small{display:none}}
 
 .instagram-card{margin-top:2rem;padding:2rem;background:#f5f3ed;border:1px solid #bec9c4;border-radius:12px}.instagram-card h2{font-size:1.9rem;margin-top:.7rem}.instagram-identity{display:flex;gap:1rem;align-items:center;padding:1.2rem 0}.instagram-identity>.material-symbols-outlined{font-size:32px;color:#005142}.instagram-identity p{margin:.2rem 0}.instagram-actions{display:flex;gap:1rem;flex-wrap:wrap}.instagram-confirm{margin-top:1rem;padding:1rem;background:#fff;border-radius:8px}@media(max-width:600px){.instagram-card{padding:1.2rem}}
+/* F16: Daylight share/review board. */
+.publish-grid{display:grid;grid-template-columns:minmax(240px,0.8fr) minmax(300px,1.2fr);gap:48px;margin-top:32px;align-items:start}
+.publish-preview{padding:24px;background:#f0eee8;border-radius:16px;text-align:center}
+.publish-preview video{display:block;aspect-ratio:9/16;width:100%;max-width:300px;max-height:65vh;margin:0 auto;border-radius:12px;background:#1b1c18}
+.publish-details{padding:24px;background:#fff;border:1px solid #e4e2dd;border-radius:16px}
+.publish-details textarea{display:block;box-sizing:border-box;width:100%;font:inherit;line-height:1.6;padding:16px;border:1px solid #bec9c4;border-radius:8px;resize:vertical;margin-top:10px}
+.publish-details label{display:block;margin-top:24px}.publish-account{font-size:1.3rem;color:#005142}.publish-account small{display:block;font-size:.85rem;color:#546159;margin-top:6px}
+.publish-consent{display:flex!important;gap:12px;align-items:flex-start;line-height:1.6;margin-bottom:20px}.publish-consent input{width:18px;height:18px;flex-shrink:0;margin-top:4px;accent-color:#005142}
+.publication-result{margin-top:24px;padding:20px;background:#f5f3ed;border-left:3px solid #126b58;border-radius:8px}
+@media(max-width:700px){.publish-grid{grid-template-columns:1fr;gap:20px}.publish-details,.publish-preview{padding:18px}.publish-preview video{max-height:45vh}.publish-details .action{width:100%}}
