@@ -7,13 +7,13 @@ import {Budget,narrate,planVideo,ProviderError,type ProviderConfig} from './prov
 import {makeRun,acquireLock,cleanup,saveManifest,runPath,purgeRun,RETENTION_MS,JOB_LIMIT_MS} from './storage';
 import {probe,validateMedia} from './media';
 import {render} from './render';
-import {validatePlan,type VideoProps} from './contracts';
+import {validatePlan,type VideoProps,type Plan} from './contracts';
 import {VOICES} from './voices';
 import {currentCredentials} from './credentials';
 import {generationFailure} from './generation-errors';
 import {validationCategory} from '../scripts/generation-diagnostics.mjs';
 
-export function configuration(voice?:string):ProviderConfig{
+export function configuration(voice?:string,requireVoice=true):ProviderConfig{
  const storyboardProvider=process.env.AI_PROVIDER||'gemini';
  if(storyboardProvider!=='gemini'&&storyboardProvider!=='nvidia')throw new Error('AI_PROVIDER must be gemini or nvidia.');
  const geminiApi=process.env.GEMINI_API||'interactions';
@@ -21,10 +21,10 @@ export function configuration(voice?:string):ProviderConfig{
  const config:ProviderConfig={...currentCredentials(),storyboardProvider,geminiApi,nvidiaModel:process.env.NVIDIA_MODEL,geminiModel:process.env.GEMINI_MODEL||'gemini-3.8-flash',geminiFallbackModels:(process.env.GEMINI_FALLBACK_MODELS??'gemini-3.5-flash-lite').split(',').map(s=>s.trim()).filter(Boolean),voiceId:voice||process.env.ELEVENLABS_VOICE_ID||VOICES[0].id,voiceModel:process.env.ELEVENLABS_MODEL_ID||'eleven_multilingual_v2'};
  if(config.storyboardProvider==='nvidia'&&(!config.nvidiaKey||!config.nvidiaModel))throw new Error('Set NVIDIA_API_KEY and NVIDIA_MODEL in .env.');
  if(config.storyboardProvider==='gemini'&&!config.geminiKey)throw new Error('Set GEMINI_API_KEY in .env.');
- if(!config.elevenKey||!config.voiceId)throw new Error('Set ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID in .env.');
+ if(requireVoice&&(!config.elevenKey||!config.voiceId))throw new Error('Set ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID in .env.');
  return config;
 }
-export async function generate(options:{demo:boolean;topic?:string;voice?:string;captions:boolean;revisionContext?:string;renderProps?:VideoProps;reviewedPlanFile?:string;onDiagnostic?:(category:string)=>void;onRenderPercent?:(percent:number)=>void;signal?:AbortSignal;onProgress?:(state:string)=>void|Promise<void>}){
+export async function generate(options:{demo:boolean;topic?:string;voice?:string;captions:boolean;revisionContext?:string;renderProps?:VideoProps;reviewedPlanFile?:string;approvedPlan?:Plan;onDiagnostic?:(category:string)=>void;onRenderPercent?:(percent:number)=>void;signal?:AbortSignal;onProgress?:(state:string)=>void|Promise<void>}){
  options.signal?.throwIfAborted();
  const config=options.demo||options.renderProps?undefined:configuration(options.voice);
  if(!options.demo&&(!options.topic?.trim()||[...options.topic].length>2000))throw new Error('Provide a topic between 1 and 2,000 characters.');
@@ -46,13 +46,14 @@ export async function generate(options:{demo:boolean;topic?:string;voice?:string
    for(let attempt=0;attempt<4&&!accepted;attempt++){
     await state('Planning scenes');
     let plan;
-    try{plan=attempt===0&&options.reviewedPlanFile?validatePlan(JSON.parse(await readFile(options.reviewedPlanFile,'utf8'))):await planVideo(options.topic!,config!,budget,[options.revisionContext && "Revise the source lesson according to these requested changes: "+options.revisionContext,feedback].filter(Boolean).join("\n"),signal);}
-    catch(error){options.onDiagnostic?.(validationCategory(error));if(error instanceof ProviderError||signal.aborted||attempt===3)throw error;console.log(error instanceof Error?error.message:'Invalid storyboard');const candidate=(error as Error & {candidate?:unknown}).candidate;feedback=`Correct the previous plan error, retaining required topic-specific animation fields: ${error instanceof Error?error.message:'invalid plan'}. Previous candidate: ${JSON.stringify(candidate??null).slice(0,24000)}`;continue;}
+    try{plan=options.approvedPlan?validatePlan(options.approvedPlan):attempt===0&&options.reviewedPlanFile?validatePlan(JSON.parse(await readFile(options.reviewedPlanFile,'utf8'))):await planVideo(options.topic!,config!,budget,[options.revisionContext && "Revise the source lesson according to these requested changes: "+options.revisionContext,feedback].filter(Boolean).join("\n"),signal);}
+    catch(error){options.onDiagnostic?.(validationCategory(error));if(options.approvedPlan||error instanceof ProviderError||signal.aborted||attempt===3)throw error;console.log(error instanceof Error?error.message:'Invalid storyboard');const candidate=(error as Error & {candidate?:unknown}).candidate;feedback=`Correct the previous plan error, retaining required topic-specific animation fields: ${error instanceof Error?error.message:'invalid plan'}. Previous candidate: ${JSON.stringify(candidate??null).slice(0,24000)}`;continue;}
     await state('Generating narration');
     const narration=await narrate(plan,config!,budget,signal);
     const audioPath=path.join(dir,'narration.mp3');await writeFile(audioPath,narration.audio);
     const {duration}=await probe(audioPath,signal);
     console.log('Narration duration: '+duration.toFixed(1)+' seconds.');
+    if(!narrationDurationAccepted(duration)&&options.approvedPlan)throw new Error('Approved narration duration is outside 40-90 seconds. Edit the storyboard narration before generating again.');
     if(!narrationDurationAccepted(duration)){feedback=`The previous narration lasted ${duration.toFixed(1)} seconds. Rewrite the complete script to target seventy-five seconds (40–90 seconds is acceptable), changing word count by approximately a factor of ${(TARGET_VIDEO_SECONDS/duration).toFixed(2)}. Do not add silence or speed up audio. Keep valid visual objects and repair action phrases to match the revised narration. Previous plan: ${JSON.stringify(plan)}`;continue;}
     const timeline=buildTimeline(plan,narration.alignment,duration);
     accepted={plan,timeline,audioUrl:`data:audio/mpeg;base64,${narration.audio.toString('base64')}`,captions:options.captions,demo:false};

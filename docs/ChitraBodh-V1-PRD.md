@@ -1,6 +1,6 @@
 # ChitraBodh — V1 Product Requirements Document
 
-> **24 November 2026 — F19 planned extension:** [AI storyboard review and editing](ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Documentation only; implementation status is tracked separately.
+> **25 November 2026 — F19 implementation:** [AI storyboard review and editing](ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Implemented on dev; manual browser and live-provider sign-off is tracked in PROJECT_STATUS.md.
 
 **API/database companions:** [API design](ChitraBodh-API-Design.md) · [OpenAPI contract](api/chitrabodh.openapi.json) · [database design](ChitraBodh-Database-Design.md). These specify the planned application contracts, not current localhost behavior.
 
@@ -934,8 +934,8 @@ ChitraBodh V1 is complete when a creator can register or sign in with email and 
 
 No subscriptions, billing, user behavior tracking, brand customization, mandatory script/storyboard editing, or direct YouTube publication are part of that definition.
 
-## F19 — Product scope
+## F19 — Storyboard review and editing (dev implementation)
 
-F19 adds a review stage between idea entry and video generation. AI writes the complete storyboard; creators may preview each scene, edit narration or request visual changes in plain language, review the candidate, and generate without making any edits. One Generate action confirms the complete saved plan. No code editor or per-scene approval is required. The four-step flow is Idea → Review storyboard → Generate → Watch/share. This replaces the earlier automatic-only creator flow for F19; it does not claim the editor exists today.
+Create now saves the idea and opens an AI storyboard review before video submission. The owner can preview shared-renderer scenes, request scoped AI changes or direct narration changes, compare and apply/discard candidates, and explicitly approve the saved revision. Generation pins the exact plan/settings and never silently replans it. Existing ready videos, caption variants and Instagram publishing keep their current contracts.
 
-See the [complete F19 contract](ChitraBodh-Storyboard-Editor-Specification.md) for user flows, edge cases, integration requirements, retention and verification gates.
+The [F19 specification](ChitraBodh-Storyboard-Editor-Specification.md) sections 5–6 contain the implemented API, state transitions, collections, indexes, retention and transaction boundaries, superseding earlier proposed F19 routes. Limits are 4–8 scenes, 20–1,300 narration characters/scene, and 1–1,000 feedback code points. Run the separate `npm run storyboard:worker`. Manual browser and live-provider sign-off remains pending; see PROJECT_STATUS.md.

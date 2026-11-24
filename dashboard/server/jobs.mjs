@@ -79,6 +79,7 @@ async function completeJob(store, current, state, fields, artifact, plan, sessio
     await store.jobs.updateOne({_id:job._id,active:true},{$set:{state:outcome,active:false,finishedAt:new Date(),...fields}},{session});
     if(job.kind!=='caption')await store.versions.updateOne({_id:job.versionId},{$set:{state:outcome==='succeeded'?'ready':outcome}},{session});
     await store.projects.updateOne({_id:job.projectId,activeJobId:job._id},{$set:{status:outcome==='succeeded'||['revision','caption'].includes(job.kind)?'ready':'draft',updatedAt:new Date()},$unset:{activeJobId:''}},{session});
+    if(job.kind==='storyboard')await store.approvedStoryboards.deleteOne({_id:job.versionId},{session});
     if(job.kind==='revision')await store.revisionInputs.deleteOne({_id:job.versionId},{session});
     return outcome;
 }
@@ -102,6 +103,7 @@ export async function cancelJob(store,ownerId,id){
       await store.jobs.updateOne({_id:id,ownerId,active:true},{$set:stopped},{session});
       if(job.kind!=='caption')await store.versions.updateOne({_id:job.versionId},{$set:{state:'cancelled'}},{session});
       await store.projects.updateOne({_id:job.projectId,activeJobId:id},{$set:{status:['revision','caption'].includes(job.kind)?'ready':'draft'},$unset:{activeJobId:''}},{session});
+      if(job.kind==='storyboard')await store.approvedStoryboards.deleteOne({_id:job.versionId},{session});
       if(job.kind==='revision')await store.revisionInputs.deleteOne({_id:job.versionId},{session});
       return {...job,...stopped};
     }

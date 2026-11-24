@@ -1,6 +1,6 @@
 # ChitraBodh — Stitch exploration prompts
 
-> **24 November 2026 — F19 planned extension:** [AI storyboard review and editing](../ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Documentation only; implementation status is tracked separately.
+> **25 November 2026 — F19 implementation:** [AI storyboard review and editing](../ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Implemented on dev; manual browser and live-provider sign-off is tracked in PROJECT_STATUS.md.
 
 Prepared 1 November 2026. A consolidated version of these prompts was submitted on 2 November 2026 and all three boards were generated in [ChitraBodh Brand Direction Studies](https://stitch.withgoogle.com/u/1/projects/16810763223132817674?pli=1). These contain brand/product context only, never credentials or private project data. No direction is selected yet.
 

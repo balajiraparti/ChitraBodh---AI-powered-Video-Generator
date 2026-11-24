@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import './shell.css';
 import './stitch-utilities.css';
 import './daylight.css';
+import './storyboard.css';
 
 const destinations = [['/dashboard', 'My videos'], ['/create', 'Create video'], ['/settings', 'Settings']];
 export default function Workspace({ Component, pageProps }) {

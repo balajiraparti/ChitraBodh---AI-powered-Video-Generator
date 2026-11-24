@@ -6,6 +6,7 @@ export class GenerationError extends Error {
 export function generationFailure(error:unknown,stage:string):Error{
  if(error instanceof ProviderError||error instanceof GenerationError)return error;
  const message=error instanceof Error?error.message:'';
+ if(message.startsWith('Approved narration duration'))return new GenerationError(stage,'APPROVED_NARRATION_DURATION','Your approved narration is outside 40–90 seconds. Reopen the saved idea, shorten or extend its narration, and approve a new storyboard.');
  if(/already running/.test(message))return new GenerationError(stage,'BUSY','Another video is already generating. Wait for it to finish.');
  if(/Set (?:GEMINI|NVIDIA|ELEVENLABS)_/.test(message))return new GenerationError(stage,'CONFIGURATION','A required provider key or model setting is missing in .env.');
  if(error instanceof Error&&/AbortError|TimeoutError/.test(error.name))return new GenerationError(stage,'TIMEOUT',`${stage} timed out or was cancelled. Retry when the provider is available.`);

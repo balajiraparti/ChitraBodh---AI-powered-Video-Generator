@@ -1,6 +1,6 @@
 # ChitraBodh — Prototype Build and Evaluation Plan
 
-> **24 November 2026 — F19 planned extension:** [AI storyboard review and editing](ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Documentation only; implementation status is tracked separately.
+> **25 November 2026 — F19 implementation:** [AI storyboard review and editing](ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Implemented on dev; manual browser and live-provider sign-off is tracked in PROJECT_STATUS.md.
 
 **Version:** 1.0  
 **Date:** 26 October 2026  
@@ -246,8 +246,8 @@ Generated audio, scripts, timing payloads, thumbnails, screenshots, and videos r
 
 The next concrete deliverable is a working local generator and its first evaluated video, not a full SaaS application. These documents provide the build sequence; implementation is the next task.
 
-## F19 — Next planned experiment
+## F19 — Verification next
 
-After document review, design F19 in Stitch before coding. Implement F19-A through F19-E in order: contracts/design, planning/preview, candidate editing, approved-plan generation, then browser and live-provider verification. Evaluate water cycle and search algorithms for scene accuracy and preview/final agreement. Track actual source hashes, timing and private delivery; do not treat storyboard screenshots as proof of generated-video quality.
+The supplied Stitch exports now inform the dev implementation. Contracts, planning/preview, candidate editing and approved-plan generation are implemented. Next perform browser and live-provider verification. Evaluate water cycle and search algorithms for scene accuracy and preview/final agreement. Track actual source hashes, timing and private delivery; do not treat storyboard screenshots as proof of generated-video quality.
 
 See the [complete F19 contract](ChitraBodh-Storyboard-Editor-Specification.md) for user flows, edge cases, integration requirements, retention and verification gates.

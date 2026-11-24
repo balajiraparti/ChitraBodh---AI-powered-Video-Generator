@@ -15,7 +15,7 @@ test('create page renders the saved draft and progress page renders real stages'
   </RouterContext.Provider>);
   assert.match(html,/Water cycle/);
   assert.match(html,/href="\/jobs\/other-job"/);
-  assert.match(html,/<button[^>]*disabled[^>]*>Create video/);
+  assert.match(html,/<button type="button" class="action">Preview storyboard/);
   assert.match(html,/<button class="action">Save draft/);
   const progress=renderToStaticMarkup(<Job initial={{state:'running',stage:'narration',statusUrl:'/api/v1/jobs/test'}}/>);
   assert.match(progress,/Creating narration/);

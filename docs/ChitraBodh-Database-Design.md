@@ -1,6 +1,6 @@
 # ChitraBodh — V1 Database Design
 
-> **24 November 2026 — F19 planned extension:** [AI storyboard review and editing](ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Documentation only; implementation status is tracked separately.
+> **25 November 2026 — F19 implementation:** [AI storyboard review and editing](ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Implemented on dev; manual browser and live-provider sign-off is tracked in PROJECT_STATUS.md.
 
 Version 1.0 · 31 October 2026 · **Proposed implementation specification. No database migration has been applied.**
 
@@ -322,8 +322,8 @@ Transitions: queued → preparing → processing → publishing → published; q
 
 Dispatch intent transaction checks lease/fence/state, time deadline, live owned artifact/project and exact connectionId/accountId/dispatchEpoch. It writes connection/artifact/project guards and publishing intent. Disconnect's existing atomic epoch change fences this transaction; grant reads also require that epoch. A post whose intent already committed may finish after disconnect. Published media IDs and safe links remain metadata after local content expires. Future F18 deletion must serialize with these same guards and retain unresolved delivery evidence. F17 scheduling is not implemented by these collections yet.
 
-## F19 — Planned storyboard persistence
+## F19 — Storyboard review and editing (dev implementation)
 
-Add storyboardHeads, storyboardSnapshots, storyboardOperations, storyboardCandidates and approvedStoryboards as specified in section 6. Unique command keys, partial active-owner indexes, revision CAS, fencing and atomic generation admission protect edits and approvals. Preview retention is distinct from job-owned snapshot retention and the original ready-video deadline. No database migration has run; migration/index validation and cleanup tests are required before rollout.
+Create now saves the idea and opens an AI storyboard review before video submission. The owner can preview shared-renderer scenes, request scoped AI changes or direct narration changes, compare and apply/discard candidates, and explicitly approve the saved revision. Generation pins the exact plan/settings and never silently replans it. Existing ready videos, caption variants and Instagram publishing keep their current contracts.
 
-See the [complete F19 contract](ChitraBodh-Storyboard-Editor-Specification.md) for user flows, edge cases, integration requirements, retention and verification gates.
+The [F19 specification](ChitraBodh-Storyboard-Editor-Specification.md) sections 5–6 contain the implemented API, state transitions, collections, indexes, retention and transaction boundaries, superseding earlier proposed F19 routes. Limits are 4–8 scenes, 20–1,300 narration characters/scene, and 1–1,000 feedback code points. Run the separate `npm run storyboard:worker`. Manual browser and live-provider sign-off remains pending; see PROJECT_STATUS.md.

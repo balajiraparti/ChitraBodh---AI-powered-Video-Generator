@@ -16,7 +16,8 @@
     "worker": "tsx scripts/generation-worker.mjs",
     "publishing:worker": "node scripts/publishing-worker.mjs",
     "media:cleanup": "tsx scripts/media-cleanup.mjs",
-    "worker:recover": "tsx scripts/worker-recover.mjs"
+    "worker:recover": "tsx scripts/worker-recover.mjs",
+    "storyboard:worker": "tsx scripts/storyboard-worker.mjs"
   },
   "engines": {
     "node": ">=22"

@@ -23,6 +23,9 @@ const paths:Record<string,React.ReactNode>={
 };
 export function Explainer({plan,timeline,audioUrl,captions,demo}:VideoProps){
  const frame=useCurrentFrame();const {fps}=useVideoConfig();const time=frame/fps;
+ return <><ExplainerFrame plan={plan} timeline={timeline} captions={captions} demo={demo} time={time}/>{audioUrl&&<Audio src={audioUrl}/>}</>;
+}
+export function ExplainerFrame({plan,timeline,captions,demo,time}:Omit<VideoProps,'audioUrl'> & {time:number}){
  const index=Math.max(0,timeline.scenes.findIndex(s=>time>=s.start&&time<s.end));
  const timing=timeline.scenes[index];const scene=plan.scenes[index];
  const entrance=interpolate(time-timing.start,[0,.35],[0,1],{extrapolateLeft:'clamp',extrapolateRight:'clamp'});
@@ -32,8 +35,7 @@ export function Explainer({plan,timeline,audioUrl,captions,demo}:VideoProps){
  const caption=timeline.captions.find(c=>time>=c.start&&time<c.end);
  const columns=scene.nodes.length===1?1:2;
  const positions=scene.nodes.map((_,i)=>({x:columns===1?450:225+(i%2)*450,y:scene.nodes.length<=2?320:190+Math.floor(i/2)*330}));
- return <AbsoluteFill style={{background:'#f6f5ee',color:'#142b36',fontFamily:'Arial, sans-serif',padding:'112px 90px'}}>
-  {audioUrl&&<Audio src={audioUrl}/>}
+ return <div style={{position:'absolute',inset:0,boxSizing:'border-box',overflow:'hidden',background:'#f6f5ee',color:'#142b36',fontFamily:'Arial, sans-serif',padding:'112px 90px'}}>
   <div style={{display:'flex',justifyContent:'space-between',fontSize:25,letterSpacing:4,fontWeight:700,color:'#147c72'}}><span>CHITRABODH</span><span>EXPLAINED SIMPLY</span></div>
   <div style={{marginTop:70,fontSize:25,letterSpacing:5,color:'#61716e'}}>CHAPTER {String(index+1).padStart(2,'0')} / {String(plan.scenes.length).padStart(2,'0')}</div>
   <div style={{opacity:stageOpacity,transform:`translateY(${(1-entrance)*25}px)`}}>
@@ -49,5 +51,5 @@ export function Explainer({plan,timeline,audioUrl,captions,demo}:VideoProps){
   {captions&&caption&&<div style={{position:'absolute',bottom:270,left:100,right:100,textAlign:'center',fontSize:46,lineHeight:1.3,fontWeight:600}}><span style={{background:'#142b36',color:'#fff',padding:'12px 22px',boxDecorationBreak:'clone',borderRadius:14}}>{caption.text}</span></div>}
   <div style={{position:'absolute',bottom:165,left:90,right:90,height:5,background:'#dde3db'}}><div style={{width:`${time/timeline.duration*100}%`,height:5,background:'#147c72'}}/></div>
   <div style={{position:'absolute',bottom:112,left:90,right:90,fontSize:22,color:'#61716e',display:'flex',justifyContent:'space-between'}}><span>{demo?'OFFLINE DEMO · SILENT · SAMPLE TIMING':'A LITTLE KNOWLEDGE. CLEARLY EXPLAINED.'}</span><span>{Math.floor(time)}s</span></div>
- </AbsoluteFill>;
+ </div>;
 }

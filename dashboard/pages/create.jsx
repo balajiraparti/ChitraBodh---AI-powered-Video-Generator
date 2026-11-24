@@ -31,21 +31,27 @@ function Editor({initial,seed,voices,activeJobId}) {
   const generation=useRef(null);
   const dirty=draft && (topic.trim()!==draft.topic || captions!==draft.captions || voiceCatalogId!==draft.voiceCatalogId);
   async function generate(){
-    if(activeJobId || busy || dirty || !available || !topic.trim() || length>2000)return;
-    setPending('generation');
-    setMessage('');
+    if(busy||!available||!topic.trim()||[...topic].length>2000)return;
+    setPending('generation');setMessage('');
     try{
-      const body=JSON.stringify(draft?{projectId:draft.id,expectedRevision:draft.revision}:{topic,voiceCatalogId,captions});
+      let saved=draft;
+      if(!saved||dirty){
+        const fingerprint=JSON.stringify([topic,voiceCatalogId,captions]);
+        if(request.current?.fingerprint!==fingerprint)request.current={fingerprint,key:crypto.randomUUID()};
+        const r=await fetch('/api/projects'+(draft?'/'+draft.id:''),{method:draft?'PATCH':'POST',headers:{'Content-Type':'application/json','Idempotency-Key':request.current.key},body:JSON.stringify({topic,voiceCatalogId,captions,expectedRevision:draft?.revision})});
+        if(!r.ok){setMessage('Could not save this idea. Check your session or reopen the latest draft before planning.');return;}
+        saved=await r.json();setDraft(saved);setTopic(saved.topic);
+      }
+      const existing=await fetch('/api/v1/storyboards/'+saved.id);
+      if(existing.ok){const data=await existing.json();if(!data.stale&&(data.plan||['queued','running'].includes(data.operation?.state))){await router.push('/storyboards/'+saved.id);return;}}
+      const body=JSON.stringify({expectedProjectRevision:saved.revision});
       if(generation.current?.body!==body)generation.current={body,key:crypto.randomUUID()};
-      const response=await fetch('/api/v1/generations',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':generation.current.key},body});
-      const result=await response.json().catch(()=>({}));
-      if(response.status===202 || result.error?.code==='ACTIVE_JOB_EXISTS'){await router.push('/jobs/'+(result.jobId || result.job.jobId));return;}
-      if(response.status===409){setMessage('The draft changed. Reopen the saved version before generating.');return;}
-      if(response.status===401){setMessage('Sign in again before creating a video.');return;}
-      if(response.status===422){setMessage('Choose an available narrator before generating.');return;}
-      throw Error();
-    }catch{setMessage('Could not confirm your request. Try again.');}
-    finally{setPending(null);}
+      const r=await fetch('/api/v1/storyboards/'+saved.id+'/start',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':generation.current.key},body});
+      const data=await r.json();
+      if(r.ok){generation.current=null;await router.push('/storyboards/'+saved.id);return;}
+      if(r.status<500)generation.current=null;
+      setMessage(data.error?.code==='ACCOUNT_APPROVAL_REQUIRED'?'Your account needs administrator approval to use AI planning.':r.status===429?'Wait a minute before asking AI again.':r.status===409?'Another storyboard is running or this idea changed. Reopen your saved idea.':'Could not prepare the storyboard. Your idea is saved; try again.');
+    }catch{setMessage('Could not confirm the request. Your idea is safe. Try again.');}finally{setPending(null);}
   }
   const length=[...topic].length;
   async function save(event) {
@@ -79,10 +85,10 @@ function Editor({initial,seed,voices,activeJobId}) {
     {!available && <p>Select an available narrator to save this draft.</p>}
     <label><input type="checkbox" checked={captions} disabled={busy} onChange={event=>{setCaptions(event.target.checked);setMessage("");}}/> Include synchronized captions</label>
 
-    {dirty && <small>Save your changes before creating the video.</small>}
+    {dirty && <small>Your changes will be saved before preparing the storyboard.</small>}
     {activeJobId && <p>You can edit this draft while your <Link href={"/jobs/"+activeJobId}>current video</Link> is generating. Reopen this draft after it finishes to create another video.</p>}
     <div className="composer-actions">
-    <button type="button" className="action" disabled={activeJobId || busy || dirty || !available || !topic.trim() || length>2000} onClick={generate}>{pending==='generation'?'Submitting…':'Create video'}</button>
+    <button type="button" className="action" disabled={busy || !available || !topic.trim() || length>2000} onClick={generate}>{pending==='generation'?'Preparing…':'Preview storyboard'}</button>
     <button className="action" disabled={busy || !available || !topic.trim() || length>2000}>{pending==='save'?'Saving…':'Save draft'}</button>
     </div>
     <span role="status">{message}</span>

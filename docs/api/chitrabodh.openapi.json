@@ -43,6 +43,9 @@
     },
     {
       "name": "Publications"
+    },
+    {
+      "name": "Storyboards"
     }
   ],
   "paths": {
@@ -4586,6 +4589,621 @@
         },
         "x-implementation": "F16"
       }
+    },
+    "/api/v1/storyboards/{projectId}": {
+      "get": {
+        "tags": [
+          "Storyboards"
+        ],
+        "summary": "Read private storyboard, operation and candidate",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/Storyboard400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Storyboard401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Storyboard403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Storyboard404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Storyboard409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Storyboard410"
+          },
+          "413": {
+            "$ref": "#/components/responses/Storyboard413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Storyboard415"
+          },
+          "422": {
+            "$ref": "#/components/responses/Storyboard422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Storyboard429"
+          },
+          "503": {
+            "$ref": "#/components/responses/Storyboard503"
+          },
+          "200": {
+            "description": "Success (flat response body)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryboardRead"
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "F19"
+      }
+    },
+    "/api/v1/storyboards/{projectId}/start": {
+      "post": {
+        "tags": [
+          "Storyboards"
+        ],
+        "summary": "Start storyboard",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryboardStart"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/Storyboard400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Storyboard401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Storyboard403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Storyboard404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Storyboard409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Storyboard410"
+          },
+          "413": {
+            "$ref": "#/components/responses/Storyboard413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Storyboard415"
+          },
+          "422": {
+            "$ref": "#/components/responses/Storyboard422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Storyboard429"
+          },
+          "503": {
+            "$ref": "#/components/responses/Storyboard503"
+          },
+          "202": {
+            "description": "Success (flat response body)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "storyboardId": {
+                      "type": "string"
+                    },
+                    "operationId": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "required": [
+                    "storyboardId",
+                    "operationId"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "F19"
+      }
+    },
+    "/api/v1/storyboards/{projectId}/edit": {
+      "post": {
+        "tags": [
+          "Storyboards"
+        ],
+        "summary": "Edit storyboard",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryboardEdit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/Storyboard400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Storyboard401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Storyboard403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Storyboard404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Storyboard409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Storyboard410"
+          },
+          "413": {
+            "$ref": "#/components/responses/Storyboard413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Storyboard415"
+          },
+          "422": {
+            "$ref": "#/components/responses/Storyboard422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Storyboard429"
+          },
+          "503": {
+            "$ref": "#/components/responses/Storyboard503"
+          },
+          "202": {
+            "description": "Success (flat response body)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "storyboardId": {
+                      "type": "string"
+                    },
+                    "operationId": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "required": [
+                    "storyboardId",
+                    "operationId"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "F19"
+      }
+    },
+    "/api/v1/storyboards/{projectId}/apply": {
+      "post": {
+        "tags": [
+          "Storyboards"
+        ],
+        "summary": "Apply storyboard",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryboardCandidateAction"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/Storyboard400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Storyboard401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Storyboard403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Storyboard404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Storyboard409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Storyboard410"
+          },
+          "413": {
+            "$ref": "#/components/responses/Storyboard413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Storyboard415"
+          },
+          "422": {
+            "$ref": "#/components/responses/Storyboard422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Storyboard429"
+          },
+          "503": {
+            "$ref": "#/components/responses/Storyboard503"
+          },
+          "200": {
+            "description": "Success (flat response body)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "required": [
+                    "revision"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "F19"
+      }
+    },
+    "/api/v1/storyboards/{projectId}/discard": {
+      "post": {
+        "tags": [
+          "Storyboards"
+        ],
+        "summary": "Discard storyboard",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryboardCandidateAction"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/Storyboard400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Storyboard401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Storyboard403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Storyboard404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Storyboard409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Storyboard410"
+          },
+          "413": {
+            "$ref": "#/components/responses/Storyboard413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Storyboard415"
+          },
+          "422": {
+            "$ref": "#/components/responses/Storyboard422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Storyboard429"
+          },
+          "503": {
+            "$ref": "#/components/responses/Storyboard503"
+          },
+          "200": {
+            "description": "Success (flat response body)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "required": [
+                    "revision"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "F19"
+      }
+    },
+    "/api/v1/storyboards/{projectId}/cancel": {
+      "post": {
+        "tags": [
+          "Storyboards"
+        ],
+        "summary": "Cancel storyboard",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryboardCancel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/Storyboard400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Storyboard401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Storyboard403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Storyboard404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Storyboard409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Storyboard410"
+          },
+          "413": {
+            "$ref": "#/components/responses/Storyboard413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Storyboard415"
+          },
+          "422": {
+            "$ref": "#/components/responses/Storyboard422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Storyboard429"
+          },
+          "503": {
+            "$ref": "#/components/responses/Storyboard503"
+          },
+          "200": {
+            "description": "Success (flat response body)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "cancelled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "cancelled"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "F19"
+      }
+    },
+    "/api/v1/storyboards/{projectId}/generate": {
+      "post": {
+        "tags": [
+          "Storyboards"
+        ],
+        "summary": "Generate storyboard",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryboardGenerate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/Storyboard400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Storyboard401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Storyboard403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Storyboard404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Storyboard409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Storyboard410"
+          },
+          "413": {
+            "$ref": "#/components/responses/Storyboard413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Storyboard415"
+          },
+          "422": {
+            "$ref": "#/components/responses/Storyboard422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Storyboard429"
+          },
+          "503": {
+            "$ref": "#/components/responses/Storyboard503"
+          },
+          "202": {
+            "description": "Success (flat response body)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "versionId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "projectId": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string"
+                    },
+                    "statusUrl": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "jobId",
+                    "versionId",
+                    "projectId",
+                    "statusUrl"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "F19"
+      }
     }
   },
   "components": {
@@ -6845,6 +7463,760 @@
             "const": true
           }
         }
+      },
+      "StoryboardPlan": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 90
+          },
+          "learningObjective": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250
+          },
+          "scenes": {
+            "minItems": 4,
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]{0,39}$"
+                },
+                "layout": {
+                  "type": "string",
+                  "enum": [
+                    "icon_text",
+                    "process_diagram",
+                    "comparison"
+                  ]
+                },
+                "heading": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 60
+                },
+                "arrayStory": {
+                  "type": "object",
+                  "properties": {
+                    "values": {
+                      "minItems": 3,
+                      "maxItems": 9,
+                      "type": "array",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 99
+                      }
+                    },
+                    "target": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 99
+                    },
+                    "events": {
+                      "minItems": 1,
+                      "maxItems": 8,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "action": {
+                            "type": "string",
+                            "enum": [
+                              "show",
+                              "compare",
+                              "discard_left",
+                              "discard_right",
+                              "found",
+                              "not_found"
+                            ]
+                          },
+                          "low": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "high": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "mid": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "phrase": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "occurrence": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "action",
+                          "low",
+                          "high",
+                          "mid",
+                          "phrase",
+                          "occurrence"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "values",
+                    "target",
+                    "events"
+                  ],
+                  "additionalProperties": false
+                },
+                "illustration": {
+                  "type": "object",
+                  "properties": {
+                    "background": {
+                      "type": "string",
+                      "enum": [
+                        "sky",
+                        "night",
+                        "paper"
+                      ]
+                    },
+                    "setting": {
+                      "type": "string",
+                      "enum": [
+                        "outdoor",
+                        "room",
+                        "city",
+                        "lab",
+                        "digital",
+                        "plain"
+                      ]
+                    },
+                    "objects": {
+                      "minItems": 3,
+                      "maxItems": 16,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-z][a-z0-9_]{0,39}$"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "sun",
+                              "moon",
+                              "hill",
+                              "water",
+                              "cloud",
+                              "tree",
+                              "animal",
+                              "person",
+                              "factory",
+                              "soil",
+                              "atom",
+                              "leaf",
+                              "box",
+                              "circle",
+                              "arrow",
+                              "text",
+                              "rect",
+                              "triangle",
+                              "diamond",
+                              "line",
+                              "drop",
+                              "roots",
+                              "co2",
+                              "o2",
+                              "h2o",
+                              "laptop",
+                              "phone",
+                              "server",
+                              "bottle",
+                              "truck",
+                              "house",
+                              "car",
+                              "coin",
+                              "check",
+                              "lock",
+                              "shield",
+                              "bulb",
+                              "gear",
+                              "chart",
+                              "cart",
+                              "store",
+                              "envelope",
+                              "battery",
+                              "solar_panel",
+                              "wind_turbine",
+                              "bell",
+                              "heart",
+                              "globe",
+                              "clock",
+                              "qr",
+                              "bank",
+                              "book"
+                            ]
+                          },
+                          "x": {
+                            "type": "number",
+                            "minimum": 30,
+                            "maximum": 870
+                          },
+                          "y": {
+                            "type": "number",
+                            "minimum": 50,
+                            "maximum": 690
+                          },
+                          "width": {
+                            "type": "number",
+                            "minimum": 30,
+                            "maximum": 840
+                          },
+                          "height": {
+                            "type": "number",
+                            "minimum": 30,
+                            "maximum": 600
+                          },
+                          "label": {
+                            "type": "string",
+                            "maxLength": 30
+                          },
+                          "color": {
+                            "type": "string",
+                            "enum": [
+                              "teal",
+                              "blue",
+                              "green",
+                              "gold",
+                              "brown",
+                              "gray",
+                              "white",
+                              "red",
+                              "orange",
+                              "purple",
+                              "ink"
+                            ]
+                          },
+                          "toId": {
+                            "type": "string"
+                          },
+                          "fromId": {
+                            "type": "string"
+                          },
+                          "style": {
+                            "type": "string",
+                            "enum": [
+                              "solid",
+                              "dashed",
+                              "dotted"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "kind",
+                          "x",
+                          "y",
+                          "width",
+                          "height",
+                          "label",
+                          "color"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "actions": {
+                      "minItems": 1,
+                      "maxItems": 12,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "targetId": {
+                            "type": "string",
+                            "pattern": "^[a-z][a-z0-9_]{0,39}$"
+                          },
+                          "action": {
+                            "type": "string",
+                            "enum": [
+                              "reveal",
+                              "move",
+                              "pulse",
+                              "rotate",
+                              "flow",
+                              "pop",
+                              "slide_up",
+                              "draw",
+                              "ring",
+                              "fade_out",
+                              "grow",
+                              "shake"
+                            ]
+                          },
+                          "phrase": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 140
+                          },
+                          "occurrence": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991
+                          },
+                          "duration": {
+                            "type": "number",
+                            "minimum": 0.5,
+                            "maximum": 12
+                          },
+                          "repeat": {
+                            "type": "boolean"
+                          },
+                          "toX": {
+                            "type": "number",
+                            "minimum": 30,
+                            "maximum": 870
+                          },
+                          "toY": {
+                            "type": "number",
+                            "minimum": 50,
+                            "maximum": 690
+                          }
+                        },
+                        "required": [
+                          "targetId",
+                          "action",
+                          "phrase",
+                          "occurrence",
+                          "duration",
+                          "repeat"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "background",
+                    "objects",
+                    "actions"
+                  ],
+                  "additionalProperties": false
+                },
+                "motion": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "water_cycle"
+                    },
+                    "phase": {
+                      "type": "string",
+                      "enum": [
+                        "overview",
+                        "evaporation",
+                        "condensation",
+                        "precipitation",
+                        "collection"
+                      ]
+                    },
+                    "triggerPhrase": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "occurrence": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "phase",
+                    "triggerPhrase",
+                    "occurrence"
+                  ],
+                  "additionalProperties": false
+                },
+                "narration": {
+                  "type": "string",
+                  "minLength": 20,
+                  "maxLength": 1300
+                },
+                "nodes": {
+                  "maxItems": 4,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_]{0,39}$"
+                      },
+                      "iconId": {
+                        "type": "string",
+                        "enum": [
+                          "sun",
+                          "water",
+                          "cloud",
+                          "rain",
+                          "vapor",
+                          "leaf",
+                          "chip",
+                          "database",
+                          "bulb",
+                          "arrow",
+                          "book",
+                          "globe",
+                          "check",
+                          "clock"
+                        ]
+                      },
+                      "label": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 32
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "iconId",
+                      "label"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "edges": {
+                  "maxItems": 6,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "string"
+                      },
+                      "to": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "from",
+                      "to"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "cues": {
+                  "maxItems": 6,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "phrase": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "occurrence": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "targetId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "phrase",
+                      "occurrence",
+                      "targetId"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "layout",
+                "heading",
+                "narration",
+                "nodes",
+                "edges",
+                "cues"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "title",
+          "learningObjective",
+          "scenes"
+        ],
+        "additionalProperties": false
+      },
+      "StoryboardSettings": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "voiceCatalogId": {
+            "type": "string"
+          },
+          "captions": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "voiceCatalogId",
+          "captions"
+        ]
+      },
+      "StoryboardStart": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedProjectRevision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "expectedProjectRevision"
+        ]
+      },
+      "StoryboardEdit": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "scope": {
+            "enum": [
+              "scene",
+              "storyboard"
+            ]
+          },
+          "sceneId": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "feedback": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "narration": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 1300
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "scope"
+        ],
+        "oneOf": [
+          {
+            "required": [
+              "feedback"
+            ],
+            "not": {
+              "required": [
+                "narration"
+              ]
+            }
+          },
+          {
+            "required": [
+              "narration",
+              "sceneId"
+            ],
+            "not": {
+              "required": [
+                "feedback"
+              ]
+            },
+            "properties": {
+              "scope": {
+                "const": "scene"
+              }
+            }
+          }
+        ]
+      },
+      "StoryboardCandidateAction": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "operationId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "operationId"
+        ]
+      },
+      "StoryboardCancel": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "operationId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "operationId"
+        ]
+      },
+      "StoryboardGenerate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "planHash": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64
+          },
+          "confirmed": {
+            "const": true
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "planHash",
+          "confirmed"
+        ]
+      },
+      "StoryboardRead": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "planHash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StoryboardPlan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StoryboardPlan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidateId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "settings": {
+            "$ref": "#/components/schemas/StoryboardSettings"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "planning",
+              "editable",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "serverNow": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "activeJobId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "operation": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "state": {
+                "enum": [
+                  "queued",
+                  "running",
+                  "succeeded",
+                  "failed",
+                  "cancelled"
+                ]
+              },
+              "error": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
       }
     },
     "parameters": {
@@ -7310,6 +8682,226 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Storyboard400": {
+        "description": "Invalid input",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Storyboard401": {
+        "description": "Sign in required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Storyboard403": {
+        "description": "Origin or AI eligibility denied",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Storyboard404": {
+        "description": "Not found or foreign owner",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Storyboard409": {
+        "description": "Stale revision, unresolved changes, busy or key reuse",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Storyboard410": {
+        "description": "Expired",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Storyboard413": {
+        "description": "Body too large",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Storyboard415": {
+        "description": "JSON required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Storyboard422": {
+        "description": "Voice or scene unavailable",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Storyboard429": {
+        "description": "Rate limited",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Storyboard503": {
+        "description": "Service unavailable",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
             }
           }
         }

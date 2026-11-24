@@ -1,6 +1,6 @@
 # ChitraBodh — Prototype and Internal Pilot Technical Design
 
-> **24 November 2026 — F19 planned extension:** [AI storyboard review and editing](ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Documentation only; implementation status is tracked separately.
+> **25 November 2026 — F19 implementation:** [AI storyboard review and editing](ChitraBodh-Storyboard-Editor-Specification.md) defines the new pre-generation flow and takes precedence over earlier automatic-only flow descriptions for F19. Implemented on dev; manual browser and live-provider sign-off is tracked in PROJECT_STATUS.md.
 
 **31 October companion:** Use [Dashboard and application system design](ChitraBodh-Dashboard-System-Design.md) for the updated application architecture, API/data contracts, recovery and publishing rules, and reconciled 40–90-second duration policy. This earlier document preserves the initial prototype design context.
 
