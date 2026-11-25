@@ -13,6 +13,6 @@ export async function render(props:VideoProps,directory:string,signal:AbortSigna
   if(signal.aborted)throw new Error('Generation cancelled.');
   await renderStill({serveUrl,composition,inputProps:props,browserExecutable,output:path.join(directory,'thumbnail.png'),frame:300});
   let last=-1;
-  await renderMedia({serveUrl,composition,inputProps:props,browserExecutable,outputLocation:path.join(directory,'video.mp4'),codec:'h264',crf:23,x264Preset:'veryfast',concurrency:2,cancelSignal,onProgress:({progress})=>{const step=Math.floor(progress*10);if(step!==last){last=step;onPercent?.(step*10);console.log(`Rendering ${step*10}%`);}}});
+  await renderMedia({serveUrl,composition,inputProps:props,browserExecutable,outputLocation:path.join(directory,'video.mp4'),codec:'h264',crf:23,x264Preset:'veryfast',concurrency:process.env.RENDER_CONCURRENCY==='1'?1:2,cancelSignal,onProgress:({progress})=>{const step=Math.floor(progress*10);if(step!==last){last=step;onPercent?.(step*10);console.log(`Rendering ${step*10}%`);}}});
  }finally{signal.removeEventListener('abort',cancel);}
 }

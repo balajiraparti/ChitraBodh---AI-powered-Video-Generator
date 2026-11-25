@@ -1,0 +1,319 @@
+# Proposed pilot infrastructure. Apply only after resource/cost review.
+services:
+  - type: web
+    name: chitrabodh-pilot-web
+    runtime: docker
+    branch: dev
+    region: oregon
+    plan: 0.5c-512mb
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: node scripts/render-start.mjs web
+    autoDeployTrigger: 'off'
+    healthCheckPath: /api/health
+    numInstances: 1
+    maxShutdownDelaySeconds: 300
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: BETTER_AUTH_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        sync: false
+      - key: GEMINI_FALLBACK_MODELS
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: ELEVENLABS_MALE_VOICE_ID
+        sync: false
+      - key: FILEBASE_ACCESS_KEY_ID
+        sync: false
+      - key: FILEBASE_SECRET_ACCESS_KEY
+        sync: false
+      - key: FILEBASE_BUCKET
+        sync: false
+      - key: REGION
+        sync: false
+      - key: INSTAGRAM_APP_ID
+        sync: false
+      - key: INSTAGRAM_APP_SECRET
+        sync: false
+      - key: INSTAGRAM_CONFIG_ID
+        sync: false
+      - key: INSTAGRAM_TOKEN_KEY
+        sync: false
+      - key: INSTAGRAM_API_VERSION
+        sync: false
+      - key: PILOT_SIGNUP_ENABLED
+        value: "false"
+      - key: MONIKA_VOICE_ENABLED
+        value: "false"
+      - key: AI_PROVIDER
+        value: "gemini"
+      - key: GEMINI_API
+        value: "interactions"
+      - key: FILEBASE_ENDPOINT
+        value: "https://s3.filebase.io"
+      - key: CHITRABODH_PUBLIC_URL
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+  - type: worker
+    name: chitrabodh-pilot-generation
+    runtime: docker
+    branch: dev
+    region: oregon
+    plan: 1c-2g
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: node scripts/render-start.mjs generation
+    autoDeployTrigger: 'off'
+    numInstances: 1
+    maxShutdownDelaySeconds: 300
+    envVars:
+      - key: MONGODB_URI
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: MONGODB_URI
+      - key: GEMINI_API_KEY
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: GEMINI_API_KEY
+      - key: GEMINI_MODEL
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: GEMINI_MODEL
+      - key: GEMINI_FALLBACK_MODELS
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: GEMINI_FALLBACK_MODELS
+      - key: AI_PROVIDER
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: AI_PROVIDER
+      - key: GEMINI_API
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: GEMINI_API
+      - key: FILEBASE_ACCESS_KEY_ID
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: FILEBASE_ACCESS_KEY_ID
+      - key: FILEBASE_SECRET_ACCESS_KEY
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: FILEBASE_SECRET_ACCESS_KEY
+      - key: FILEBASE_BUCKET
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: FILEBASE_BUCKET
+      - key: REGION
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: REGION
+      - key: FILEBASE_ENDPOINT
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: FILEBASE_ENDPOINT
+      - key: ELEVENLABS_API_KEY
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: ELEVENLABS_API_KEY
+      - key: ELEVENLABS_MALE_VOICE_ID
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: ELEVENLABS_MALE_VOICE_ID
+      - key: MONIKA_VOICE_ENABLED
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: MONIKA_VOICE_ENABLED
+      - key: CHITRABODH_PUBLIC_URL
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+  - type: worker
+    name: chitrabodh-pilot-storyboard
+    runtime: docker
+    branch: dev
+    region: oregon
+    plan: 0.5c-512mb
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: node scripts/render-start.mjs storyboard
+    autoDeployTrigger: 'off'
+    numInstances: 1
+    maxShutdownDelaySeconds: 300
+    envVars:
+      - key: MONGODB_URI
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: MONGODB_URI
+      - key: GEMINI_API_KEY
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: GEMINI_API_KEY
+      - key: GEMINI_MODEL
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: GEMINI_MODEL
+      - key: GEMINI_FALLBACK_MODELS
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: GEMINI_FALLBACK_MODELS
+      - key: AI_PROVIDER
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: AI_PROVIDER
+      - key: GEMINI_API
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: GEMINI_API
+      - key: CHITRABODH_PUBLIC_URL
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+  - type: worker
+    name: chitrabodh-pilot-publishing
+    runtime: docker
+    branch: dev
+    region: oregon
+    plan: 0.5c-512mb
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: node scripts/render-start.mjs publishing
+    autoDeployTrigger: 'off'
+    numInstances: 1
+    maxShutdownDelaySeconds: 300
+    envVars:
+      - key: MONGODB_URI
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: MONGODB_URI
+      - key: FILEBASE_ACCESS_KEY_ID
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: FILEBASE_ACCESS_KEY_ID
+      - key: FILEBASE_SECRET_ACCESS_KEY
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: FILEBASE_SECRET_ACCESS_KEY
+      - key: FILEBASE_BUCKET
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: FILEBASE_BUCKET
+      - key: REGION
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: REGION
+      - key: FILEBASE_ENDPOINT
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: FILEBASE_ENDPOINT
+      - key: INSTAGRAM_APP_ID
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: INSTAGRAM_APP_ID
+      - key: INSTAGRAM_APP_SECRET
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: INSTAGRAM_APP_SECRET
+      - key: INSTAGRAM_CONFIG_ID
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: INSTAGRAM_CONFIG_ID
+      - key: INSTAGRAM_TOKEN_KEY
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: INSTAGRAM_TOKEN_KEY
+      - key: INSTAGRAM_API_VERSION
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: INSTAGRAM_API_VERSION
+      - key: CHITRABODH_PUBLIC_URL
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+  - type: cron
+    name: chitrabodh-pilot-cleanup
+    runtime: docker
+    branch: dev
+    region: oregon
+    plan: 0.5c-512mb
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: node scripts/render-start.mjs cleanup
+    autoDeployTrigger: 'off'
+    schedule: '*/5 * * * *'
+    envVars:
+      - key: MONGODB_URI
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: MONGODB_URI
+      - key: FILEBASE_ACCESS_KEY_ID
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: FILEBASE_ACCESS_KEY_ID
+      - key: FILEBASE_SECRET_ACCESS_KEY
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: FILEBASE_SECRET_ACCESS_KEY
+      - key: FILEBASE_BUCKET
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: FILEBASE_BUCKET
+      - key: REGION
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: REGION
+      - key: FILEBASE_ENDPOINT
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: FILEBASE_ENDPOINT
+      - key: CHITRABODH_PUBLIC_URL
+        fromService:
+          name: chitrabodh-pilot-web
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
