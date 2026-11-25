@@ -1,0 +1,45 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "dashboard": {
+      "root": "dashboard",
+      "framework": "nextjs",
+      "installCommand": "cd .. && npm ci",
+      "buildCommand": "cd .. && npm run dashboard:build"
+    }
+  },
+  "daemons": {
+    "generation": {
+      "root": ".",
+      "entrypoint": "Dockerfile",
+      "command": ["/usr/bin/tini", "--", "node", "scripts/render-start.mjs", "generation"],
+      "instances": {"iad1": 0},
+      "resources": {"requests": {"memory": "2Gi"}},
+      "terminationGracePeriodSeconds": 300
+    },
+    "storyboard": {
+      "root": ".",
+      "entrypoint": "Dockerfile",
+      "command": ["/usr/bin/tini", "--", "node", "scripts/render-start.mjs", "storyboard"],
+      "instances": {"iad1": 0},
+      "resources": {"requests": {"memory": "1Gi"}},
+      "terminationGracePeriodSeconds": 300
+    },
+    "publishing": {
+      "root": ".",
+      "entrypoint": "Dockerfile",
+      "command": ["/usr/bin/tini", "--", "node", "scripts/render-start.mjs", "publishing"],
+      "instances": {"iad1": 0},
+      "resources": {"requests": {"memory": "1Gi"}},
+      "terminationGracePeriodSeconds": 300
+    },
+    "cleanup": {
+      "root": ".",
+      "entrypoint": "Dockerfile",
+      "command": ["/usr/bin/tini", "--", "node", "--import", "tsx", "scripts/media-cleanup.mjs"],
+      "instances": {"iad1": 0},
+      "resources": {"requests": {"memory": "1Gi"}},
+      "terminationGracePeriodSeconds": 60
+    }
+  }
+}
