@@ -39,3 +39,5 @@ Rollback: disable cloud workers before restarting local processes; restore match
 ## Validation evidence / limitations
 
 Targeted runtime and existing-page tests passed, including matching HTTPS origins, rejecting credential-bearing origins, command allowlisting, public web binding and one-shot cleanup. TypeScript passed. Production build result is recorded in PROJECT_STATUS.md. Docker Desktop's Linux daemon was unavailable locally; actual Linux image startup/render remains a cloud-deployment gate. CLI validation returned 401 from its expired saved login; the connected MCP Blueprint planning operation is the platform validation path.
+
+Blueprint record: exs-dc37q63rjlhs73f30ccg. Initial planning failed with need_payment_info on all services. No service resources were provisioned. Billing must be configured by the owner, then the plan must be rerun and approved before deploy. The Meta redirect remains unchanged until the HTTPS site passes health checks.
