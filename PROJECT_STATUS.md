@@ -149,4 +149,8 @@ Render planning result: created Blueprint `exs-dc37q63rjlhs73f30ccg` (Chitrabodh
 
 ## 25 November 2026 — Vercel deployment preparation
 
+Import inspection detected the dashboard as internal until an explicit service rewrite was added. All public routes now target the dashboard service, while application ownership/auth checks remain intact. Deployment runtime tests passed (2); JSON parsing and diff whitespace checks passed. Cloud verification is still pending.
+
 User requested Vercel after the Render billing blocker. Confirmed signed-in Vercel Hobby account and repository access; import form targets dev. Added repository-root service and Docker daemon configuration plus docs/Vercel-Deployment.md. Daemons initially have zero instances until secrets, cloud build and runtime checks pass. No paid upgrade, Meta callback change or cloud worker activation yet. Public homepage deployment and Linux/container validation are pending. Current beta supports long-running workers; the 5 GiB combined proposal would consume Hobby's 420 GB-hour monthly memory quota in about 84 hours. Next: deploy the staged configuration, inspect build results and configure production credentials securely.
+
+27 November resume: Brave confirmed the initial dev deployment is Ready but lacks the unpushed public service rewrite. Stable assigned domain is chitrabodh-ai-powered-video-generat.vercel.app. Resuming routing fix, then cloud verification; workers remain paused.
