@@ -5,7 +5,7 @@ export function getServerSideProps({req,res,query}){
   res?.setHeader('Referrer-Policy','no-referrer');
   if(query.email!==undefined || query.password!==undefined)return {redirect:{destination:'/sign-in',permanent:false}};
   const origin=new URL(process.env.BETTER_AUTH_URL);
-  if(['localhost','127.0.0.1'].includes(origin.hostname) && req.headers.host!==origin.host){
+  if(req.headers.host!==origin.host){
     return {redirect:{destination:origin.origin+'/sign-in'+(query.mode==='sign-up'?'?mode=sign-up':''),permanent:false}};
   }
   return {props:{initialMode:query.mode==='sign-up'?'sign-up':'sign-in'}};
@@ -29,11 +29,13 @@ export default function SignIn({initialMode='sign-in'}){
         401:'The email or password did not match. If this is a new account, choose Create an account.',
         422:'Account creation failed. If you already registered, choose Sign in.',
         400:'Enter a valid email and a password between 12 and 128 characters.',
-        403:'Your sign-in page is on a different address from the server. Reopen the dashboard sign-in link.',
+        403:'This request is not allowed. Reopen the sign-in page and try again.',
         429:'Too many attempts. Please wait before trying again.',
         503:'The sign-in service is temporarily unavailable. Try again shortly.'
       };
-      setError(messages[response.status] || `The sign-in service returned HTTP ${response.status}. Please retry shortly.`);
+      const details=await response.json().catch(()=>({}));
+      const reasons={REGISTRATION_CLOSED:'Account creation is temporarily closed. Use an existing account to sign in.',AUTH_ORIGIN_MISMATCH:'Reopen the sign-in page to use the correct app address.'};
+      setError(reasons[details.code] || messages[response.status] || `The sign-in service returned HTTP ${response.status}. Please retry shortly.`);
       setState('error');
     }catch{setError('Could not reach the dashboard. Check the connection and try again.');setState('error')}
   }

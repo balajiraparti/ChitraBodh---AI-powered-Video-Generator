@@ -16,9 +16,9 @@ export default async function handler(req,res) {
   const path=req.query.path.join('/');
   try {
     const {auth,origin,limits}=await services();
-    if(req.method==='POST' && req.headers.origin!==origin) return res.status(403).end();
+    if(req.method==='POST' && req.headers.origin!==origin) return res.status(403).json({code:'AUTH_ORIGIN_MISMATCH'});
     if(req.method==='POST' && (path==='sign-up' || path==='sign-in')) {
-      if(path==='sign-up'&&process.env.PILOT_SIGNUP_ENABLED==='false')return res.status(403).json({message:'Registration is closed during the pilot. Use your existing testing account.'});
+      if(path==='sign-up'&&process.env.PILOT_SIGNUP_ENABLED==='false')return res.status(403).json({code:'REGISTRATION_CLOSED',message:'Registration is closed during the pilot. Use your existing testing account.'});
       const email=z.email().safeParse(typeof req.body?.email==='string'?req.body.email.trim().toLowerCase():'');
       const password=typeof req.body?.password==='string' ? req.body.password : '';
       if(!email.success || password.length<12 || password.length>128)return res.status(400).json({message:'Enter a valid email and a password between 12 and 128 characters.'});

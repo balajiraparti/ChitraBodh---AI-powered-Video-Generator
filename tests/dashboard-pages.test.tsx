@@ -60,3 +60,12 @@ test('sign-in cannot GET credentials before hydration and strips credential quer
   assert.equal(headers['Cache-Control'],'no-store');
   assert.equal(headers['Referrer-Policy'],'no-referrer');
 });
+
+test('alternate deployment sign-up URLs redirect to the configured origin without reflecting input',()=>{
+  const previous=process.env.BETTER_AUTH_URL;
+  process.env.BETTER_AUTH_URL='https://app.example.com';
+  try{
+    assert.deepEqual(signInProps({req:{headers:{host:'preview.example.com'}},query:{mode:'sign-up',next:'https://untrusted.invalid'}}),{redirect:{destination:'https://app.example.com/sign-in?mode=sign-up',permanent:false}});
+    assert.deepEqual(signInProps({req:{headers:{host:'app.example.com'}},query:{mode:'sign-up'}}),{props:{initialMode:'sign-up'}});
+  }finally{if(previous===undefined)delete process.env.BETTER_AUTH_URL;else process.env.BETTER_AUTH_URL=previous;}
+});
